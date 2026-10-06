@@ -1,0 +1,3 @@
+LIBRARY "hideui_daemon"
+EXPORTS
+    hu_daemon_acquire = hu_daemon_acquire@4

@@ -1,0 +1,3 @@
+# hideui_daemon.dll is a DELIVERABLE and is committed: every addon ships a
+# copy of it, and no player should have to build one. Do not add a *.dll rule.
+*.o
