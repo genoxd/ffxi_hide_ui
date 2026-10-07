@@ -16,14 +16,15 @@ The client builds its interface out of 369 named windows. You can
 - read what a prompt offers and answer it in the window's place: an NPC's
   choice list, a text entry, a party invite, the linkshell and area lists, the
   delivery box
-- block the game's macro keys so Ctrl+number and Alt+number are yours to bind
+
+Two things that are not windows are covered as well: the compass, which you
+can hide and move like a window, and the macro keys, which you can block so
+that Ctrl+number and Alt+number are free for your own binds.
 
 This library draws nothing (shameless plug for [ffxi_world_draw](https://github.com/genoxd/ffxi_world_draw)).
 
 Nameplates, damage numbers, the target cursor, the mouse cursor and the
 loading screen's graphics are not windows, and the library does not cover them.
-The compass is not a window either, but the library covers it all the same,
-under the name `compass`: see [The compass](#the-compass).
 
 ## Install
 
@@ -122,7 +123,7 @@ blocking them has consequences:
 | `post1`, `post2` (incoming delivery box; `post2` is its second screen) | the session stays open until `ui:cancel('post1')` (see [Prompts](#prompts)) |
 | `passinpu`, `link5`, `arealist` | the NPC's script waits until you `answer` or `cancel` it (see [Prompts](#prompts)) |
 | `prtyjoin` (the party menu's invite screen) | the invite waits until you `answer` or `cancel` it |
-| `mcr1pall`, `mcr2pall` (the Ctrl and Alt macro bars) | the bar is not drawn, and Enter on it can no longer run a macro; Ctrl+number and Alt+number still run them, since the macro keys never go through the bar (see [Macro keys](#macro-keys)) |
+| `mcr1pall`, `mcr2pall` (the Ctrl and Alt macro bars) | the bar no longer shows, but Ctrl+number and Alt+number still run the macros; to stop those, see [Macro keys](#macro-keys) |
 
 Shops, the auction house (`auc1`), `inspect`, the target window, the cast bar
 (`casttime`) and the map windows are fine to block. Windows in neither list
@@ -198,10 +199,10 @@ be opened by the game; use `cancel` to close them.
 
 ## The compass
 
-The compass in the lower left, with the Vana'diel clock and the weather icon,
-is not one of the game's windows. The client draws it on its own, from the
-routine that runs the interface each frame. The library reaches it all the
-same, under the name `compass`:
+The compass at the lower left, with the Vana'diel clock and the weather
+icon, is not one of the 369 windows: the client draws it separately. The
+library covers it anyway, under the name `compass`, and for these four
+calls it behaves like a window:
 
 ```lua
 ui:hide('compass')
@@ -210,40 +211,42 @@ ui:move('compass', 200, 900)    -- top-left corner of its box
 ui:reset('compass')
 ```
 
-Hidden, it is not drawn at all. Its box is 88 by 42 and sits above the
-chat log; `ui:info('compass').rect` says where, and `info` has no cursor or
-elements for it.
+Its box is 88 by 42 and normally sits just above the chat log;
+`ui:info('compass').rect` tells you where it is right now. Left alone, the
+game keeps it above the chat log, moving it whenever the log grows or
+shrinks, and shows it again after a cutscene or when you close the map.
+Once you move it, it stays where you put it until you reset it.
 
-The game puts the compass back above the log every time the log's top edge
-moves, and shows it again when whatever hid it ends: a cutscene, or a
-full-screen window like the map. A position you set is therefore written
-before every draw, so it holds until you reset it. The `opened` and
-`closed` events fire as the game hides the compass and brings it back.
-
-The game shows and hides the compass itself, every frame, so the other
-verbs fold into hide: `block` and `close` hide it, `unblock` and `open`
-bring it back, and each holds until you undo it, as `hide` does. It has no
-rows or frame to size, so `resize` is accepted and does nothing. The clock
-inside it is the game's own `/clock on` and `/clock off`.
+The other calls are simpler for the compass than for a window. `block` and
+`close` do the same thing as `hide`, and `unblock` and `open` the same as
+`unhide`: the game shows and hides the compass by itself, so there is
+nothing else to block or close. `resize` is accepted and does nothing,
+because the compass has no rows or frame to size. `info('compass')`
+reports no cursor and no elements, since it has neither. The `closed`
+event fires when the game hides the compass for a cutscene, and `opened`
+when it brings it back. The clock inside it is switched with the game's
+own `/clock on` and `/clock off`; the library leaves it alone.
 
 ## Macro keys
 
+Ctrl+1 through Ctrl+0 and Alt+1 through Alt+0 run the game's macros.
+Blocking the macro bar windows does not stop that, because the bar is only
+a display and the game handles the keys separately. To take those keys for
+your own Windower binds, block the macros themselves:
+
 ```lua
-ui:block_macros()     -- Ctrl+number and Alt+number run nothing, and the macro bars do not open
-ui:unblock_macros()   -- your hold dropped; still blocked while another addon holds one
+ui:block_macros()     -- Ctrl+number and Alt+number no longer run macros
+ui:unblock_macros()
 ui:macros()           -- { blocked = true, blocked_by = { 'myaddon' }, mine = true }
 ```
 
-The game runs a macro straight from the key, without any window, so this
-is a verb of its own rather than a window name.
-
-While the block holds, Ctrl and Alt do nothing at all: no macro runs and
-no bar opens, so the keys are yours to bind through Windower. A bar that
-is open when you call `block_macros` is closed.
-
-The block is a hold, like a hide: it lasts until you call `unblock_macros`
-or your addon unloads, and with two addons holding one it lasts until both
-let go. `hideui.status().macros_blocked` says whether any addon holds one.
+While the block is on, pressing Ctrl or Alt shows no bar, and Ctrl+number
+and Alt+number do nothing. If a bar is showing when you call
+`block_macros`, it closes. The block stays on until you call
+`unblock_macros` or your addon unloads. If two addons have blocked the
+macros, they stay blocked until both have unblocked them.
+`hideui.status().macros_blocked` tells you whether any addon has a block
+on.
 
 ## Events
 
@@ -268,7 +271,7 @@ Every event carries `e.name` except `pending` and `resync`.
 | `error` | the game refused something you asked for, or one of your own callbacks raised (`e.verb` is `'callback'`): `e.verb`, `e.name`, `e.reason` |
 | `cursor` | the game's cursor in an open window moved to row `e.row`; for `query` and `arealist`, `e.row` is the index into the list `options()` returns |
 | `pending` | a party invite or a delivery-box session started or ended (see [Prompts](#prompts)): `e.what` is `'invite'` or `'post'`, `e.pending` true or false |
-| `resync` | your addon fell more than 4096 events behind and lost the oldest `e.dropped`; re-read `opened()`, `info()` and `pending()` |
+| `resync` | the library keeps the last 4096 events for you; if your addon falls further behind than that, it gets this single event instead of the ones it missed, with `e.dropped` set to how many. Re-read `opened()`, `info()` and `pending()` to catch up |
 
 Callbacks run on the frame after the event, so a window may already be gone
 when `opened` reaches you; check `ui:info(name).open`. A window already
@@ -449,9 +452,9 @@ a reason and the list of those entries, and applies the rest.
 
 ## More than one addon
 
-Several addons can use the library at once. Hides add up: a window hidden by
-two addons stays hidden until both unhide it. So do macro blocks: a block
-holds until every addon holding one lets go. Moves do not: the library
+Several addons can use the library at once. Hides and blocks add up: a
+window hidden or blocked by two addons stays that way until both let go,
+and the same goes for macro blocks. Moves do not: the library
 keeps one position per window, so a window moved by two addons sits where
 the later move put it, and when that addon unloads the window goes back to
 where the game puts it, not to the earlier addon's spot. A `blocked` event
@@ -529,11 +532,11 @@ that one with the game closed.
 
 ## Under the hood
 
-The library finds the client's window table and a few of the client's own
-routines in the running game, and hooks seven of those routines: opening,
-showing and closing a window, the per-frame UI update, the mouse mode, the
-key routing and the compass draw. It makes every change from inside the
-game's own thread. If a game patch changes any of that, nothing installs
+The library finds the client's window table and the routines it needs in
+the running game, and hooks eight of them: the ones that open, show and
+close a window, run the UI each frame, decide whether the mouse is in a
+menu, pass a key to a window, draw the compass and let macro keys run. It
+makes every change from inside the game's own thread. If a game patch changes any of that, nothing installs
 and `new` returns the reason.
 
 Building it: [`engine/README.md`](engine/README.md) and
