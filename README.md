@@ -1032,3 +1032,7 @@ means it has not been identified yet; the name is still valid.
 | `ut_point` | Unity (status menu) |
 | `wepsort` |  |
 | `worldsel` |  |
+
+## License
+
+0BSD. See [LICENSE](LICENSE).
