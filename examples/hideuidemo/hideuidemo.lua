@@ -30,6 +30,8 @@
 --                                         answers (answer and cancel reply to the prompt the last
 --                                         options or pending read, and are refused once another has come)
 --   //hideuidemo pending                     a party invite or post-box session waiting
+--   //hideuidemo blockmacros|unblockmacros   stop the game's Ctrl+number and Alt+number macros / back
+--   //hideuidemo macros                      whether the macro keys are blocked, and by whom
 --   //hideuidemo layout                      what this addon placed, saved to data/settings.xml
 --   //hideuidemo apply                       put the saved layout back
 --   //hideuidemo events on [name]            print opened/closed/covered/uncovered/blocked/cursor as they
@@ -234,10 +236,14 @@ local function show_info(name)
         say(207, '  remembered ' .. memory_text(p.memory))
     end
     local resize = p.resize or {}
-    say(207, ('  a size holds until %s%s'):format(
-        resize.holds == 'reopen' and 'it closes' or resize.holds == 'trigger' and 'its owner re-sizes it'
-            or 'the next frame',
-        resize.min_rows and (', resizes by rows %d..%d'):format(resize.min_rows, resize.max_rows) or ''))
+    if resize.holds == 'none' then
+        say(207, '  no size to set')
+    else
+        say(207, ('  a size holds until %s%s'):format(
+            resize.holds == 'reopen' and 'it closes' or resize.holds == 'trigger' and 'its owner re-sizes it'
+                or 'the next frame',
+            resize.min_rows and (', resizes by rows %d..%d'):format(resize.min_rows, resize.max_rows) or ''))
+    end
     if p.open then
         say(207, ('  rect %s, %s'):format(rect(p.rect), cursor_text(p)))
         local count = #p.elements
@@ -451,6 +457,8 @@ local help = {
     'answer <name> <value>   query <value>, link5 <slot>, arealist <zone id> (NPC prompt), passinpu <text>, prtyjoin yes|no',
     'cancel <name>           cancel a prompt, or end a delivery or post-box session; the box closes when the server answers',
     'pending                 a party invite or post-box session waiting',
+    'blockmacros|unblockmacros  stop the game\'s Ctrl+number and Alt+number macros / back',
+    'macros                  whether the macro keys are blocked, and by whom',
     'layout                  save what this addon placed to data/settings.xml',
     'apply                   put the saved layout back',
     'events on [name]        print events, cursor moves too, as they happen, for every window or one',
@@ -651,6 +659,20 @@ windower.register_event('addon command', function(cmd, ...)
             say(207, 'post-box session open: ' .. tostring(p.post.box))
         end
         if not p.invite and not p.post then say(207, 'nothing pending') end
+
+    elseif cmd == 'blockmacros' or cmd == 'unblockmacros' then
+        local verb = cmd == 'blockmacros' and 'block_macros' or 'unblock_macros'
+        local done, err = call(verb)
+        report(done, err, verb)
+
+    elseif cmd == 'macros' then
+        local m, err = call('macros')
+        if not m then say(123, 'macros failed: ' .. tostring(err)) return end
+        if m.blocked then
+            say(207, ('macro keys blocked by %s%s'):format(table.concat(m.blocked_by, ', '), m.mine and ' (mine)' or ''))
+        else
+            say(207, 'macro keys not blocked')
+        end
 
     elseif cmd == 'layout' then
         local layout, err = call('layout')

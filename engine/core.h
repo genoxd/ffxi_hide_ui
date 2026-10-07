@@ -127,17 +127,25 @@ inline bool reads_bottom_anchored(const char* name, int top, int bottom, int def
     return bottom_anchored_class(name) || hangs_from_bottom(top, bottom, default_top, default_bottom);
 }
 
+// The compass is no registry row: the game draws it outside the menu
+// system. The engine names it all the same, on an entry with no row and a
+// key of 16 NUL bytes, which no open key (space-padded, cut at the first
+// NUL) and no live resource key can equal.
+const char kCompassName[] = "compass";
+
 struct Inventory {
     NameEntry names[kMaxNames];
     int16_t name_of_row[kRowCount];
     int count;
+    int16_t compass;        // the compass entry's index; -1 until built
 
-    // Every record, whatever its type; rows share an entry only when type and
-    // name both match. Fails on an inventory the engine cannot index, which
-    // only a broken menu_table.inc can produce: one name under two types
-    // could not be told apart by name.
+    // Every record, whatever its type, then the compass; rows share an entry
+    // only when type and name both match. Fails on an inventory the engine
+    // cannot index, which only a broken menu_table.inc can produce: one name
+    // under two types could not be told apart by name.
     bool build() {
         count = 0;
+        compass = -1;
         for (int r = 0; r < kRowCount; ++r) {
             name_of_row[r] = -1;
             const char* tp = kRowSpecs[r].type;
@@ -171,7 +179,14 @@ struct Inventory {
             e.rows[e.row_count++] = static_cast<int16_t>(r);
             name_of_row[r] = static_cast<int16_t>(n);
         }
-        return count > 0;
+        if (count == 0 || count >= kMaxNames || find_exact(kCompassName) >= 0) {
+            return false;
+        }
+        NameEntry& c = names[count];
+        memset(&c, 0, sizeof(c));
+        memcpy(c.name, kCompassName, strlen(kCompassName));
+        compass = static_cast<int16_t>(count++);
+        return true;
     }
 
     int find_exact(const char* nm) const {
@@ -554,6 +569,7 @@ struct Handle {
     uint8_t active;
     char name[48];
     uint8_t holds[kMaxNames];
+    uint8_t macros_hold;    // this handle blocks the macro keys
     uint32_t cursor;        // event ring position this handle has read up to
     uint32_t dropped;
 };
@@ -629,6 +645,8 @@ struct Holds {
     uint32_t hide_count[kMaxNames];
     uint32_t block_count[kMaxNames];
     volatile LONG want[kMaxNames];
+    uint32_t macros_count;          // handles blocking the macro keys
+    volatile LONG macros_want;      // 1 while any does
 
     LONG want_of(int n) const {
         LONG w = 0;
@@ -662,6 +680,20 @@ struct Holds {
         publish(n);
     }
 
+    // The macro keys: a hold under no name, counted once per handle.
+    void set_macros(Handle& h, bool on) {
+        if ((h.macros_hold != 0) == on) {
+            return;
+        }
+        h.macros_hold = on ? 1 : 0;
+        if (on) {
+            ++macros_count;
+        } else {
+            --macros_count;
+        }
+        InterlockedExchange(&macros_want, macros_count ? 1 : 0);
+    }
+
     void release(Handle& h, int names) {
         for (int n = 0; n < names; ++n) {
             if (h.holds[n] & kHoldHide) {
@@ -671,6 +703,7 @@ struct Holds {
                 set(h, n, kHoldBlock, false);
             }
         }
+        set_macros(h, false);
     }
 };
 
@@ -884,6 +917,7 @@ enum Op {
     kOpResetGroupMine,      // target the group: its moves the command's handle made
     kOpBlockClose,          // the game's close of a window a block found open
     kOpArealistCancel,
+    kOpMacrosBlocked,       // the macro keys' first block: a bar the handler has up closed, no target
 };
 
 // What a kOpResetMine resets.
@@ -904,11 +938,12 @@ enum Verb {
     kVerbCancel,
     kVerbResetGroup,
     kVerbBlock,
+    kVerbBlockMacros,
 };
 
 inline const char* verb_name(int verb) {
     static const char* const names[] = {"", "move", "move_group", "reset", "reset_all", "open", "close",
-                                        "resize", "answer", "cancel", "reset_group", "block"};
+                                        "resize", "answer", "cancel", "reset_group", "block", "block_macros"};
     return verb >= 0 && verb < static_cast<int>(sizeof(names) / sizeof(names[0])) ? names[verb] : "";
 }
 

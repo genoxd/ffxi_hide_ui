@@ -5,11 +5,12 @@
 // never run: no loader, no DllMain, no TLS callbacks.
 //
 // image_check.exe <unpacked FFXiMain.dll> [registry mcb masks set_position close open update staged show
-//                  mouse_mode menu_input
+//                  mouse_mode menu_input compass_draw macro_gate
 //                  the eleven called routines in signatures.h's kCalls order
 //                  link5_cache_site link5_cache query_cancel_site query_cancel_allowed
 //                  set_cursor link5_latch_site link5_latch link5_open_site link5_global
-//                  link5_callback glyph_convert row_hit_test mouse_read menu_routing]
+//                  link5_callback glyph_convert row_hit_test mouse_read menu_routing
+//                  compass_global macro_object_global]
 // The optional hex addresses are the ones expected for that build.
 
 #define WIN32_LEAN_AND_MEAN
@@ -132,6 +133,7 @@ int main(int argc, char** argv) {
     const uint8_t* glyph_convert = find(text, size, "glyph_convert", kSigGlyphConvert);
     const uint8_t* hit_test = find(text, size, "row_hit_test", kSigRowHitTest);
     const uint8_t* routing = find(text, size, "menu_routing", kSigMenuRouting);
+    const uint8_t* macro_site = find(text, size, "macro_object", kSigMacroObject);
 
     if (registry) {
         check(rd32(registry, 1) == rd32(registry, 19), "menu_registry: its two table addresses agree");
@@ -268,6 +270,34 @@ int main(int argc, char** argv) {
             static_cast<unsigned>(kRoutingSinkCall), static_cast<unsigned>(reinterpret_cast<uintptr_t>(target)),
             static_cast<unsigned>(reinterpret_cast<uintptr_t>(call + 5)));
         check(call[0] == 0xE8 && sites[kSiteMenuInput] && target == sites[kSiteMenuInput], label);
+    }
+    if (sites[kSiteCompassDraw]) {
+        const uint8_t* site = sites[kSiteCompassDraw];
+        const uint8_t* global = rdptr(site, kCompassDrawGlobal);
+        check(rd32(site, kCompassDrawGlobal) == rd32(site, kCompassDrawGlobal2),
+            "compass_draw: its two compass globals, at +2 and +31, agree");
+        expect("compass global", reinterpret_cast<uintptr_t>(global), argc, argv, data_arg + 14);
+        char label[128];
+        snprintf(label, sizeof(label), "compass global 0x%08X is data in the image, outside .text",
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(global)));
+        check(global >= image && global + 4 <= image + image_size && !(global >= text && global < text + size), label);
+    }
+    if (sites[kSiteMacroGate]) {
+        const uint8_t* word = rdptr(sites[kSiteMacroGate], kMacroGateGlobal);
+        char label[128];
+        snprintf(label, sizeof(label), "macro_gate: the word its prologue reads, 0x%08X, is data in the image, outside .text",
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(word)));
+        check(word >= image && word + 2 <= image + image_size && !(word >= text && word < text + size), label);
+    }
+    if (macro_site) {
+        check(rd32(macro_site, kMacroObjectImm) == rd32(macro_site, kMacroObjectImm2),
+            "macro_object: its two globals, at +15 and +23, agree");
+        const uint8_t* global = rdptr(macro_site, kMacroObjectImm);
+        expect("macro object global", reinterpret_cast<uintptr_t>(global), argc, argv, data_arg + 15);
+        char label[128];
+        snprintf(label, sizeof(label), "macro object global 0x%08X is data in the image, outside .text",
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(global)));
+        check(global >= image && global + 4 <= image + image_size && !(global >= text && global < text + size), label);
     }
     if (registry) {
         const uint8_t* table = rdptr(registry, 1);

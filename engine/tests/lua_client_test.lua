@@ -21,7 +21,7 @@ local SJIS_A, UTF8_A = '\130\160', '\227\129\130'
 local function reset_windower()
     chat, handlers = {}, {}
     windower = {
-        add_to_chat = function(colour, text) chat[#chat + 1] = {colour = colour, text = text} end,
+        add_to_chat = function(color, text) chat[#chat + 1] = {color = color, text = text} end,
         register_event = function(name, fn)
             handlers[name] = handlers[name] or {}
             table.insert(handlers[name], fn)
@@ -48,14 +48,14 @@ local function status_table(ok, err)
                image = {path = 'C:\\addon\\libs\\_HideUI.dll', build = '0.7.2', abi = 5}}
     local s = {ok = ok, state = ok and 'installed' or 'failed', role = ok and 'resident' or 'none',
                engine = '0.7.2', handles = 1, dropped = 7, hidden = {}, blocked = {}, moved = {}, resized = {},
-               detail = d}
+               macros_blocked = false, detail = d}
     if ok then
         d.daemon = {abi = 1, build = '1.0.0'}
-        d.registry, d.rows, d.names, d.manager = '0x020022D8', 370, 369, '0x10621838'
+        d.registry, d.rows, d.names, d.manager = '0x020022D8', 370, 370, '0x10621838'
         d.ui = {w = 1920, h = 1080}
         s.ui = {w = 1920, h = 1080}
         d.functions = {open_by_name = '0x1', ui_update = '0x2', staged_close = '0x3', show_path = '0x4',
-                       set_position = '0x5', close_by_name = '0x6'}
+                       set_position = '0x5', close_by_name = '0x6', compass_draw = '0x7', compass_global = '0x8'}
         d.resident = d.image
         s.hidden, s.moved = {'logwindo'}, {'equip'}
     end
@@ -91,10 +91,11 @@ local function copy(t)
     return out
 end
 
--- The engine's window names, as many as these tests use.
+-- The engine's names, as many as these tests use: windows, and the compass,
+-- which is no window but is listed, hidden and blocked like one.
 local windows = {'logwindo', 'logwin2', 'equip', 'menuwind', 'buff', 'ability', 'query', 'partywin', 'targetwi',
                  'subwindo', 'passinpu', 'prtyjoin', 'link5', 'arealist', 'delivery', 'post1', 'post2',
-                 'playermo', 'persona'}
+                 'playermo', 'persona', 'compass'}
 
 local native_state
 local function make_native()
@@ -104,7 +105,8 @@ local function make_native()
     local Handle = {}
     Handle.__index = Handle
     for _, verb in ipairs({'hide', 'unhide', 'block', 'unblock', 'move', 'move_group', 'reset', 'reset_group',
-                           'reset_all', 'open', 'close', 'resize', 'answer', 'cancel'}) do
+                           'reset_all', 'open', 'close', 'resize', 'answer', 'cancel', 'block_macros',
+                           'unblock_macros'}) do
         Handle[verb] = function(self, ...)
             table.insert(native_state.calls, {verb = verb, handle = self.name, args = {...}, n = select('#', ...)})
             if native_state.raises[verb] then
@@ -151,10 +153,12 @@ local function make_native()
         native_state.lists = native_state.lists + 1
         local all = {}
         for _, name in ipairs(windows) do
-            all[name] = {name = name, layer = 2, open = false, blockable = name ~= 'query', detail = {}}
+            all[name] = {name = name, layer = 2, open = false, blockable = name ~= 'query',
+                         detail = {}}
         end
         all.logwindo.open, all.logwindo.hidden, all.logwindo.detail.dock = true, true, 'chat_log'
         all.equip.moved = true
+        all.compass.open, all.compass.layer = true, nil
         return all
     end
     function Handle:opened()
@@ -180,6 +184,9 @@ local function make_native()
     end
     function Handle:rects()
         return {logwindo = {x = 16, y = 898, w = 1774, h = 166}, equip = {x = 300, y = 200, w = 200, h = 160}}
+    end
+    function Handle:macros()
+        return copy(native_state.macros or {blocked = false, blocked_by = {}, mine = false})
     end
     -- The engine's own layout(), which hideui.lua no longer reads.
     function Handle:layout()
@@ -343,6 +350,14 @@ check(not ok and tostring(err):find('pending events name no window', 1, true) an
     'on and off: pending and resync take no window name: ' .. tostring(err))
 ok, err = pcall(ui.off, ui, 'opened', 'nosuch')
 check(not ok and tostring(err):find('no such window: nosuch', 1, true), 'off: an unknown window name raises too')
+do
+    local calls_before = #native_state.calls
+    local on_ok = pcall(ui.on, ui, 'opened', 'compass', function() end)
+    ui:off('opened', 'compass')
+    check(on_ok and ui:hide('compass') == true and last_call('hide').args[1] == 'compass'
+            and #native_state.calls == calls_before + 1,
+        'the compass is a name the engine lists: on(event, \'compass\', fn) passes, hide(\'compass\') reaches the engine')
+end
 
 local seen = {}
 local function record(event) seen[#seen + 1] = event.event .. ':' .. event.name end
@@ -460,7 +475,35 @@ do
         'rects(): every open window\'s frame, keyed by name')
 end
 
--- the game's text as UTF-8, its bytes beside it as raw; segments' colours named
+-- the macro keys: two verbs of no window, and a read
+do
+    native_state.calls = {}
+    native_state.macros = {blocked = true, blocked_by = {'first', 'other'}, mine = true}
+    native_state.status.macros_blocked = true
+    local m = ui:macros()
+    local s = hideui.status()
+    local blocked = ui:block_macros()
+    local unblocked = ui:unblock_macros()
+    local c1, c2 = native_state.calls[1] or {}, native_state.calls[2] or {}
+    check(blocked == true and unblocked == true and #native_state.calls == 2 and c1.verb == 'block_macros' and c1.n == 0
+            and c2.verb == 'unblock_macros' and c2.n == 0,
+        'block_macros and unblock_macros reach the engine with no arguments and return what it returns')
+    check(m.blocked == true and #m.blocked_by == 2 and m.blocked_by[1] == 'first' and m.mine == true
+            and s.macros_blocked == true and s.detail == nil,
+        'macros() and status().macros_blocked return what the engine returns')
+    native_state.results.block_macros = {nil, 'block_macros needs hideui 0.9.0 or newer; the resident copy is X'}
+    local r, why = ui:block_macros()
+    native_state.results.block_macros = nil
+    local dot_ok, dot_err = pcall(ui.block_macros)
+    local dot2_ok, dot2_err = pcall(ui.macros)
+    check(r == nil and why == 'block_macros needs hideui 0.9.0 or newer; the resident copy is X' and not dot_ok
+            and tostring(dot_err):find('use ui:block_macros(...)', 1, true) and not dot2_ok
+            and tostring(dot2_err):find('use ui:macros(...)', 1, true),
+        'a refusal of block_macros comes back as nil and the reason; a dot for a colon raises: ' .. tostring(why))
+    native_state.macros, native_state.status.macros_blocked = nil, false
+end
+
+-- the game's text as UTF-8, its bytes beside it as raw; segments' colors named
 do
     native_state.prompts = copy(prompts)
     native_state.prompts.query.title = {text = 'Teleport ' .. SJIS_A,
@@ -631,6 +674,15 @@ second:resize('partywin', 3)
 check(second:release() == true and second_native.released, 'release reaches the engine')
 local after, reason = second:hide('logwindo')
 check(after == nil and reason:find('released'), 'a released handle answers nil and the reason')
+do
+    local calls_before = #native_state.calls
+    local b, bwhy = second:block_macros()
+    local u, uwhy = second:unblock_macros()
+    local m, mwhy = second:macros()
+    check(b == nil and bwhy:find('released') and u == nil and uwhy:find('released') and m == nil and mwhy:find('released')
+            and #native_state.calls == calls_before,
+        'block_macros, unblock_macros and macros on a released handle answer nil and the reason, reaching nothing')
+end
 local snapshot = second:layout()
 snapshot.groups.chat_log.x = 0
 local again = second:layout()
@@ -716,7 +768,8 @@ local commands = {
     {'answer', 'query', '4'}, {'answer', 'passinpu', 'two', 'words'}, {'answer', 'prtyjoin', 'yes'},
     {'answer', 'link5', '3'}, {'answer', 'arealist', '231'}, {'answer', 'prtyjoin', 'maybe'}, {'answer'},
     {'cancel', 'query'}, {'cancel', 'delivery'}, {'cancel'}, {'pending'}, {'answer', 'prtyjoin', 'no'},
-    {'cancel', 'delivery'}, {'move', 'equip', '300', '200'}, {'group', 'chat_log', '16', '830'},
+    {'cancel', 'delivery'}, {'blockmacros'}, {'macros'}, {'unblockmacros'},
+    {'move', 'equip', '300', '200'}, {'group', 'chat_log', '16', '830'},
     {'layout'}, {'apply'}, {'events', 'on'}, {'debug', 'on'}, {'debug', 'off'}, {'status'}, {'help'},
     {'move', 'equip'},
 }
@@ -825,6 +878,22 @@ local seen_forms = table.concat(forms, ' ')
 check(seen_forms:find('partywin,3,nil', 1, true) and seen_forms:find('equip,300,200', 1, true)
         and not seen_forms:find('ptw3', 1, true),
     'hideuidemo passes resize as numbers (rows, or w and h): ' .. seen_forms)
+do
+    local macro_calls = {}
+    for _, c in ipairs(native_state.calls) do
+        if c.verb == 'block_macros' or c.verb == 'unblock_macros' then macro_calls[#macro_calls + 1] = c.verb end
+    end
+    chat = {}
+    command('macros')
+    local unblocked = chat_has('macro keys not blocked')
+    native_state.macros = {blocked = true, blocked_by = {'hideuidemo', 'other'}, mine = true}
+    command('macros')
+    native_state.macros = nil
+    check(table.concat(macro_calls, ' ') == 'block_macros unblock_macros' and unblocked
+            and chat_has('macro keys blocked by hideuidemo, other (mine)'),
+        'hideuidemo blockmacros and unblockmacros reach the engine, and macros prints whether the keys are blocked'
+            .. ' and who blocks them: ' .. table.concat(macro_calls, ' '))
+end
 
 chat = {}
 native_state.prompts = copy(prompts)

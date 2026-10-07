@@ -65,13 +65,30 @@
 // window's sink and never a hidden one's, the sink's other callers still
 // reach it, with no active menu the routing routine's own branch runs, the
 // unhide gives the keys back -- and the two new signatures and the routing
-// routine's call to the sink failing closed.
+// routine's call to the sink failing closed. 0.8.0's own: the compass, on
+// the stand-in's object and draw entry (the game's bytes around three
+// stand-in callees, run each frame after the update): listed open and not
+// blockable, its box and anchor in info() and rects(), a hide stopping its
+// draws and updates, a move seen by its render at the anchor and put back by
+// a reset, remembered() and the layout, open, close, block and resize
+// refused, opened and closed as its state byte is poked, the site resolved
+// again once the daemon's jump is on it, a release unhiding and resetting
+// it, and the site and its two copies of the global failing closed. 0.9.0's
+// own: the macro keys, on the stand-in's gate (the game's shape around
+// stand-in globals and a callee) consulted each frame a number key is held:
+// a block has the hooked gate say no and nothing fires, closes a bar the
+// handler has up with the handler's own sequence, is read back by macros()
+// and status().macros_blocked with its holders, holds while any handle
+// holds it and goes with a release; the gate resolved again over the
+// daemon's jump; the gate, its manager imm32 and the macro object's
+// constructor site failing closed; and a 0.8.0 resident (copy f) making no
+// handle for this copy.
 //
 // e2e_test.exe <LuaCore.dll> <a/_HideUI.dll> <FFXiMain.dll> <b/_HideUI.dll> <c/_HideUI.dll> <hideui.lua>
-//              <d/_HideUI.dll> <e/_HideUI.dll>
+//              <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll>
 //
 // Copy e publishes engine abi 4's table, standing for a 0.5.1 to 0.6.3
-// resident.
+// resident; copy f engine abi 5's, standing for a 0.7.0 to 0.8.0 one.
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -147,7 +164,7 @@ const char kPrelude[] =
     "  return open()\n"
     "end\n"
     "function copy_of(path)\n"
-    "  return path and path:match('[/\\\\]([abcde])[/\\\\]_[Hh]ide[Uu][Ii]%.dll$')\n"
+    "  return path and path:match('[/\\\\]([abcdef])[/\\\\]_[Hh]ide[Uu][Ii]%.dll$')\n"
     "end\n"
     "function finish()\n"
     "  local text = table.concat(out, '\\n')\n"
@@ -361,6 +378,8 @@ struct FakeLog {
     void* sink_menu;
     int sink_code;
     int main_menu_opens;
+    int compass_x;
+    int compass_y;
 };
 
 struct FakeState {
@@ -412,6 +431,17 @@ struct FakeState {
     volatile LONG* query_waits;
     void* menu_input;
     void* menu_routing;
+    uint8_t* compass;
+    uint8_t** compass_ptr;
+    void* compass_draw;
+    volatile LONG* compass_draws;
+    volatile LONG* compass_updates;
+    uint8_t* macro_object;
+    uint8_t** macro_object_ptr;
+    void* macro_gate;
+    uint8_t* macro_ctor_site;
+    volatile LONG* macro_key;
+    volatile LONG* macros_fired;
 };
 
 // fake_arealist.h's Log, field for field.
@@ -671,12 +701,12 @@ DWORD WINAPI never_runs(LPVOID) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 9) {
+    if (argc < 10) {
         std::printf("usage: e2e_test.exe <LuaCore.dll> <a/_HideUI.dll> <FFXiMain.dll> <b/_HideUI.dll>"
-            " <c/_HideUI.dll> <hideui.lua> <d/_HideUI.dll> <e/_HideUI.dll>\n");
+            " <c/_HideUI.dll> <hideui.lua> <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll>\n");
         return 2;
     }
-    for (int i = 2; i < 9; ++i) {
+    for (int i = 2; i < 10; ++i) {
         to_backslashes(argv[i]);
     }
     g_dll = argv[2];
@@ -698,13 +728,13 @@ int main(int argc, char** argv) {
             "check(not s.ok and s.state == 'failed' and s.role == 'none' and s.error == nil"
             "  and tostring(d.error):find('FFXiMain', 1, true),"
             "  'no FFXiMain.dll: status().detail.error names the failure: ' .. tostring(d.error))\n"
-            "check(s.engine == '0.7.6' and s.handles == 0 and s.dropped == 0 and type(s.hidden) == 'table'"
-            "  and type(s.resized) == 'table' and d.image and d.image.abi == 5 and s.ui == nil,"
+            "check(s.engine == '0.9.0' and s.handles == 0 and s.dropped == 0 and type(s.hidden) == 'table'"
+            "  and type(s.resized) == 'table' and d.image and d.image.abi == 6 and s.ui == nil,"
             "  'status: the public fields at the top, the image under detail')\n"
             "local ok, err = pcall(hu.new, 42)\n"
             "check(not ok and tostring(err):find('string expected', 1, true), 'new(42) raises: ' .. tostring(err))\n"
             "check(hu.shutdown() == true, 'shutdown of an engine that never installed is a no-op')\n"
-            "check(hu.version() == 'hideui 0.7.6', 'version: ' .. hu.version())\n"
+            "check(hu.version() == 'hideui 0.9.0', 'version: ' .. hu.version())\n"
             "return finish()\n");
         lua.close(L);
         check(!engine_mapped(), "a failed engine holds no pin: closing Lua unmaps it");
@@ -769,6 +799,18 @@ int main(int argc, char** argv) {
         snprintf(input_addresses[i], sizeof(input_addresses[i]), "0x%08X",
             static_cast<unsigned>(reinterpret_cast<uintptr_t>(input_fns[i])));
     }
+    char compass_addresses[2][16];
+    const void* const compass_fns[2] = {g_fake->compass_draw, g_fake->compass_ptr};
+    for (int i = 0; i < 2; ++i) {
+        snprintf(compass_addresses[i], sizeof(compass_addresses[i]), "0x%08X",
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(compass_fns[i])));
+    }
+    char macro_addresses[2][16];
+    const void* const macro_fns[2] = {g_fake->macro_gate, g_fake->macro_object_ptr};
+    for (int i = 0; i < 2; ++i) {
+        snprintf(macro_addresses[i], sizeof(macro_addresses[i]), "0x%08X",
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(macro_fns[i])));
+    }
     const char* globals[] = {"OPEN", addresses[0], "UPDATE", addresses[1], "STAGED", addresses[2],
                              "SHOW", addresses[3], "SETPOS", addresses[4], "CLOSE", addresses[5],
                              "REGISTRY", addresses[6], "MCB", addresses[7], "PENDING", addresses[8],
@@ -782,7 +824,9 @@ int main(int argc, char** argv) {
                              "SETCURSOR", addresses[23], "LINK5LATCH", addresses[24], "LINK5CB", addresses[25],
                              "CONVERT", convert_address, "MOUSE", mouse_addresses[0], "HITTEST", mouse_addresses[1],
                              "MOUSEREAD", mouse_addresses[2], "SINK", input_addresses[0],
-                             "ROUTING", input_addresses[1], NULL};
+                             "ROUTING", input_addresses[1], "COMPASS", compass_addresses[0],
+                             "COMPASSGLOBAL", compass_addresses[1], "MACROGATE", macro_addresses[0],
+                             "MACROOBJECT", macro_addresses[1], NULL};
 
     const char kExpectFailure[] =
         "local hu = load_engine()\n"
@@ -956,6 +1000,69 @@ int main(int argc, char** argv) {
             " nothing");
     }
 
+    // -- the 0.8.0 site: the compass draw entry, whose two copies of the
+    //    compass global must agree
+    {
+        uint8_t* draw = static_cast<uint8_t*>(g_fake->compass_draw);
+        const uint8_t draw_first = draw[0];
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[3] = {
+            {draw + 7, 0xc8, "signature compass_draw: not found"},
+            {draw + 31, static_cast<uint8_t>(draw[31] + 1), "compass_draw: its two compass globals disagree"},
+            {draw + 2, static_cast<uint8_t>(draw[2] + 1), "compass_draw: its two compass globals disagree"},
+        };
+        for (int i = 0; i < 3; ++i) {
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+        }
+        check(static_cast<uint8_t*>(g_fake->open)[0] == open_first && draw[0] == draw_first && !engine_mapped()
+                && *g_fake->compass_draws > 0,
+            "a compass draw entry that differs, or whose two copies of the global disagree, installs nothing; the"
+            " stand-in draws it every frame all the same");
+    }
+
+    // -- the 0.9.0 sites: the macro key gate, whose imm32 at +40 must be the
+    //    manager, and the macro object's constructor site, whose two copies
+    //    of the global must agree
+    {
+        uint8_t* gate = static_cast<uint8_t*>(g_fake->macro_gate);
+        uint8_t* site = g_fake->macro_ctor_site;
+        const uint8_t gate_first = gate[0];
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[4] = {
+            {gate + 7, 0x90, "signature macro_gate: not found"},
+            {gate + 40, static_cast<uint8_t>(gate[40] + 1), "signature macro_gate: not found"},
+            {site + 6, 0x90, "signature macro_object: not found"},
+            {site + 15, static_cast<uint8_t>(site[15] + 1), "macro_object: its two globals disagree"},
+        };
+        for (int i = 0; i < 4; ++i) {
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+        }
+        check(static_cast<uint8_t*>(g_fake->open)[0] == open_first && gate[0] == gate_first && !engine_mapped()
+                && *g_fake->macros_fired == 0,
+            "a macro key gate that differs or whose imm32 is not the manager, and a constructor site that differs"
+            " or whose two globals disagree, install nothing; no key held, no macro fired");
+    }
+
     // -- a signature that matches twice
     {
         poke(g_fake->spare_set_position, 0x83);
@@ -1044,7 +1151,7 @@ int main(int argc, char** argv) {
         "local d = s.detail or {}\n"
         "check(s.ok and s.state == 'installed' and s.role == 'resident' and h ~= nil,"
         "  'installs against the stand-in FFXiMain: ' .. tostring(d.error))\n"
-        "check(s.engine == '0.7.6' and s.handles == 1 and s.dropped == 0 and hu.version() == 'hideui 0.7.6'"
+        "check(s.engine == '0.9.0' and s.handles == 1 and s.dropped == 0 and hu.version() == 'hideui 0.9.0'"
         "  and s.registry == nil and s.functions == nil,"
         "  'status: engine, handles and dropped at the top, the internals under detail; version is hideui 0.7.0')\n"
         "check(s.ui and s.ui.w == 1920 and s.ui.h == 1080 and d.ui and d.ui.w == 1920,"
@@ -1066,6 +1173,12 @@ int main(int argc, char** argv) {
         "check(f.menu_input == SINK and f.menu_routing == ROUTING,"
         "  'the menu input sink and the routing routine resolved to the stand-in: '"
         "  .. tostring(f.menu_input) .. ' ' .. tostring(f.menu_routing))\n"
+        "check(f.compass_draw == COMPASS and f.compass_global == COMPASSGLOBAL,"
+        "  'the compass draw entry and the compass global resolved to the stand-in: '"
+        "  .. tostring(f.compass_draw) .. ' ' .. tostring(f.compass_global))\n"
+        "check(f.macro_gate == MACROGATE and f.macro_object == MACROOBJECT,"
+        "  'the macro key gate and the macro object global resolved to the stand-in: '"
+        "  .. tostring(f.macro_gate) .. ' ' .. tostring(f.macro_object))\n"
         "check(calls == 11 and all and f.prtyjoin_pending == PENDING and f.query_confirm == nil"
         "  and f.list_select == nil,"
         "  'the eleven reply, re-dock and resize routines, arealist\\'s close+reset and latch clear among them,'"
@@ -1078,7 +1191,7 @@ int main(int argc, char** argv) {
         "  'SetCursor, the link5 pending latch and the event callback the link5 open site names resolved to the'"
         "  .. ' stand-in: ' .. tostring(f.set_cursor) .. ' ' .. tostring(f.link5_latch) .. ' '"
         "  .. tostring(f.link5_callback))\n"
-        "check(d.registry == REGISTRY and d.manager == MCB and d.rows == 370 and d.names == 369"
+        "check(d.registry == REGISTRY and d.manager == MCB and d.rows == 370 and d.names == 370"
         "  and d.ui and d.ui.w == 1920 and d.ui.h == 1080, 'registry, manager and UI size resolved')\n"
         "check(d.pinned and d.daemon and d.daemon.abi == 1, 'pinned, daemon abi ' .. tostring(d.daemon and d.daemon.abi))\n"
         "check(h:hide('logwindo') == true and h:block('menuwind') == true and h:move('equip', 300, 200) == true,"
@@ -1302,6 +1415,310 @@ int main(int argc, char** argv) {
         check(!live_menu(kRowAbility)
                 && memcmp(registry_row(kRowAbility), g_fake->pristine + kRowAbility * 0x2C, 0x2C) == 0,
             "ability closed, its registry row as the table has it");
+    }
+
+    // -- the compass (0.8.0): the stand-in's object and draw entry, hooked;
+    //    read, hidden, moved and reset through Lua, its events as the state
+    //    byte is poked, and a release putting it back
+    {
+        uint8_t* compass = g_fake->compass;
+        const FakeLog* fl = g_fake->log;
+        phase(L,
+            "local all = h:list()\n"
+            "local c = all.compass or {}\n"
+            "check(c.name == 'compass' and c.open == true and c.blockable == true and c.hidden == false"
+            "  and c.blocked == false and c.moved == false and c.resized == false and c.layer == nil and c.detail"
+            "  and c.detail.policy == 0 and c.detail.dock == nil,"
+            "  'list(): compass open, blockable, no hold, no layer or dock group')\n"
+            "local i = h:info('compass')\n"
+            "check(i.name == 'compass' and i.open and i.blockable == true and i.hidden == false and i.blocked == false"
+            "  and #i.hidden_by == 0 and #i.blocked_by == 0 and i.mine.hidden == false and i.mine.blocked == false"
+            "  and i.docked == false and i.covered == false and i.focused == false and i.layer == nil"
+            "  and i.resize.holds == 'none' and i.resize.min_rows == nil and i.memory == nil,"
+            "  'info(compass): open, no hold, no layer, nothing to resize')\n"
+            "check(i.rect.x == 16 and i.rect.y == 1016 and i.rect.w == 88 and i.rect.h == 42 and i.rect.right == 104"
+            "  and i.rect.bottom == 1058 and i.origin.x == 104 and i.origin.y == 1058 and i.default.x == 16"
+            "  and i.default.y == 1016 and i.default.w == 88 and i.default.h == 42 and i.cursor == nil"
+            "  and i.elements == nil and i.items == nil,"
+            "  'info(compass): its box {16, 1016, 88, 42} from its anchor 104,1058, the default the same box, no'"
+            "  .. ' cursor, items or elements')\n"
+            "check(i.detail.state == 3 and i.detail.x == 104 and i.detail.y == 1058 and i.detail.height == 42"
+            "  and i.detail.policy == 0 and #i.detail.rows == 0 and i.detail.address and i.detail.layer == nil"
+            "  and i.detail.controller == nil,"
+            "  'info(compass).detail: the object: state 3, anchor, height; policy 0, no rows')\n"
+            "local r = h:rects().compass\n"
+            "local set = {}\n"
+            "for _, n in ipairs(h:opened()) do set[n] = true end\n"
+            "check(r and r.x == 16 and r.y == 1016 and r.w == 88 and r.h == 42 and set.compass,"
+            "  'rects() has the compass box; opened() names it')\n"
+            "check(h:focused() == false, 'focused() never names the compass')\n"
+            "local a, awhy = h:answer('compass', 1)\n"
+            "local cn, cwhy = h:cancel('compass')\n"
+            "local o, owhy = h:options('compass')\n"
+            "check(a == nil and awhy:find('takes no answer', 1, true) and cn == nil and cwhy:find('nothing to cancel', 1, true)"
+            "  and o == nil and owhy:find('has no options', 1, true),"
+            "  'answer, cancel and options of the compass refuse as for any window that is no prompt')\n"
+            "check(h:hide('compass') == true, 'hide(compass) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG draws = *g_fake->compass_draws;
+        const LONG updates = *g_fake->compass_updates;
+        wait_frames(3);
+        check(*g_fake->compass_draws == draws && *g_fake->compass_updates == updates && compass[0x0D] == 3
+                && static_cast<uint8_t*>(g_fake->compass_draw)[0] == 0xE9,
+            "hidden: over three frames the compass draw entry's pre runs instead of it, no render and no update; the"
+            " state byte stands");
+        phase(L,
+            "local i = h:info('compass')\n"
+            "check(i.hidden and #i.hidden_by == 1 and i.hidden_by[1] == 'alpha' and i.mine.hidden and i.open"
+            "  and h:list().compass.hidden, 'info(compass) while hidden: hidden by alpha, still open')\n"
+            "check(h:unhide('compass') == true, 'unhide(compass) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG resumed = *g_fake->compass_draws;
+        wait_frames(3);
+        check(resumed > draws && *g_fake->compass_draws > resumed && *g_fake->compass_updates > updates,
+            "unhidden: the draws and updates resume");
+        // A block holds the compass as a hide does: no window closes, no
+        // event posts; close and open are the hide hold set and dropped;
+        // resize is accepted and changes nothing.
+        phase(L,
+            "h:poll()\n"
+            "check(h:block('compass') == true, 'block(compass) holds')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG blocked = *g_fake->compass_draws;
+        const LONG blocked_updates = *g_fake->compass_updates;
+        wait_frames(3);
+        check(*g_fake->compass_draws == blocked && *g_fake->compass_updates == blocked_updates && compass[0x0D] == 3,
+            "blocked: over three frames no render and no update, as under a hide; the state byte stands");
+        phase(L,
+            "local i = h:info('compass')\n"
+            "local c = h:list().compass\n"
+            "check(i.blocked and i.blockable == true and i.hidden and i.open and #i.blocked_by == 1"
+            "  and i.blocked_by[1] == 'alpha' and #i.hidden_by == 0 and i.mine.blocked and not i.mine.hidden"
+            "  and c.blocked and c.blockable and c.hidden,"
+            "  'info(compass) while blocked: blocked by alpha, hidden by the block, blockable, still open')\n"
+            "check(#(h:poll()) == 0, 'no event for the block: the game never attempts an open of the compass')\n"
+            "check(h:unblock('compass') == true, 'unblock(compass) drops the hold')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG unblocked = *g_fake->compass_draws;
+        wait_frames(3);
+        check(unblocked > blocked && *g_fake->compass_draws > unblocked && *g_fake->compass_updates > blocked_updates,
+            "unblocked: the draws and updates resume");
+        phase(L,
+            "local i = h:info('compass')\n"
+            "check(not i.blocked and not i.hidden and #i.blocked_by == 0 and not i.mine.blocked"
+            "  and not h:list().compass.blocked, 'info(compass) after the unblock: no hold')\n"
+            "check(h:close('compass') == true, 'close(compass) is a hide')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG closed = *g_fake->compass_draws;
+        wait_frames(3);
+        check(*g_fake->compass_draws == closed && compass[0x0D] == 3,
+            "closed: no render over three frames, the state byte stands: nothing the game closed");
+        phase(L,
+            "local i = h:info('compass')\n"
+            "check(i.hidden and i.open and #i.hidden_by == 1 and i.hidden_by[1] == 'alpha' and i.mine.hidden"
+            "  and not i.blocked, 'info(compass) after close: hidden by alpha, still open, not blocked')\n"
+            "check(#(h:poll()) == 0, 'no event for the close')\n"
+            "check(h:open('compass') == true, 'open(compass) is an unhide')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG opened = *g_fake->compass_draws;
+        wait_frames(3);
+        check(opened > closed && *g_fake->compass_draws > opened, "opened: the draws resume");
+        phase(L,
+            "check(not h:info('compass').hidden and #(h:poll()) == 0,"
+            "  'info(compass) after open: no hold, no event')\n"
+            "check(h:resize('compass', 3) == true and h:resize('compass', 10, 20) == true,"
+            "  'resize(compass, 3) and resize(compass, 10, 20) are accepted')\n"
+            "local raised = not pcall(h.resize, h, 'compass', 'three')\n"
+            "local z, zwhy = h:resize('compass', 0)\n"
+            "local f, fwhy = h:resize('compass', 1.5)\n"
+            "local r, rwhy = h:resize('compass', 0, 20)\n"
+            "check(raised and z == nil and zwhy == 'resize compass: it has no template family; resize(name, w, h) sets'"
+            "  .. ' any size' and f == nil and fwhy == 'usage: resize(name, rows) or resize(name, w, h) with whole numbers'"
+            "  and r == nil and rwhy == 'resize compass: width and height are 1..32767',"
+            "  'the usage errors every name gets stay: a string raises, zero rows, a fraction and a zero width refuse: '"
+            "  .. tostring(zwhy) .. ' | ' .. tostring(fwhy) .. ' | ' .. tostring(rwhy))\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(fl->compass_x == 104 && fl->compass_y == 1058 && get16(compass, 0x28) == 104
+                && get16(compass, 0x2A) == 1058 && get16(compass, 0x2C) == 42,
+            "resized: nothing changed, the anchor and the height as the game had them");
+        phase(L,
+            "local i = h:info('compass')\n"
+            "check(i.resize.holds == 'none' and i.resize.min_rows == nil and i.memory == nil"
+            "  and h:list().compass.resized == false and h:remembered().compass == nil and i.rect.w == 88"
+            "  and i.rect.h == 42, 'info(compass) after resize: nothing held, nothing remembered, the box as it was')\n"
+            "return finish()\n");
+        phase(L,
+            "check(h:move('compass', 10, 20) == true, 'move(compass, 10, 20) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(fl->compass_x == 98 && fl->compass_y == 62 && get16(compass, 0x28) == 98 && get16(compass, 0x2A) == 62,
+            "moved: the render sees the anchor 98,62, the box's top-left at 10,20");
+        put16(compass, 0x28, 104);
+        put16(compass, 0x2A, 1058);
+        wait_frames(3);
+        check(fl->compass_x == 98 && fl->compass_y == 62 && get16(compass, 0x28) == 98,
+            "the game writes its own anchor back (a chat log edge change): the next draw writes the move's again");
+        phase(L,
+            "local i = h:info('compass')\n"
+            "local m = i.memory and i.memory.position or {}\n"
+            "check(i.rect.x == 10 and i.rect.y == 20 and i.rect.w == 88 and i.rect.h == 42 and i.origin.x == 98"
+            "  and i.origin.y == 62 and i.default.x == 16 and i.default.y == 1016 and m.x == 10 and m.y == 20"
+            "  and m.mine and m.owner == 'alpha' and m.group == nil,"
+            "  'info(compass) moved: the box at 10,20, the anchor 98,62, the default the box the game had, the'"
+            "  .. ' position remembered by alpha')\n"
+            "local rem = h:remembered().compass\n"
+            "check(rem and rem.position and rem.position.x == 10 and rem.position.y == 20 and rem.size == nil"
+            "  and h:list().compass.moved == true and h:layout().positions.compass.x == 10,"
+            "  'remembered() lists the compass while it is moved, and layout() carries it')\n"
+            "check(h:reset('compass') == true, 'reset(compass) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(fl->compass_x == 104 && fl->compass_y == 1058 && get16(compass, 0x28) == 104 && get16(compass, 0x2A) == 1058,
+            "reset: the anchor back at 104,1058 and the render draws there");
+        phase(L,
+            "check(h:remembered().compass == nil and h:list().compass.moved == false and h:info('compass').memory == nil,"
+            "  'reset: nothing remembered for the compass')\n"
+            "h:poll()\n"
+            "return finish()\n");
+        poke(compass + 0x0D, 0);
+        wait_frames(2);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(seen, ' ') == 'closed:compass' and h:info('compass').open == false"
+            "  and h:list().compass.open == false and h:rects().compass == nil and h:info('compass').rect == nil"
+            "  and h:info('compass').detail.state == 0,"
+            "  'the state byte poked to 0: closed{compass}; info, list and rects say closed: ' .. table.concat(seen, ' '))\n"
+            "return finish()\n");
+        poke(compass + 0x0D, 3);
+        wait_frames(2);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(seen, ' ') == 'opened:compass' and h:info('compass').open == true,"
+            "  'the state byte back to 3: opened{compass}: ' .. table.concat(seen, ' '))\n"
+            "hc = hu.new('compass_owner')\n"
+            "check(hc:hide('compass') == true and hc:move('compass', 30, 40) == true, 'another handle hides and moves it')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG held = *g_fake->compass_draws;
+        wait_frames(3);
+        const bool held_still = *g_fake->compass_draws == held;
+        phase(L,
+            "check(h:info('compass').hidden and h:info('compass').hidden_by[1] == 'compass_owner'"
+            "  and h:remembered().compass.position.owner == 'compass_owner' and hc:release() == true,"
+            "  'held by compass_owner, which releases')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG released = *g_fake->compass_draws;
+        wait_frames(3);
+        check(held_still && *g_fake->compass_draws > released && fl->compass_x == 104 && fl->compass_y == 1058
+                && get16(compass, 0x28) == 104 && get16(compass, 0x2A) == 1058,
+            "the release unhides the compass and resets it: drawn again at the game's anchor");
+        phase(L,
+            "check(not h:info('compass').hidden and h:remembered().compass == nil, 'nothing of compass_owner remains')\n"
+            "h:poll()\n"
+            "return finish()\n");
+    }
+
+    // -- the macro keys (0.9.0): the stand-in's gate, hooked, consulted each
+    //    frame a number key is held; a block has it say no and closes a bar
+    //    the handler has up; macros() and status() read who holds it
+    {
+        uint8_t* macro = g_fake->macro_object;
+        const FakeLog* fl = g_fake->log;
+        const int row_bar = row_named("mcr1pall");
+        InterlockedExchange(g_fake->macro_key, 1);
+        wait_frames(3);
+        const LONG fired = *g_fake->macros_fired;
+        wait_frames(3);
+        check(*g_fake->macros_fired > fired && static_cast<uint8_t*>(g_fake->macro_gate)[0] == 0xE9,
+            "a number key held: a macro fires each frame through the hooked gate, which says yes");
+        phase(L,
+            "local m = h:macros()\n"
+            "check(m.blocked == false and #m.blocked_by == 0 and m.mine == false"
+            "  and hu.status().macros_blocked == false,"
+            "  'macros(): not blocked, nobody holds it; status().macros_blocked false')\n"
+            "check(h:block_macros() == true, 'block_macros holds')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG blocked = *g_fake->macros_fired;
+        wait_frames(3);
+        check(*g_fake->macros_fired == blocked,
+            "blocked: over three frames the gate's pre answers no and no macro fires");
+        phase(L,
+            "local m = h:macros()\n"
+            "check(m.blocked == true and #m.blocked_by == 1 and m.blocked_by[1] == 'alpha' and m.mine == true"
+            "  and hu.status().macros_blocked == true, 'macros(): blocked by alpha, mine; status().macros_blocked')\n"
+            "hm = hu.new('macro_owner')\n"
+            "local o = hm:macros()\n"
+            "check(o.blocked == true and #o.blocked_by == 1 and o.blocked_by[1] == 'alpha' and o.mine == false,"
+            "  'macros() through another handle: blocked by alpha, not mine')\n"
+            "check(h:unblock_macros() == true, 'unblock_macros drops the hold')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG resumed = *g_fake->macros_fired;
+        wait_frames(3);
+        check(*g_fake->macros_fired > resumed, "unblocked: the macros fire again");
+        phase(L,
+            "check(h:block_macros() == true and hm:block_macros() == true and h:block_macros() == true,"
+            "  'alpha and macro_owner both block the macro keys, alpha twice')\n"
+            "check(h:unblock_macros() == true, 'alpha unblocks')\n"
+            "local m = h:macros()\n"
+            "check(m.blocked == true and #m.blocked_by == 1 and m.blocked_by[1] == 'macro_owner' and m.mine == false"
+            "  and hu.status().macros_blocked == true, 'still blocked by macro_owner: ' .. table.concat(m.blocked_by, ' '))\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG held = *g_fake->macros_fired;
+        wait_frames(3);
+        check(*g_fake->macros_fired == held, "and no macro fires while macro_owner holds the block");
+        phase(L,
+            "check(hm:release() == true, 'macro_owner releases')\n"
+            "local m = h:macros()\n"
+            "check(m.blocked == false and #m.blocked_by == 0 and hu.status().macros_blocked == false,"
+            "  'the release drops its block: not blocked')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const LONG released = *g_fake->macros_fired;
+        wait_frames(3);
+        check(*g_fake->macros_fired > released, "released: the macros fire again");
+        // the Ctrl bar up at the block: opened by name as the handler opens
+        // it, the object's bytes as the handler writes them; the close as the
+        // game runs it, the instance freed a frame after its marks
+        uint8_t* bar = static_cast<uint8_t*>(open_on_game_thread("menu    mcr1pall"));
+        macro[0x0C] = 1;
+        macro[0x0D] = 2;
+        macro[0x18] = 1;
+        wait_frames(2);
+        memset(g_fake->log, 0, sizeof(*g_fake->log));
+        *g_fake->close_frames = 1;
+        phase(L,
+            "h:poll()\n"
+            "check(h:block_macros() == true, 'block_macros with the Ctrl bar up queues its close')\n"
+            "return finish()\n");
+        wait_frames(3);
+        *g_fake->close_frames = 0;
+        check(bar && !live_menu(row_bar) && strcmp(fl->last_close, "menu    mcr1pall") == 0 && macro[0x0C] == 0
+                && macro[0x18] == 0 && macro[0x0D] == 2,
+            "the bar is closed through the game's close by name, +0x0C and +0x18 read 0, +0x0D untouched");
+        phase(L,
+            "local out = {}\n"
+            "for _, e in ipairs((h:poll())) do out[#out + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(out, ' ') == 'closed:mcr1pall', 'closed{mcr1pall} follows: ' .. table.concat(out, ' '))\n"
+            "check(h:unblock_macros() == true, 'unblock_macros')\n"
+            "return finish()\n");
+        wait_frames(3);
+        InterlockedExchange(g_fake->macro_key, 0);
+        const LONG idle = *g_fake->macros_fired;
+        wait_frames(3);
+        check(*g_fake->macros_fired == idle, "with no number key held nothing fires");
     }
 
     check(open_on_game_thread("menu    menuwind") == NULL, "the hooked open refuses a blocked name");
@@ -1579,7 +1996,7 @@ int main(int argc, char** argv) {
         "check(runs(c.title.segments) == 'Will you lend a hand?/30:1' and c.title.undecoded == 0,"
         "  'options(query): the title decoded by its glyph count, its spaces (glyph 0) kept: ' .. runs(c.title.segments))\n"
         "check(o[1] and runs(o[1].segments) == 'Yes, /30:1|gladly/30:2|./30:1' and o[1].undecoded == 0,"
-        "  'options(query): a green run (1E 02) between default ones (1E 01), the colour codes out of the text: '"
+        "  'options(query): a green run (1E 02) between default ones (1E 01), the color codes out of the text: '"
         "  .. runs(o[1] and o[1].segments))\n"
         "check(o[2] and runs(o[2].segments) == 'Not today./30:1' and o[2].undecoded == 0,"
         "  'options(query): a code the game does not draw is dropped: ' .. runs(o[2] and o[2].segments))\n"
@@ -2130,7 +2547,8 @@ int main(int argc, char** argv) {
         "check(s.ok, 'a fresh engine resolves the already-patched routines: ' .. tostring(s.detail.error))\n"
         "local f = s.detail.functions\n"
         "check(f.open_by_name == OPEN and f.ui_update == UPDATE"
-        "  and f.staged_close == STAGED and f.show_path == SHOW, 'at the same addresses')\n"
+        "  and f.staged_close == STAGED and f.show_path == SHOW and f.compass_draw == COMPASS"
+        "  and f.macro_gate == MACROGATE, 'at the same addresses')\n"
         "check(h:hide('buff') == true, 'and hides through them')\n"
         "return finish()\n");
     wait_frames(3);
@@ -2464,7 +2882,7 @@ int main(int argc, char** argv) {
         phase(L,
             "hu = load_engine()\n"
             "h = hu.new('six')\n"
-            "check(hu.status().ok and hu.status().engine == '0.7.6', 'a fresh engine for the six-member party list: '"
+            "check(hu.status().ok and hu.status().engine == '0.9.0', 'a fresh engine for the six-member party list: '"
             "  .. tostring(hu.status().detail.error))\n"
             "local p, e = h:info('partywin'), h:info('equip')\n"
             "check(p.detail.layout == 'bottom' and p.rect.y == p.default.y and p.rect.bottom == p.default.bottom"
@@ -3158,13 +3576,13 @@ int main(int argc, char** argv) {
         L = fresh(g);
         phase(L,
             "chat, handlers = {}, {}\n"
-            "windower = {add_to_chat = function(colour, text) chat[#chat + 1] = text end,"
+            "windower = {add_to_chat = function(color, text) chat[#chat + 1] = text end,"
             "  register_event = function(name, fn) handlers[name] = fn end,"
             "  from_shift_jis = function(text) return (text:gsub('\\130\\160', '\\227\\129\\130')) end}\n"
             "_addon = {name = 'layout'}\n"
             "hideui = dofile(HIDEUI)\n"
             "ui = hideui.new()\n"
-            "check(ui ~= nil and ui.name == 'layout' and hideui.version() == 'hideui 0.7.6' and hideui.status().handles == 1,"
+            "check(ui ~= nil and ui.name == 'layout' and hideui.version() == 'hideui 0.9.0' and hideui.status().handles == 1,"
             "  'hideui.lua loads copy A beside it and makes a handle, named after _addon.name')\n"
             "seen = {}\n"
             "ui:on('opened', 'ability', function(e) seen[#seen + 1] = e.event .. ':' .. e.name end)\n"
@@ -3181,7 +3599,7 @@ int main(int argc, char** argv) {
             "  and s1[1] and s1[1].color == 'default' and s1[2].color == 'green' and s1[2].text == 'gladly'"
             "  and s1[2].raw == 'gladly' and s1[2].escape == nil,"
             "  'options(query) through hideui.lua: the prompt\\'s name, the text with its bytes as raw, segments\\''"
-            "  .. ' colours named')\n"
+            "  .. ' colors named')\n"
             "local r1, w1 = ui:answer(q, 2)\n"
             "local r2, w2 = ui:answer({name = 'query', id = q.id + 1}, 1)\n"
             "check(r1 == nil and tostring(w1):find('value 2', 1, true) and r2 == nil and w2 == 'that prompt is gone',"
@@ -3320,6 +3738,7 @@ int main(int argc, char** argv) {
     const char* const dll_c = argv[5];
     const char* const dll_d = argv[7];
     const char* const dll_e = argv[8];
+    const char* const dll_f = argv[9];
     char daemon_b[MAX_PATH];
     char daemon_c[MAX_PATH];
     beside(dll_b, "hideui_daemon.dll", daemon_b, sizeof(daemon_b));
@@ -3333,7 +3752,7 @@ int main(int argc, char** argv) {
         "local s = hu.status()\n"
         "local d = s.detail\n"
         "check(s.ok and s.role == 'resident' and copy_of(d.image.path) == 'a' and d.resident"
-        "  and copy_of(d.resident.path) == 'a' and d.resident.abi == 5 and d.resident.build == s.engine,"
+        "  and copy_of(d.resident.path) == 'a' and d.resident.abi == 6 and d.resident.build == s.engine,"
         "  'copy A installs and is resident: ' .. tostring(d.error))\n"
         "check(ha:hide('buff') == true and ha:block('menuwind') == true and ha:move('equip', 300, 200) == true,"
         "  'A hides buff, blocks menuwind and moves equip')\n"
@@ -3354,7 +3773,7 @@ int main(int argc, char** argv) {
         "  and copy_of(d.resident.path) == 'a' and d.resident.build == s.engine,"
         "  'copy B forwards; its status names A as resident: ' .. tostring(d.resident and d.resident.path))\n"
         "check(s.handles == 2, 'one handle table in the client: B counts the handle of A and its own')\n"
-        "check(hu.version() == 'hideui 0.7.6', 'the version of B is hideui 0.7.0 alone: ' .. hu.version())\n"
+        "check(hu.version() == 'hideui 0.9.0', 'the version of B is its own: ' .. hu.version())\n"
         "check(hb:hide('buff') == true and hb:move('equip', 10, 20) == true, 'B hides buff and moves equip after A')\n"
         "return finish()\n");
     check(!mapped(daemon_b), "B loaded no daemon: it installs nothing of its own");
@@ -3377,7 +3796,7 @@ int main(int argc, char** argv) {
         "  'info() through B reads the live menu')\n"
         "local n = 0\n"
         "for _ in pairs(hb:list()) do n = n + 1 end\n"
-        "check(n == 369, 'list() through B: all ' .. n .. ' windows')\n"
+        "check(n == 370, 'list() through B: all ' .. n .. ' names, the compass among them')\n"
         "local q = hb:options('query')\n"
         "local s = q and q.options[1] and q.options[1].segments or {}\n"
         "check(q and q.title.text == 'Will you lend a hand?' and #q.options == 3 and q.options[2].value == 4"
@@ -3591,12 +4010,12 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.7.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.9.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'c', 'new() through A to C: ' .. tostring(why))\n"
         "local s, why2 = hu.status()\n"
         "check(s == nil and tostring(why2):find('status needs hideui 0.5.1 or newer; the resident copy is ', 1, true) == 1,"
         "  'status() through A to C: ' .. tostring(why2))\n"
-        "check(hu.version() == 'hideui 0.7.6', 'A\\'s version is its own')\n"
+        "check(hu.version() == 'hideui 0.9.0', 'A\\'s version is its own')\n"
         "local ok, why3, kind = hu.shutdown()\n"
         "check(ok == false and kind == 'handles', 'A\\'s shutdown, an engine abi 1 slot, reaches C: ' .. tostring(why3))\n"
         "return finish()\n");
@@ -3624,7 +4043,7 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.7.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.9.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'd', 'new() through A to D, a 0.5.0 resident: no handle at all: ' .. tostring(why))\n"
         "local ok, why2, kind = hu.shutdown()\n"
         "check(ok == false and kind == 'handles', 'A\\'s shutdown reaches D, which refuses while D holds a handle')\n"
@@ -3654,7 +4073,7 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.7.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.9.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'e', 'new() through A to E, a 0.6.3 resident: no handle, and the copy to update: '"
         "  .. tostring(why))\n"
         "local s = hu.status()\n"
@@ -3671,6 +4090,43 @@ int main(int argc, char** argv) {
     check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
     lua.close(LE);
     check(!mapped(dll_a) && !mapped(dll_e), "and neither copy stays mapped");
+
+    // -- F resident: its table is engine abi 5's, as a 0.7.0 to 0.8.0
+    //    resident's is; a 0.9.0 copy makes no handle through it, the macro
+    //    slots past its table, and names the copy to update, while the calls
+    //    whose slots F has still reach it; F's own handle blocks the keys
+    lua_State* LF = fresh_from(dll_f, globals);
+    phase(LF,
+        "hu = load_engine()\n"
+        "hf = hu.new('addon_f')\n"
+        "local s = hu.status()\n"
+        "check(hf ~= nil and s.ok and s.role == 'resident' and copy_of(s.detail.resident.path) == 'f'"
+        "  and s.detail.resident.abi == 5, 'F installs and is resident, publishing engine abi 5\\'s table')\n"
+        "check(hf:block_macros() == true and hf:macros().mine == true and hu.status().macros_blocked == true,"
+        "  'F\\'s own handle, on its own full table, blocks the macro keys')\n"
+        "return finish()\n");
+    LA = fresh_from(dll_a, globals);
+    phase(LA,
+        "hu = load_engine()\n"
+        "local h, why = hu.new('addon_a')\n"
+        "local path = tostring(why):match('; the resident copy is (.+)$')\n"
+        "check(h == nil and tostring(why):find('new needs hideui 0.9.0 or newer; the resident copy is ', 1, true) == 1"
+        "  and copy_of(path) == 'f', 'new() through A to F, a 0.8.0 resident: no handle, and the copy to update: '"
+        "  .. tostring(why))\n"
+        "local s = hu.status()\n"
+        "check(s and s.ok and s.role == 'forwarder' and copy_of(s.detail.resident.path) == 'f' and s.handles == 1"
+        "  and s.macros_blocked == true, 'status() through A to F, a slot F has, still answers, macros_blocked with it')\n"
+        "local ok, why2, kind = hu.shutdown()\n"
+        "check(ok == false and kind == 'handles', 'A\\'s shutdown reaches F, which refuses while F holds a handle')\n"
+        "return finish()\n");
+    lua.close(LA);
+    phase(LF,
+        "check(hf:unblock_macros() == true and hu.status().macros_blocked == false and hf:release() == true"
+        "  and hu.shutdown() == true, 'F unblocks, releases and shuts down')\n"
+        "return finish()\n");
+    check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
+    lua.close(LF);
+    check(!mapped(dll_a) && !mapped(dll_f), "and neither copy stays mapped");
 
     InterlockedExchange(&g_stop, 1);
     WaitForSingleObject(game, 5000);

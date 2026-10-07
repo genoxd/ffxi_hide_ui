@@ -16,11 +16,11 @@
 #include "../daemon/hideui_abi.h"
 
 // Bumped only when fields are appended to HuEngineApi: the table's version.
-#define HU_ENGINE_ABI 5u
+#define HU_ENGINE_ABI 6u
 
 // Bumped whenever the engine binary changes, ABI or not: two addons can ship
 // different builds at one ABI, and status names the one serving.
-#define HU_ENGINE_BUILD "0.7.6"
+#define HU_ENGINE_BUILD "0.9.0"
 
 // Written into the record last, behind a barrier. Any other value, zero
 // included, means no resident: a copy that died mid-publish or a resident
@@ -251,6 +251,15 @@ typedef struct HuEngineApi {
     HuEngineRead pending5;
     HuEngineRead rects5;
     HuEngineNameVerb block5;
+
+    /* engine abi 6, the 0.9.0 API: the macro keys. block_macros holds the
+       game's Ctrl+number and Alt+number macros off for the handle and
+       closes a macro bar that is up, unblock_macros drops the hold, and
+       macros reads whether they are blocked and by whom; status gains
+       macros_blocked. */
+    HuEngineVerb block_macros;
+    HuEngineVerb unblock_macros;
+    HuEngineRead macros;
 } HuEngineApi;
 
 // What the resident publishes into the pid-scoped mapping. `module` is its
@@ -283,7 +292,7 @@ HU_STATIC_ASSERT(offsetof(HuEngineEvent4, pending) == 268, "HuEngineEvent4 layou
 HU_STATIC_ASSERT(sizeof(HuEngineReply) == 16, "HuEngineReply size is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineReply, used) == 12, "HuEngineReply layout is ABI");
 
-HU_STATIC_ASSERT(sizeof(HuEngineApi) == 328, "HuEngineApi size is ABI");
+HU_STATIC_ASSERT(sizeof(HuEngineApi) == 340, "HuEngineApi size is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, handle_new) == 8, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, hide) == 16, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, move) == 32, "HuEngineApi layout is ABI");
@@ -304,12 +313,15 @@ HU_STATIC_ASSERT(offsetof(HuEngineApi, move5) == 284, "HuEngineApi layout is ABI
 HU_STATIC_ASSERT(offsetof(HuEngineApi, poll5) == 308, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, rects5) == 320, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, block5) == 324, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, block_macros) == 328, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, unblock_macros) == 332, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, macros) == 336, "HuEngineApi layout is ABI");
 
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, module) == 12, "HuEngineRecord layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, resident_path) == 16, "HuEngineRecord layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, resident_build) == 276, "HuEngineRecord layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, api) == 340, "the api comes last so appending to it moves nothing");
-HU_STATIC_ASSERT(sizeof(HuEngineRecord) == 668, "HuEngineRecord size is ABI");
+HU_STATIC_ASSERT(sizeof(HuEngineRecord) == 680, "HuEngineRecord size is ABI");
 HU_STATIC_ASSERT(sizeof(HU_ENGINE_BUILD) <= HU_BUILD_MAX, "the build string must fit the record");
 HU_STATIC_ASSERT(sizeof(HuEngineRecord) <= HU_ENGINE_MAPPING_BYTES, "the record must fit the fixed section");
 HU_STATIC_ASSERT(sizeof(HU_ENGINE_MAPPING_NAME_FORMAT) + 8 <= HU_NAME_MAX, "the mapping name must fit for every pid");

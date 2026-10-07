@@ -119,6 +119,23 @@ const size_t kMcbActive = 0x54;
 const size_t kMcbBytes = 0xB8;
 const size_t kMouseMode = 0x4D;         // the mouse object's: 1 world, 2 menu
 const uint8_t kMouseWorld = 1;
+// The compass object, reached only through the game's global pointer. The
+// manager lays its box out as 88 wide by +0x2C high, its anchor the box's
+// bottom-right: the clock and the dial draw relative to (x, y - height).
+const size_t kCompassState = 0x0D;      // u8: 0 hidden, 1 show requested, 2 fading in, 3 shown, 4 fading out
+const size_t kCompassX = 0x28;          // int16: the anchor
+const size_t kCompassY = 0x2A;
+const size_t kCompassHeight = 0x2C;     // int16
+const size_t kCompassBytes = 0x3C;
+const int kCompassWidth = 88;
+// The macro key object, reached only through the game's global pointer. The
+// handler records the bar it has up and the set its keys dispatch to; its
+// own close of a bar is the bar closed by name, then +0x0C and +0x18 zeroed,
+// +0x0D left alone.
+const size_t kMacroBar = 0x0C;          // u8: 0 none, 1 the Ctrl bar, 2 the Alt bar up
+const size_t kMacroSet = 0x0D;          // u8: the set the number keys dispatch to
+const size_t kMacroBarUp = 0x18;        // u8: set while a bar is up
+const size_t kMacroObjectBytes = 0x24;  // the constructor's allocation
 
 const uint32_t kStateDormant = 0x0E;
 const int kQueryCancelled = 0xFF;
@@ -376,6 +393,8 @@ struct Game {
     const uint8_t* mouse_read;      // that test, inside it
     const uint8_t* menu_routing;    // never called: resolved for its call to the sink
     uintptr_t routing_return;       // that call's return address
+    uint8_t** compass;              // the game's global: the compass object, or NULL
+    uint8_t** macro_object;         // the game's global: the macro key object, or NULL
 };
 
 // Game-thread bookkeeping per name. Never read by the Lua thread.
@@ -434,6 +453,14 @@ struct Engine {
     int16_t last_row[kMaxNames];
     const uint8_t* row_menu[kMaxNames];
 
+    // The compass as the drain last saw it: shown (its state byte not 0),
+    // and the anchor the game had on it when a move first took it, x in the
+    // low word and y in the high, published for info's default box. Written
+    // by the game thread alone.
+    uint8_t compass_shown;
+    volatile LONG compass_home;
+    volatile LONG compass_home_valid;
+
     const Command* current;         // the command the drain is carrying out, on `current_thread`
     DWORD current_thread;
     volatile LONG completed;        // commands carried out, not merely taken
@@ -442,6 +469,41 @@ struct Engine {
     volatile LONG error_seq;        // odd while the game thread writes `error`
     char error[256];
 };
+
+inline bool is_compass(const Engine& e, int n) {
+    return n >= 0 && n == e.inv.compass;
+}
+
+inline uint8_t* compass_object(const Engine& e) {
+    return e.game.compass ? *e.game.compass : NULL;
+}
+
+inline uint8_t* macro_object(const Engine& e) {
+    return e.game.macro_object ? *e.game.macro_object : NULL;
+}
+
+// Open, as every reader and event reports it: the game is drawing it, fading
+// in or out included.
+inline bool compass_open(const uint8_t* c) {
+    return c && c[kCompassState] != 0;
+}
+
+// The box the manager lays the compass out in, as {left, top, right,
+// bottom} from its anchor.
+inline void compass_frame(const uint8_t* c, int16_t out[4]) {
+    const int x = rd16(c, kCompassX);
+    const int y = rd16(c, kCompassY);
+    out[0] = static_cast<int16_t>(x - kCompassWidth);
+    out[1] = static_cast<int16_t>(y - rd16(c, kCompassHeight));
+    out[2] = static_cast<int16_t>(x);
+    out[3] = static_cast<int16_t>(y);
+}
+
+inline LONG pack_home(int x, int y) {
+    return static_cast<LONG>((static_cast<uint32_t>(y) & 0xFFFFu) << 16 | (static_cast<uint32_t>(x) & 0xFFFFu));
+}
+inline int16_t home_x(LONG home) { return static_cast<int16_t>(home & 0xFFFF); }
+inline int16_t home_y(LONG home) { return static_cast<int16_t>(static_cast<uint32_t>(home) >> 16); }
 
 // The window or group a command names; empty for one that names none.
 inline const char* command_target(const Engine& e, const Command& c) {
@@ -553,7 +615,7 @@ inline uint8_t* row_of(Engine& e, int row) {
 // routines work on the controller, and a blocked menu still has one.
 inline uint8_t* controller_global(Engine& e, const char* nm) {
     const int n = e.inv.find_exact(nm);
-    if (n < 0) {
+    if (n < 0 || e.inv.names[n].row_count == 0) {
         return NULL;
     }
     uint8_t** slot = e.game.slot[e.inv.names[n].rows[0]];
@@ -831,14 +893,50 @@ inline void restore_size(Engine& e, int n, uint8_t* menu, uint8_t* ctl, int x, i
     }
 }
 
+// A move of the compass: nothing to place now, the remembered position
+// goes on at its next draw (hook_compass_pre). The anchor the game has on it
+// is its home, taken at the first move alone: later ones find the anchor
+// the draw wrote.
+inline void move_compass(Engine& e, int n) {
+    Placement& p = e.place[n];
+    const uint8_t* c = compass_object(e);
+    if (c && !e.compass_home_valid) {
+        InterlockedExchange(&e.compass_home, pack_home(rd16(c, kCompassX), rd16(c, kCompassY)));
+        InterlockedExchange(&e.compass_home_valid, 1);
+    }
+    p.touched = 1;
+}
+
+// The compass back on the game's anchor, forgetting what is remembered. The
+// game rewrites the anchor itself at its next show and at the chat log's
+// next edge change, so a home never taken costs nothing.
+inline void reset_compass(Engine& e, int n) {
+    Placement& p = e.place[n];
+    e.memory.clear(n);
+    uint8_t* c = compass_object(e);
+    if (c && e.compass_home_valid) {
+        wr16(c, kCompassX, home_x(e.compass_home));
+        wr16(c, kCompassY, home_y(e.compass_home));
+    }
+    InterlockedExchange(&e.compass_home_valid, 0);
+    p.touched = 0;
+}
+
 // Back to the game's placement and the window's own size, forgetting what is
 // remembered, whoever wrote it. Placement: the default rect, or for a class
 // whose open hook places it, where that hook put it; a bottom-anchored
 // window's frame goes on its bottom; docking re-imposes y for a window that
 // docks. A window the engine never placed or sized is left as it is. Once
 // the engine holds neither its placement nor a size, its anchoring is
-// forgotten too, and read again at the next touch.
+// forgotten too, and read again at the next touch. The compass has no size
+// and no menu: its position alone, back on its anchor.
 inline void reset_one(Engine& e, int n, bool position, bool size) {
+    if (is_compass(e, n)) {
+        if (position) {
+            reset_compass(e, n);
+        }
+        return;
+    }
     Placement& p = e.place[n];
     if (position) {
         e.memory.clear(n);
@@ -1041,6 +1139,24 @@ inline void close_named(Engine& e, const char* nm) {
     char key[kKeyLen + 1];
     make_key(e, n, key);
     e.game.close(e.game.mcb, NULL, key);
+}
+
+// The macro keys' first block as it lands: a bar the handler has up is
+// closed as the handler's own close does, the bar by name, then the object's
+// bar and bar-up bytes zeroed, the set byte left alone. From here on the
+// gate answers no, so the handler opens and closes nothing itself.
+inline void macros_blocked(Engine& e) {
+    static const char* const bars[] = {"mcr1pall", "mcr2pall"};
+    for (size_t i = 0; i < sizeof(bars) / sizeof(bars[0]); ++i) {
+        if (open_named(e, bars[i], NULL)) {
+            close_named(e, bars[i]);
+        }
+    }
+    uint8_t* m = macro_object(e);
+    if (m && readable(m, kMacroObjectBytes)) {
+        m[kMacroBar] = 0;
+        m[kMacroBarUp] = 0;
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1569,6 +1685,10 @@ inline void run_command(Engine& e, const Command& c) {
         const bool by_frame = (c.flags & kCmdFrame) != 0;
         forget_waiting_on(e, n);
         e.memory.write(n, c.x, c.y, -1, c.slot, c.gen, by_frame);
+        if (is_compass(e, n)) {
+            move_compass(e, n);
+            break;
+        }
         undock_registry(e, n);
         uint8_t* ctl = NULL;
         uint8_t* menu = live_menu(e, n, &ctl);
@@ -1666,6 +1786,9 @@ inline void run_command(Engine& e, const Command& c) {
         break;
     case kOpArealistCancel:
         arealist_cancel(e);
+        break;
+    case kOpMacrosBlocked:
+        macros_blocked(e);
         break;
     case kOpResizeRows:
     case kOpResizeRect:
@@ -1777,7 +1900,7 @@ inline void build_glyph_table(Engine& e) {
 
 // A window's controller through its registry row's slot, open or not.
 inline const uint8_t* controller_at(const Engine& e, int n) {
-    if (n < 0) {
+    if (n < 0 || e.inv.names[n].row_count == 0) {
         return NULL;
     }
     uint8_t** slot = e.game.slot[e.inv.names[n].rows[0]];
@@ -1864,6 +1987,23 @@ inline void watch_cursors(Engine& e) {
     }
 }
 
+// The compass has no open or close of its own: opened and closed are its
+// state byte leaving and reaching 0, as the drain sees it each frame. The
+// manager shows it again on every frame it finds it at 0 in the world, and
+// hides it for an event.
+inline void watch_compass(Engine& e) {
+    const int n = e.inv.compass;
+    if (n < 0) {
+        return;
+    }
+    const bool open = compass_open(compass_object(e));
+    if (open == (e.compass_shown != 0)) {
+        return;
+    }
+    e.compass_shown = open ? 1 : 0;
+    e.events.post(pack_event(open ? kEvOpened : kEvClosed, n));
+}
+
 inline void drain(Engine& e) {
     build_glyph_table(e);
     reconcile_layers(e);
@@ -1880,6 +2020,7 @@ inline void drain(Engine& e) {
         InterlockedIncrement(&e.completed);
     }
     watch_pending(e);
+    watch_compass(e);
     // The game's close of a dormant menu marks it and defers its destruction
     // without a staged close, so a covered window that closes is noticed
     // here, at the marks.
@@ -2017,6 +2158,43 @@ inline int __cdecl hook_menu_input_pre(HuFrame* f) {
     }
     const uint8_t* active = rdptr(e.game.mcb, kMcbActive);
     if (!active || reinterpret_cast<uintptr_t>(active) != f->ecx || active[kMenuLayer] != kHiddenLayer) {
+        return 0;
+    }
+    f->result = 0;
+    return 1;
+}
+
+// The compass draw entry, no arguments, nothing returned. A remembered
+// position is written on every call, hidden or not, because the game
+// rewrites the anchor on each show and on each change of the chat log's
+// edge, and a reader expects the box where the move put it. The position is
+// the box's top-left, or the anchor itself from a move by the origin. The
+// drain runs earlier in the same frame, so the memory it wrote is read here
+// directly. While an owner hides the compass the original does not run:
+// nothing is drawn and its fade state stands still.
+inline int __cdecl hook_compass_pre(HuFrame* f) {
+    Engine& e = *static_cast<Engine*>(f->user);
+    const int n = e.inv.compass;
+    if (n < 0) {
+        return 0;
+    }
+    const MemEntry& m = e.memory.e[n];
+    uint8_t* c = compass_object(e);
+    if (m.active && c) {
+        wr16(c, kCompassX, m.by_frame ? m.x + kCompassWidth : m.x);
+        wr16(c, kCompassY, m.by_frame ? m.y + rd16(c, kCompassHeight) : m.y);
+    }
+    return (e.holds.want[n] & kWantHidden) ? 1 : 0;
+}
+
+// The macro key gate, no arguments, al 1 while the macro keys may act. The
+// handler consults it before opening a bar and before each number key, so
+// with the gate at no nothing of the macro keys runs, as during a cutscene;
+// while any handle blocks them the original does not run and the gate
+// answers no.
+inline int __cdecl hook_macro_gate_pre(HuFrame* f) {
+    const Engine& e = *static_cast<const Engine*>(f->user);
+    if (!e.holds.macros_want) {
         return 0;
     }
     f->result = 0;

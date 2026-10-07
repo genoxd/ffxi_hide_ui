@@ -75,6 +75,14 @@
     'size']) and reset_group(group) reset only what this handle placed, and
     refuse, naming who placed it, when another handle did.
 
+    block_macros() stops the game's macro keys, Ctrl+number and
+    Alt+number, and closes a macro bar that is up; unblock_macros() drops
+    this handle's hold, and the keys stay blocked while another handle
+    holds one. macros() is {blocked, blocked_by, mine}: whether they are
+    blocked, the handles holding a block, and whether this one is one;
+    hideui.status().macros_blocked says whether any does. The macro keys
+    are no window: no name reaches them and no event names them.
+
     answer and cancel take the table options() or pending() returned (its
     name and id) in place of the window's name. Text the game shows comes
     back as UTF-8 in .text (or .name, .inviter), its Shift-JIS bytes in
@@ -418,8 +426,23 @@ local function read_call(verb)
     end
 end
 
-for _, verb in ipairs({'list', 'opened', 'focused', 'remembered', 'groups', 'pending', 'rects'}) do
+for _, verb in ipairs({'list', 'opened', 'focused', 'remembered', 'groups', 'pending', 'rects', 'macros'}) do
     Handle[verb] = read_call(verb)
+end
+
+-- A verb of no window.
+local function plain_call(verb)
+    return function(self)
+        check_self(self, verb)
+        if not self.native then
+            return nil, released
+        end
+        return call(self, verb)
+    end
+end
+
+for _, verb in ipairs({'block_macros', 'unblock_macros'}) do
+    Handle[verb] = plain_call(verb)
 end
 
 -- x, y are the frame's top-left: info(name).rect.x and .y.

@@ -1,5 +1,5 @@
 // signatures.h - how the engine finds FFXiMain's routines and data, the
-// routines it calls, and the six routines it hooks.
+// routines it calls, and the eight routines it hooks.
 
 #ifndef HIDEUI_SIGNATURES_H_
 #define HIDEUI_SIGNATURES_H_
@@ -8,7 +8,7 @@
 
 namespace hu {
 
-// The 30 signatures the engine scans for; build.sh checks the count. Not one
+// The 33 signatures the engine scans for; build.sh checks the count. Not one
 // verbatim.
 const char kSigRegistry[] =
     "a0 ?? ?? ?? ?? 53 56 57 33 ff 84 c0 74 ?? 8b 5c 24 ?? b8 ?? ?? ?? ?? 8b f0 6a 10 53 50 e8 ?? ?? ?? ?? 83 c4 0c 85 c0 74 ?? 8a 4e 2c 83 c6 2c";
@@ -43,6 +43,41 @@ const char kSigMenuInput[] =
 const char kSigMenuRouting[] =
     "56 8b f1 e8 ?? ?? ?? ?? 84 c0 75 3a 8b ce e8 ?? ?? ?? ?? 84 c0 74 20 8b ce e8 ?? ?? ?? ?? 84 c0 75 15 8b 44 24 08 8b 4e 54 50 e8";
 const size_t kRoutingSinkCall = 0x2A;
+
+// The compass draw entry (no arguments, plain ret), hooked: the compass
+// through its global, its update, the manager's gate, then its render by a
+// jump. The global is the imm32 at +2 and again at +31, which must agree;
+// the manager's at +16. The first instruction is the prologue, so the engine
+// reads the global out of the intact copy at +31 and pins it at +2 before
+// the scan, as it pins the manager.
+const char kSigCompassDraw[] =
+    "8b 0d ?? ?? ?? ?? 85 c9 74 ?? e8 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 3c 01 74 ?? 8b 0d ?? ?? ?? ?? e9 ?? ?? ?? ?? c3";
+const size_t kCompassDrawGlobal = 2;
+const size_t kCompassDrawGlobal2 = 31;
+const size_t kCompassDrawManagerImm = 16;
+
+// The macro key gate (no arguments, `this` unused, al 1 while the macro keys
+// may act; plain ret), hooked: the macro key handler's one question before
+// it opens a bar and before each number key, and the gate's only caller.
+// The prologue, mov ax,[imm32], reads a word the engine knows from nowhere
+// else, so the engine reads the imm32 out of the hit (on a patched site,
+// out of the daemon's saved original) and pins it at +2 before the scan
+// that resolves the site; the manager's imm32 at +40 is pinned as the
+// mouse mode picker's.
+const char kSigMacroGate[] =
+    "66 a1 ?? ?? ?? ?? 56 33 f6 66 85 c0 74 ?? 0f bf c0 8b 34 85 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 83 39 60 0f 85 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 84 c0 0f 85";
+const size_t kMacroGateGlobal = 2;
+const size_t kMacroGateManagerImm = 40;
+
+// The macro key object's global, read out of the macro subsystem's
+// constructor, a data site never run or hooked: the global is the imm32 at
+// +15 and again at +23, which must agree. The object is kMacroObjectBytes
+// (game.h), the constructor's allocation; the global is NULL before the
+// subsystem exists.
+const char kSigMacroObject[] =
+    "8b 0d ?? ?? ?? ?? 51 8b c8 e8 ?? ?? ?? ?? a3 ?? ?? ?? ?? eb 06 89 1d ?? ?? ?? ?? 6a 50 e8";
+const size_t kMacroObjectImm = 15;
+const size_t kMacroObjectImm2 = 23;
 
 // The row hit test: never hooked or called. Resolved to check that it still
 // takes a hit on a menu whose kMenuMouse byte is 0 for a miss (game.h), the
@@ -164,7 +199,11 @@ struct SiteSpec {
     uint32_t manager_imm;           // 0: none
 };
 
-enum { kSiteOpen, kSiteUpdate, kSiteStagedClose, kSiteShow, kSiteMouseMode, kSiteMenuInput, kSiteCount };
+enum {
+    kSiteOpen, kSiteUpdate, kSiteStagedClose, kSiteShow, kSiteMouseMode, kSiteMenuInput, kSiteCompassDraw,
+    kSiteMacroGate,
+    kSiteCount
+};
 
 const SiteSpec kSites[kSiteCount] = {
     {"open_by_name", kSigOpen, 7, 12, &hook_open_pre, &hook_open_post, 0},
@@ -173,6 +212,8 @@ const SiteSpec kSites[kSiteCount] = {
     {"show_path", kSigShow, 10, 4, &hook_show_pre, NULL, 0},
     {"mouse_mode", kSigMouseMode, 8, 0, &hook_mouse_mode_pre, NULL, kMouseModeManagerImm},
     {"menu_input", kSigMenuInput, 6, 4, &hook_menu_input_pre, NULL, 0},
+    {"compass_draw", kSigCompassDraw, 6, 0, &hook_compass_pre, NULL, kCompassDrawManagerImm},
+    {"macro_gate", kSigMacroGate, 6, 0, &hook_macro_gate_pre, NULL, kMacroGateManagerImm},
 };
 
 }  // namespace hu

@@ -5,7 +5,7 @@
 // The converter's shape: at most max_glyphs - 1 codes, then a 0, the count
 // returned; a byte the game's lead test takes (0x81..0x9F, 0xE0..0xEF,
 // 0xFA..0xFC) and the byte after it are one two-byte character; 1E nn and
-// 1F nn are colours; any other byte is itself less 0x20, signed. No 7F
+// 1F nn are colors; any other byte is itself less 0x20, signed. No 7F
 // escapes and no raw output.
 //
 // Two-byte characters as FUN_1011C950 maps them, for three groups only: the

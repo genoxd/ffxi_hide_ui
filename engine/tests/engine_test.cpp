@@ -46,7 +46,15 @@
 // to the active menu's sink while that menu is hidden, and passes the same
 // call to a visible one, any other caller's (SetCursor's code 9, the wheel),
 // and the call with no active menu, where the routing routine's own branch
-// runs; the unhide gives the keys back.
+// runs; the unhide gives the keys back. 0.8.0's own: the compass, a name on
+// no registry row: its draw hook's pre runs nothing while an owner hides it
+// and writes a remembered position's anchor on every draw, a reset puts the
+// game's anchor back, the drain posts opened and closed as its state byte
+// leaves and reaches 0, and a null object pointer is safe throughout.
+// 0.9.0's own: the macro keys, a hold under no name counted once per
+// handle: the gate hook's pre answers no while any handle holds it, the
+// block's command closes a bar the handler has up and zeroes the object's
+// bar bytes as the handler's own close does, and a null object is safe.
 
 #include "../signatures.h"
 #include "fake_glyph_convert.h"
@@ -901,8 +909,19 @@ uint32_t __cdecl counted_convert(const char* text, int16_t* glyphs, uint32_t max
 int main() {
     // -- inventory and lookup
     check(g_e.inv.build(), "inventory indexes menu_table.inc");
-    check(kRowCount == 370 && g_e.inv.count == 369,
-        "370 registry rows, 369 distinct names: conf1win on two rows, the tkdebug record one of them");
+    check(kRowCount == 370 && g_e.inv.count == 370 && g_e.inv.compass == 369,
+        "370 registry rows, 369 distinct names, conf1win on two rows, the tkdebug record one of them, then the"
+        " compass as the 370th name");
+    {
+        const int c = g_e.inv.compass;
+        static const uint8_t nuls[kKeyLen] = {0};
+        check(c >= 0 && name("compass") == c && g_e.inv.names[c].row_count == 0
+                && memcmp(g_e.inv.names[c].key, nuls, kKeyLen) == 0 && g_e.inv.find_key16(nuls) == c
+                && g_e.inv.find_key("") < 0 && g_e.inv.find_key("compass") < 0 && g_e.inv.find("COMPASS") == c
+                && g_e.inv.find_window("compass") == c,
+            "the compass: no row, a key of 16 NULs that no open key reaches (an empty key pads to spaces), found by"
+            " name in any case");
+    }
     check(g_e.inv.names[name("conf1win")].row_count == 2
             && g_e.inv.names[name("conf1win")].rows[0] == 264
             && g_e.inv.names[name("conf1win")].rows[1] == 265,
@@ -1112,13 +1131,33 @@ int main() {
             "the 0.7.6 signatures parse: the sink's 26 exact bytes, its dormant test and ret 4; the routing"
             " routine's 43, its three callees masked, ending on the call to the sink at +0x2A after it loads"
             " the active menu (+0x54) and pushes the code");
+        const size_t compass = parse_signature(kSigCompassDraw, lb, lm, sizeof(lb));
+        const bool compass_ok = compass == 41 && kCompassDrawGlobal == 2 && kCompassDrawGlobal2 == 31
+            && kCompassDrawManagerImm == 16 && lb[0] == 0x8b && lb[1] == 0x0d && lb[29] == 0x8b && lb[30] == 0x0d
+            && lb[15] == 0xb9 && lb[8] == 0x74 && lb[27] == 0x74 && lb[35] == 0xe9 && lb[40] == 0xc3
+            && strcmp(lm, "xx????xxx?x????x????x????xxx?xx????x????x") == 0;
+        check(compass_ok,
+            "the 0.8.0 signature parses: the compass draw entry's 41 bytes, its global the masked imm32 of mov ecx"
+            " at +2 and again at +31, the manager's that of mov ecx at +16, two je, the jump to its render, ret");
+        const size_t gate = parse_signature(kSigMacroGate, lb, lm, sizeof(lb));
+        const bool gate_ok = gate == 53 && kMacroGateGlobal == 2 && kMacroGateManagerImm == 40 && lb[0] == 0x66
+            && lb[1] == 0xa1 && lb[30] == 0x83 && lb[31] == 0x39 && lb[32] == 0x60 && lb[39] == 0xb9 && lb[44] == 0xe8
+            && strcmp(lm, "xx????xxxxxxx?xxxxxx????xx????xxxxx????x????x????xxxx") == 0;
+        const size_t object = parse_signature(kSigMacroObject, lb, lm, sizeof(lb));
+        const bool object_ok = object == 30 && kMacroObjectImm == 15 && kMacroObjectImm2 == 23 && lb[14] == 0xa3
+            && lb[21] == 0x89 && lb[22] == 0x1d && lb[27] == 0x6a && lb[28] == 0x50
+            && strcmp(lm, "xx????xxxx????x????xxxx????xxx") == 0;
+        check(gate_ok && object_ok,
+            "the 0.9.0 signatures parse: the macro key gate's 53 bytes, the word of mov ax at +2 and the manager of"
+            " mov ecx at +40 masked, its cmp with 0x60 and its call; the constructor site's 30, the object's global"
+            " the masked imm32 of mov at +15 and again at +23, before the push 0x50");
     }
     {
         static const char* const prologues[kSiteCount] = {
             "8b 44 24 04 83 ec 20", "83 ec 14 53 55 56 57",
             "53 56 8b 74 24 0c 33 db 57", "53 55 56 8b 74 24 10 32 db 57",
-            "56 8b f1 b9 ?? ?? ?? ??", "51 55 56 8b f1 57"};
-        static const uint32_t args[kSiteCount] = {12, 0, 20, 4, 0, 4};
+            "56 8b f1 b9 ?? ?? ?? ??", "51 55 56 8b f1 57", "8b 0d ?? ?? ?? ??", "66 a1 ?? ?? ?? ??"};
+        static const uint32_t args[kSiteCount] = {12, 0, 20, 4, 0, 4, 0, 0};
         bool ok = true;
         for (int i = 0; i < kSiteCount; ++i) {
             uint8_t sb[64];
@@ -1131,15 +1170,24 @@ int main() {
                 && kSites[i].arg_bytes == args[i] && kSites[i].pre != NULL;
             const uint32_t imm = kSites[i].manager_imm;
             for (size_t k = 0; k < pl; ++k) {
-                const bool in_imm = imm && k >= imm && k < imm + 4;
+                const bool in_imm = (imm && k >= imm && k < imm + 4)
+                    || (i == kSiteCompassDraw && k >= kCompassDrawGlobal && k < kCompassDrawGlobal + 4)
+                    || (i == kSiteMacroGate && k >= kMacroGateGlobal && k < kMacroGateGlobal + 4);
                 ok = ok && sm[k] == (in_imm ? '?' : 'x');
             }
-            ok = ok && (imm == 0 || imm + 4 <= pl);
+            ok = ok && (imm == 0 || imm + 4 <= pl || i == kSiteCompassDraw || i == kSiteMacroGate);
         }
         check(ok && kSites[kSiteMouseMode].manager_imm == 4 && kSites[kSiteMouseMode].post == NULL
-                && kSites[kSiteMenuInput].manager_imm == 0 && kSites[kSiteMenuInput].post == NULL,
+                && kSites[kSiteMenuInput].manager_imm == 0 && kSites[kSiteMenuInput].post == NULL
+                && kSites[kSiteCompassDraw].manager_imm == 16 && kSites[kSiteCompassDraw].post == NULL
+                && kSites[kSiteMacroGate].manager_imm == 40 && kSites[kSiteMacroGate].post == NULL
+                && kSiteMacroGate == kSiteCount - 1,
             "hooked prologues: open 7/12, ui_update 7/0, staged_close 9/20, show_path 10/4, menu_input 6/4, exact"
-            " bytes; mouse_mode 8/0, exact but for the manager's imm32 at +4, which the engine fills in");
+            " bytes; mouse_mode 8/0, exact but for the manager's imm32 at +4, which the engine fills in;"
+            " compass_draw 6/0, exact but for the compass global's imm32 at +2, which the engine reads out of the"
+            " entry's +31 and fills in, the manager's at +16 past the prologue; macro_gate 6/0, exact but for the"
+            " word its mov ax reads at +2, which the engine reads out of the hit and fills in, the manager's at +40"
+            " past the prologue");
     }
     {
         static uint8_t text[8192];
@@ -1330,7 +1378,8 @@ int main() {
     }
     const char* self_classes[] = {"logwindo", "ability", "partywin", "targetwi", "subwindo",
                                   "persona", "buff", "passinpu", "prtyjoin", "link5",
-                                  "scsibori", "delivery", "post1", "post2", "playermo"};
+                                  "scsibori", "delivery", "post1", "post2", "playermo",
+                                  "mcr1pall", "mcr2pall"};
     for (size_t i = 0; i < sizeof(self_classes) / sizeof(self_classes[0]); ++i) {
         give_controller(self_classes[i], vt_self);
     }
@@ -1526,6 +1575,229 @@ int main() {
         run(cmd(kOpClose, "buff", 0, 0, s1, gen1));
         run(cmd(kOpClose, "equip", 0, 0, s1, gen1));
         events(&cursor, ev, 64);
+    }
+
+    // the compass: no row, no menu; hidden by its draw hook's pre, moved by
+    // the anchor that pre writes at every draw, its home put back by a
+    // reset, opened and closed as its state byte flips
+    {
+        static uint8_t compass[kCompassBytes];
+        static uint8_t* compass_ptr;
+        memset(compass, 0, sizeof(compass));
+        compass[kCompassState] = 3;
+        wr16(compass, kCompassX, 104);
+        wr16(compass, kCompassY, 1058);
+        wr16(compass, kCompassHeight, 42);
+        compass_ptr = compass;
+        g_e.game.compass = &compass_ptr;
+        g_e.compass_shown = 1;
+        const int n = g_e.inv.compass;
+        int16_t box[4];
+        compass_frame(compass, box);
+        check(is_compass(g_e, n) && !is_compass(g_e, name("buff")) && !is_compass(g_e, -1)
+                && live_menu(g_e, n, NULL) == NULL && open_menu(g_e, n, NULL) == NULL
+                && controller_global(g_e, "compass") == NULL && controller_at(g_e, n) == NULL
+                && compass_object(g_e) == compass && compass_open(compass) && !compass_open(NULL)
+                && box[0] == 16 && box[1] == 1016 && box[2] == 104 && box[3] == 1058,
+            "the compass: no live menu, no controller through any slot; its object through the global, open while"
+            " its state byte is not 0, its box 88 x 42 ending on its anchor");
+        HuFrame f;
+        memset(&f, 0, sizeof(f));
+        f.user = &g_e;
+        const bool plain = hook_compass_pre(&f) == 0 && rd16(compass, kCompassX) == 104 && rd16(compass, kCompassY) == 1058;
+        g_e.holds.set(h1, n, kHoldHide, true);
+        drain(g_e);
+        const bool hidden = hook_compass_pre(&f) == 1 && rd16(compass, kCompassX) == 104
+            && rd16(compass, kCompassY) == 1058 && g_e.place[n].applied_hidden;
+        g_e.holds.set(h1, n, kHoldHide, false);
+        drain(g_e);
+        check(plain && hidden && hook_compass_pre(&f) == 0 && !g_e.place[n].applied_hidden
+                && events(&cursor, ev, 64) == 0,
+            "the draw hook's pre: the original runs and nothing is written with no hold and no move; it does not"
+            " run while a hold hides the compass, which the drain's layer walk survives; no event for a hide");
+        Command move = cmd(kOpMove, "compass", 10, 20, s1, gen1);
+        move.flags = kCmdFrame;
+        move.verb = kVerbMove;
+        run(move);
+        const MemEntry& m = g_e.memory.e[n];
+        const bool queued = m.active && m.x == 10 && m.y == 20 && m.by_frame && m.owner_slot == s1
+            && g_e.place[n].touched && !g_e.place[n].registry_undocked && g_e.compass_home_valid
+            && home_x(g_e.compass_home) == 104 && home_y(g_e.compass_home) == 1058
+            && rd16(compass, kCompassX) == 104 && rd16(compass, kCompassY) == 1058;
+        const int ran = hook_compass_pre(&f);
+        const bool drawn = ran == 0 && rd16(compass, kCompassX) == 98 && rd16(compass, kCompassY) == 62;
+        wr16(compass, kCompassX, 104);
+        wr16(compass, kCompassY, 1058);
+        hook_compass_pre(&f);
+        check(queued && drawn && rd16(compass, kCompassX) == 98 && rd16(compass, kCompassY) == 62
+                && g_e.drain_errors == 0,
+            "move(compass, 10, 20) by the frame: remembered, the game's anchor 104,1058 taken as home, no registry"
+            " row undocked, nothing written until the next draw, whose pre writes the anchor 98,62 and writes it"
+            " again after the game put its own back");
+        Command second = cmd(kOpMove, "compass", 30, 40, s1, gen1);
+        second.flags = kCmdFrame;
+        second.verb = kVerbMove;
+        run(second);
+        hook_compass_pre(&f);
+        check(home_x(g_e.compass_home) == 104 && home_y(g_e.compass_home) == 1058 && rd16(compass, kCompassX) == 118
+                && rd16(compass, kCompassY) == 82,
+            "a second move keeps the home the first found, and the next draw writes its anchor");
+        g_e.holds.set(h1, n, kHoldHide, true);
+        drain(g_e);
+        wr16(compass, kCompassX, 104);
+        wr16(compass, kCompassY, 1058);
+        const int skipped = hook_compass_pre(&f);
+        g_e.holds.set(h1, n, kHoldHide, false);
+        drain(g_e);
+        check(skipped == 1 && rd16(compass, kCompassX) == 118 && rd16(compass, kCompassY) == 82,
+            "hidden and moved: the pre still writes the anchor the move asks for, then keeps the original from running");
+        Command origin_move = cmd(kOpMove, "compass", 200, 900, s1, gen1);
+        origin_move.verb = kVerbMove;
+        run(origin_move);
+        hook_compass_pre(&f);
+        check(!m.by_frame && rd16(compass, kCompassX) == 200 && rd16(compass, kCompassY) == 900,
+            "a move by the origin (the older slots) is the anchor itself");
+        run(cmd(kOpReset, "compass", 0, 0, s1, gen1));
+        const bool reset = !m.active && rd16(compass, kCompassX) == 104 && rd16(compass, kCompassY) == 1058
+            && !g_e.compass_home_valid && !g_e.place[n].touched;
+        wr16(compass, kCompassX, 105);
+        hook_compass_pre(&f);
+        check(reset && rd16(compass, kCompassX) == 105 && g_e.drain_errors == 0,
+            "reset(compass): the home anchor written back, the memory and the home forgotten; the next draw writes"
+            " nothing");
+        const uint8_t ops[3] = {kOpResetOwned, kOpRestoreAll, kOpResetMine};
+        bool each = true;
+        for (int i = 0; i < 3; ++i) {
+            wr16(compass, kCompassX, 104);
+            wr16(compass, kCompassY, 1058);
+            run(move);
+            hook_compass_pre(&f);
+            const bool moved = m.active && rd16(compass, kCompassX) == 98;
+            Command r = cmd(ops[i], ops[i] == kOpResetMine ? "compass" : NULL, 0, 0, s1, gen1,
+                ops[i] == kOpResetMine ? kAspectPosition : 0);
+            run(r);
+            each = each && moved && !m.active && rd16(compass, kCompassX) == 104 && rd16(compass, kCompassY) == 1058
+                && !g_e.compass_home_valid;
+        }
+        check(each && g_e.drain_errors == 0,
+            "reset_all (the handle's own), restore_all and reset(compass, 'position') each put the anchor back through"
+            " the same path");
+        events(&cursor, ev, 64);
+        compass[kCompassState] = 0;
+        drain(g_e);
+        const int closed = events(&cursor, ev, 64);
+        const bool closed_once = closed == 1 && is_event(ev[0], kEvClosed, "compass");
+        drain(g_e);
+        const bool quiet = events(&cursor, ev, 64) == 0;
+        compass[kCompassState] = 1;
+        drain(g_e);
+        const int opened = events(&cursor, ev, 64);
+        const bool opened_once = opened == 1 && is_event(ev[0], kEvOpened, "compass");
+        compass[kCompassState] = 3;
+        drain(g_e);
+        check(closed_once && quiet && opened_once && events(&cursor, ev, 64) == 0,
+            "the drain posts closed{compass} as the state byte reaches 0, once, and opened{compass} as it leaves 0;"
+            " 1 to 3, still shown, posts nothing");
+        compass_ptr = NULL;
+        const bool no_object = hook_compass_pre(&f) == 0 && compass_object(g_e) == NULL;
+        run(move);
+        hook_compass_pre(&f);
+        drain(g_e);
+        const bool gone = events(&cursor, ev, 64) == 1 && is_event(ev[0], kEvClosed, "compass") && m.active
+            && !g_e.compass_home_valid;
+        run(cmd(kOpReset, "compass", 0, 0, s1, gen1));
+        g_e.holds.set(h1, n, kHoldHide, true);
+        const bool hidden_none = hook_compass_pre(&f) == 1;
+        g_e.holds.set(h1, n, kHoldHide, false);
+        compass_ptr = compass;
+        drain(g_e);
+        check(no_object && gone && !m.active && hidden_none && events(&cursor, ev, 64) == 1
+                && is_event(ev[0], kEvOpened, "compass") && g_e.drain_errors == 0,
+            "a null object pointer: the pre runs the original, a move takes no home and writes nothing, the drain"
+            " reads it closed, a reset and a hide are safe; the object back, opened again");
+        g_e.game.compass = NULL;
+        g_e.compass_shown = 0;
+        drain(g_e);
+        check(hook_compass_pre(&f) == 0 && events(&cursor, ev, 64) == 0,
+            "with no global at all the pre runs the original and the drain posts nothing");
+    }
+
+    // the macro keys: a hold under no name, counted once per handle; the
+    // gate's pre answers no while any handle holds it; the block's command
+    // closes a bar the handler has up as the handler's own close does
+    {
+        static uint8_t macro[kMacroObjectBytes];
+        static uint8_t* macro_ptr;
+        memset(macro, 0, sizeof(macro));
+        macro_ptr = macro;
+        g_e.game.macro_object = &macro_ptr;
+        HuFrame f;
+        memset(&f, 0, sizeof(f));
+        f.user = &g_e;
+        f.result = 0xDEAD;
+        const bool yes = hook_macro_gate_pre(&f) == 0 && f.result == 0xDEAD && g_e.holds.macros_want == 0
+            && strcmp(verb_name(kVerbBlockMacros), "block_macros") == 0;
+        g_e.holds.set_macros(h1, true);
+        g_e.holds.set_macros(h1, true);
+        const bool once = g_e.holds.macros_count == 1 && g_e.holds.macros_want == 1 && h1.macros_hold == 1;
+        const bool no = hook_macro_gate_pre(&f) == 1 && f.result == 0;
+        g_e.holds.set_macros(h2, true);
+        g_e.holds.set_macros(h1, false);
+        f.result = 0xDEAD;
+        const bool held = g_e.holds.macros_count == 1 && g_e.holds.macros_want == 1 && !h1.macros_hold
+            && h2.macros_hold && hook_macro_gate_pre(&f) == 1 && f.result == 0;
+        g_e.holds.release(h2, g_e.inv.count);
+        f.result = 0xDEAD;
+        check(yes && once && no && held && g_e.holds.macros_count == 0 && g_e.holds.macros_want == 0
+                && !h2.macros_hold && hook_macro_gate_pre(&f) == 0 && f.result == 0xDEAD,
+            "the macro key gate's pre: with no hold the original runs and the result word is left alone; a hold,"
+            " counted once however often one handle sets it, has it answer 0 and run nothing; the hold stays while"
+            " another handle holds it, and that handle's release drops it");
+
+        uint8_t* bar = open_now("mcr1pall");
+        macro[kMacroBar] = 1;
+        macro[kMacroSet] = 2;
+        macro[kMacroBarUp] = 1;
+        events(&cursor, ev, 64);
+        clear_log();
+        const LONG errors = g_e.drain_errors;
+        Command b = cmd(kOpMacrosBlocked, NULL, 0, 0, s1, gen1);
+        b.target = -1;
+        b.verb = kVerbBlockMacros;
+        run(b);
+        int n = events(&cursor, ev, 64);
+        check(bar && !live("mcr1pall") && strcmp(g_log.order, "K") == 0
+                && strncmp(g_log.last_close, "menu    mcr1pall", 16) == 0 && macro[kMacroBar] == 0
+                && macro[kMacroBarUp] == 0 && macro[kMacroSet] == 2 && n == 1 && is_event(ev[0], kEvClosed, "mcr1pall")
+                && g_e.drain_errors == errors,
+            "the block's command with the Ctrl bar up: the bar closed by name (closed{mcr1pall}), then +0x0C and"
+            " +0x18 zeroed, +0x0D left alone");
+        open_now("mcr1pall");
+        open_now("mcr2pall");
+        macro[kMacroBar] = 2;
+        macro[kMacroBarUp] = 1;
+        events(&cursor, ev, 64);
+        clear_log();
+        run(b);
+        n = events(&cursor, ev, 64);
+        check(!live("mcr1pall") && !live("mcr2pall") && strcmp(g_log.order, "KK") == 0 && macro[kMacroBar] == 0
+                && macro[kMacroBarUp] == 0 && n == 2,
+            "both bars up: both closed");
+        clear_log();
+        run(b);
+        const bool nothing = g_log.count == 0 && events(&cursor, ev, 64) == 0;
+        macro_ptr = NULL;
+        macro[kMacroBar] = 1;
+        macro[kMacroBarUp] = 1;
+        run(b);
+        const bool no_object = macro[kMacroBar] == 1 && macro[kMacroBarUp] == 1 && g_log.count == 0;
+        g_e.game.macro_object = NULL;
+        run(b);
+        check(nothing && no_object && g_log.count == 0 && g_e.drain_errors == errors,
+            "with no bar up nothing is closed; with the object's global NULL, or no global at all, nothing is"
+            " written and nothing fails");
+        macro[kMacroBar] = 0;
+        macro[kMacroBarUp] = 0;
     }
 
     // the unhide gives +0x77 back as the hide found it on the live instance;
@@ -3854,7 +4126,7 @@ int main() {
         check(n == 22 && strcmp(t.text, "A pair of pugilists.") == 0 && t.undecoded == 0
                 && strcmp(runs, "A /1E:1|pair of pugilists/1E:2|./1E:1") == 0,
             "glyphs: the measured 22-glyph \"A pair of pugilists.\" -- glyph 0 a space, the green run its own"
-            " segment, the colour codes out of the text");
+            " segment, the color codes out of the text");
 
         static const int16_t codes[] = {0x00, 0x5F, 0x60, 0x7FFF, -1, -0xFF, -0x100, 0x22, -0x1FF, 0x23,
                                         -0x200, 0x24, -0x279, 0x25, -0x8000, 0x26};
@@ -3863,13 +4135,13 @@ int main() {
         check(strcmp(t.text, " \x7F??BCDEF") == 0 && t.undecoded == 2 && t.run_count == 6
                 && strcmp(runs, " \x7F??" "/1E:1|B/1E:0|C/1E:FF|D/1F:0|E/1F:79|F/1F:7E00") == 0,
             "glyphs at every edge: 0 and 0x5F are 0x20 and 0x7F, 0x60 and up a counted ?, -1 and -0xFF not"
-            " drawn, -0x100..-0x1FF colour 1E 00..FF, -0x200 and below 1F nn");
+            " drawn, -0x100..-0x1FF color 1E 00..FF, -0x200 and below 1F nn");
 
         static const int16_t merges[] = {-0x102, -0x105, -0x101, 0x41, -0x101, 0x42, -0x102};
         memcpy(g, merges, sizeof(merges));
         runs = decoded_runs(g, sizeof(merges) / 2, &t);
         check(strcmp(t.text, "ab") == 0 && strcmp(runs, "ab/1E:1") == 0,
-            "glyphs: colours with no text under them make no segment; a colour that changes nothing splits none");
+            "glyphs: colors with no text under them make no segment; a color that changes nothing splits none");
 
         n = put_text(g, 0, "Hi");
         g[n] = g[n + 1] = g[n + 2] = 0;

@@ -1,5 +1,6 @@
 // _HideUI - the hideui engine. Resolves FFXiMain by signature, hooks six of
-// its menu routines through hideui_daemon.dll, and serves hideui.lua.
+// its menu routines, the compass draw and the macro key gate through
+// hideui_daemon.dll, and serves hideui.lua.
 //
 // Every addon ships its own copy. The first copy to install in a client is
 // the resident and publishes a table of its operations; every later copy
@@ -597,6 +598,20 @@ bool resolve_plain(const uint8_t* text, size_t size, char* why, size_t len) {
             static_cast<unsigned>(rd32(hit, kLink5LatchImm)));
         return false;
     }
+    hit = find_one(text, size, "macro_object", kSigMacroObject, why, len);
+    if (!hit) {
+        return false;
+    }
+    if (rd32(hit, kMacroObjectImm) != rd32(hit, kMacroObjectImm2)) {
+        snprintf(why, len, "macro_object: its two globals disagree");
+        return false;
+    }
+    uint8_t** macro_object = reinterpret_cast<uint8_t**>(rdptr(hit, kMacroObjectImm));
+    if (!readable(macro_object, 4)) {
+        snprintf(why, len, "macro object global at 0x%08X is not readable",
+            static_cast<unsigned>(rd32(hit, kMacroObjectImm)));
+        return false;
+    }
     hit = find_one(text, size, "link5_open", kSigLink5Open, why, len);
     if (!hit) {
         return false;
@@ -604,7 +619,8 @@ bool resolve_plain(const uint8_t* text, size_t size, char* why, size_t len) {
     // The handler opens link5 on the controller in this global; the registry
     // row must name the same one, or the pending test reads another menu.
     const int link5 = g_engine.inv.find_exact("link5");
-    const uint8_t* const* link5_slot = link5 >= 0 ? g_engine.game.slot[g_engine.inv.names[link5].rows[0]] : NULL;
+    const uint8_t* const* link5_slot = link5 >= 0 && g_engine.inv.names[link5].row_count
+        ? g_engine.game.slot[g_engine.inv.names[link5].rows[0]] : NULL;
     if (rdptr(hit, kLink5OpenGlobal) != reinterpret_cast<const uint8_t*>(link5_slot)) {
         snprintf(why, len, "link5 open site: its controller global 0x%08X is not the registry's link5 slot 0x%08X",
             static_cast<unsigned>(rd32(hit, kLink5OpenGlobal)),
@@ -644,6 +660,7 @@ bool resolve_plain(const uint8_t* text, size_t size, char* why, size_t len) {
     g.row_hit_test = hit_test;
     g.mouse_read = mouse_read;
     g.menu_routing = routing;
+    g.macro_object = macro_object;
     return true;
 }
 
@@ -676,6 +693,80 @@ bool daemon_owns(const uint8_t* at, const SiteSpec& spec, const Sig& s) {
     return id >= 0 && site_matches(id, spec, s.bytes, &info);
 }
 
+// The compass global, read out of the draw entry's intact copy at +31 and
+// pinned at +2, the prologue's imm32, before the site is scanned for: a jump
+// the daemon has written there covers +2. On an unpatched entry the two
+// copies must agree; on a patched one the daemon's saved prologue says so
+// when the site is accepted.
+bool pin_compass_global(const uint8_t* text, size_t size, Sig& s, char* why, size_t len) {
+    ScanResult r;
+    scan(text, size, s.bytes, s.mask, true, &r);
+    if (r.count == 0) {
+        snprintf(why, len, "signature compass_draw: not found (client patched, or another hook owns it)");
+        return false;
+    }
+    if (r.count != 1) {
+        snprintf(why, len, "signature compass_draw: matched %d times", r.count);
+        return false;
+    }
+    const uint8_t* hit = r.hits[0];
+    const uint32_t global = rd32(hit, kCompassDrawGlobal2);
+    if (!r.jumped[0] && rd32(hit, kCompassDrawGlobal) != global) {
+        snprintf(why, len, "compass_draw: its two compass globals disagree");
+        return false;
+    }
+    uint8_t** at = reinterpret_cast<uint8_t**>(rdptr(hit, kCompassDrawGlobal2));
+    if (!readable(at, 4)) {
+        snprintf(why, len, "compass global at 0x%08X is not readable", static_cast<unsigned>(global));
+        return false;
+    }
+    memcpy(s.bytes + kCompassDrawGlobal, &global, 4);
+    memset(s.mask + kCompassDrawGlobal, 'x', 4);
+    g_engine.game.compass = at;
+    return true;
+}
+
+// The word the macro key gate's prologue reads, pinned at +2 before the
+// site is scanned for: the engine knows it from nowhere else, so it is read
+// out of the one hit, or, on a hit the daemon has already patched (the jump
+// covers +2), out of the original the daemon saved there, which the site's
+// acceptance compares against the pinned prologue in turn.
+bool pin_macro_gate(const uint8_t* text, size_t size, const SiteSpec& spec, Sig& s, char* why, size_t len) {
+    ScanResult r;
+    scan(text, size, s.bytes, s.mask, true, &r);
+    if (r.count == 0) {
+        snprintf(why, len, "signature %s: not found (client patched, or another hook owns it)", spec.name);
+        return false;
+    }
+    if (r.count != 1) {
+        snprintf(why, len, "signature %s: matched %d times", spec.name, r.count);
+        return false;
+    }
+    const uint8_t* hit = r.hits[0];
+    const uint8_t* source = hit;
+    HuSiteInfo info;
+    if (r.jumped[0]) {
+        HuSiteDesc desc;
+        desc.size = sizeof(desc);
+        desc.target = hit;
+        desc.prologue_bytes = spec.prologue;
+        desc.stack_arg_bytes = spec.arg_bytes;
+        desc.callee_pops = 1;
+        const int32_t id = g_rt.daemon->install(&desc);
+        memset(&info, 0, sizeof(info));
+        info.size = sizeof(info);
+        if (id < 0 || g_rt.daemon->site_info(id, &info) != HU_OK || info.prologue_bytes < spec.prologue
+            || memcmp(info.original, s.bytes, kMacroGateGlobal) != 0) {
+            snprintf(why, len, "signature %s: not found (client patched, or another hook owns it)", spec.name);
+            return false;
+        }
+        source = info.original;
+    }
+    memcpy(s.bytes + kMacroGateGlobal, source + kMacroGateGlobal, 4);
+    memset(s.mask + kMacroGateGlobal, 'x', 4);
+    return true;
+}
+
 bool resolve_sites(const uint8_t* text, size_t size, char* why, size_t len) {
     for (int i = 0; i < kSiteCount; ++i) {
         const SiteSpec& spec = kSites[i];
@@ -693,6 +784,12 @@ bool resolve_sites(const uint8_t* text, size_t size, char* why, size_t len) {
             }
             memcpy(s.bytes + spec.manager_imm, &g_engine.game.mcb, 4);
             memset(s.mask + spec.manager_imm, 'x', 4);
+        }
+        if (i == kSiteCompassDraw && !pin_compass_global(text, size, s, why, len)) {
+            return false;
+        }
+        if (i == kSiteMacroGate && !pin_macro_gate(text, size, spec, s, why, len)) {
+            return false;
         }
         for (uint32_t k = 0; k < spec.prologue; ++k) {
             if (s.mask[k] != 'x') {
@@ -753,6 +850,8 @@ bool clear_handlers() {
     g_rt.pinned_busy = !all;
     return all;
 }
+
+uint8_t* compass_guarded();
 
 bool install_engine() {
     if (g_rt.state == kInstalled) {
@@ -843,6 +942,9 @@ bool install_engine() {
             return passes ? retry_later(why) : fail(why, kPlayerRestart);
         }
     }
+    // The compass as the install finds it: its first opened or closed event
+    // is a change from here.
+    g_engine.compass_shown = compass_open(compass_guarded()) ? 1 : 0;
     g_rt.pinned_busy = false;
     g_rt.transient = false;
     g_rt.state = kInstalled;
@@ -894,7 +996,7 @@ uint8_t* open_menu_guarded(int n, uint8_t** ctl_out) {
 // A controller through its registry row's slot, with `bytes` of it readable.
 uint8_t* controller_guarded(const char* nm, size_t bytes) {
     const int n = g_engine.inv.find_exact(nm);
-    if (n < 0) {
+    if (n < 0 || g_engine.inv.names[n].row_count == 0) {
         return NULL;
     }
     uint8_t** slot = g_engine.game.slot[g_engine.inv.names[n].rows[0]];
@@ -910,6 +1012,29 @@ bool open_guarded(const char* nm) {
 bool live_guarded(const char* nm) {
     const int n = g_engine.inv.find_exact(nm);
     return n >= 0 && live_menu_guarded(n, NULL) != NULL;
+}
+
+// The compass object while its global names one this thread can read.
+uint8_t* compass_guarded() {
+    uint8_t* c = compass_object(g_engine);
+    return c && readable(c, kCompassBytes) ? c : NULL;
+}
+
+// Open as every reader reports it: a window's live instance with the marks
+// clear, the compass's state byte.
+bool open_of(int n) {
+    return is_compass(g_engine, n) ? compass_open(compass_guarded()) : open_menu_guarded(n, NULL) != NULL;
+}
+
+// The registry's words for a name; the compass, on no row, reads as zeros.
+const RowSpec& spec_of(const NameEntry& ne) {
+    static const RowSpec none = {"", "", 0, 0, 0, 0};
+    return ne.row_count ? kRowSpecs[ne.rows[0]] : none;
+}
+
+// Whether a block may hold the name: never query.
+bool blockable(int n) {
+    return !hide_only(g_engine.inv.names[n].name);
 }
 
 // A string the game owns, copied up to `size` - 1 bytes; a page is checked
@@ -1216,6 +1341,9 @@ int32_t hold(const HuEngineHandle* ref, const char* name, uint8_t bit, bool on, 
     if (h) {
         const int n = lookup(name, windows, why, size);
         if (n >= 0) {
+            // The compass takes a block as a window does, hidden by the want
+            // bit its draw hook reads; no `blocked` event ever follows, the
+            // game never attempts an open of it.
             if (bit == kHoldBlock && on && hide_only(g_engine.inv.names[n].name)) {
                 snprintf(why, size, "%s", kQueryHideOnly);
             } else {
@@ -1376,11 +1504,17 @@ int32_t name_command(const HuEngineHandle* ref, const char* name, uint8_t op, ui
                      bool prompts, char* why, uint32_t size) {
     bool ok = false;
     lock();
-    if (usable(ref, why, size)) {
+    Handle* h = usable(ref, why, size);
+    if (h) {
         const int n = lookup(name, windows, why, size);
         if (n >= 0) {
             const char* nm = g_engine.inv.names[n].name;
-            if (op == kOpOpen && (g_engine.holds.want[n] & kWantBlocked)) {
+            if ((op == kOpOpen || op == kOpClose) && is_compass(g_engine, n)) {
+                // No window to open or close: close is this handle's hide
+                // hold and open drops it, here; nothing queued, no event.
+                g_engine.holds.set(*h, n, kHoldHide, op == kOpClose);
+                ok = true;
+            } else if (op == kOpOpen && (g_engine.holds.want[n] & kWantBlocked)) {
                 snprintf(why, size, "%s is blocked", nm);
             } else if (op == kOpOpen && windows && event_window(nm)) {
                 snprintf(why, size, "%s opens only for the game's own event; answer or cancel it instead", nm);
@@ -1413,8 +1547,11 @@ int32_t __stdcall op_block5(const HuEngineHandle* ref, const char* name, char* w
         const char* nm = g_engine.inv.names[n].name;
         if (hide_only(nm)) {
             snprintf(why, size, "%s", kQueryHideOnly);
-        } else if (event_window(nm) || !open_menu_guarded(n, NULL)
+        } else if (is_compass(g_engine, n) || event_window(nm) || !open_menu_guarded(n, NULL)
                    || enqueue(command(kOpBlockClose, n, 0, 0, ref, 0, kVerbBlock), why, size)) {
+            // The compass has no window to close: its block is the hidden
+            // want bit its draw hook reads, and no `blocked` event ever
+            // follows, the game never attempts an open of it.
             g_engine.holds.set(*h, n, kHoldBlock, true);
             ok = true;
         }
@@ -1452,6 +1589,36 @@ int32_t __stdcall op_reset_all(const HuEngineHandle* ref, char* why, uint32_t si
     lock();
     if (usable(ref, why, size)) {
         ok = enqueue(command(kOpResetOwned, 0, 0, 0, ref, 0, kVerbResetAll), why, size);
+    }
+    unlock();
+    return ok;
+}
+
+// The macro keys blocked: the hold on this handle, and with the first hold
+// in the client, the close of a bar the handler has up, queued with it. A
+// full queue refuses the block whole.
+int32_t __stdcall op_block_macros(const HuEngineHandle* ref, char* why, uint32_t size) {
+    bool ok = false;
+    lock();
+    Handle* h = usable(ref, why, size);
+    if (h) {
+        const bool first = !h->macros_hold && g_engine.holds.macros_count == 0;
+        if (!first || enqueue(command(kOpMacrosBlocked, -1, 0, 0, ref, 0, kVerbBlockMacros), why, size)) {
+            g_engine.holds.set_macros(*h, true);
+            ok = true;
+        }
+    }
+    unlock();
+    return ok;
+}
+
+int32_t __stdcall op_unblock_macros(const HuEngineHandle* ref, char* why, uint32_t size) {
+    bool ok = false;
+    lock();
+    Handle* h = usable(ref, why, size);
+    if (h) {
+        g_engine.holds.set_macros(*h, false);
+        ok = true;
     }
     unlock();
     return ok;
@@ -2253,6 +2420,10 @@ int32_t resize_command(const HuEngineHandle* ref, const char* name, const char* 
             const Family* f = family_of(nm);
             if (!parsed) {
                 snprintf(why, size, "usage: resize(name, rows) or resize(name, w, h) with whole numbers");
+            } else if (is_compass(g_engine, n) && (two ? (a >= 1 && a <= 0x7FFF && b >= 1 && b <= 0x7FFF) : a >= 1)) {
+                // Accepted and ignored: the compass has no rows or frame to
+                // size; nothing is queued or remembered.
+                ok = true;
             } else if (!two && !f) {
                 snprintf(why, size, "resize %s: it has no template family; resize(name, w, h) sets any size", nm);
             } else if (!two && (a < f->min || a > f->max)) {
@@ -2714,11 +2885,46 @@ struct InfoData {
     char size_owner[48];
 };
 
+// What info() reports of the compass: its object's words while the global
+// names one, its box, its anchor as the origin, and as the default box the
+// one on the anchor the game had before the engine moved it, else the box
+// it has.
+void collect_compass(InfoData* d) {
+    const uint8_t* c = compass_guarded();
+    d->open = compass_open(c);
+    if (!c) {
+        return;
+    }
+    d->menu = c;
+    d->state = c[kCompassState];
+    compass_frame(c, d->rect);
+    d->origin[0] = rd16(c, kCompassX);
+    d->origin[1] = rd16(c, kCompassY);
+    memcpy(d->deflt, d->rect, sizeof(d->deflt));
+    if (g_engine.compass_home_valid) {
+        const LONG home = g_engine.compass_home;
+        d->deflt[0] = static_cast<int16_t>(home_x(home) - kCompassWidth);
+        d->deflt[1] = static_cast<int16_t>(home_y(home) - rd16(c, kCompassHeight));
+        d->deflt[2] = home_x(home);
+        d->deflt[3] = home_y(home);
+    }
+}
+
 // What info() reports of window `n`, read from this thread.
 void collect_info(int n, InfoData* d) {
     memset(d, 0, sizeof(*d));
     d->n = n;
     d->want = g_engine.holds.want[n];
+    if (is_compass(g_engine, n)) {
+        collect_compass(d);
+        d->mem_ok = g_engine.memory.read(n, &d->mem) && remembered(d->mem);
+        if (d->mem_ok) {
+            lock();
+            owner_name(d->mem.owner_slot, d->mem.owner_gen, d->owner, sizeof(d->owner));
+            unlock();
+        }
+        return;
+    }
     d->registry_policy = rd32(g_engine.game.registry + g_engine.inv.names[n].rows[0] * kRowStride, kRowPolicy);
     uint8_t* ctl = NULL;
     uint8_t* menu = open_menu_guarded(n, &ctl);
@@ -2825,6 +3031,35 @@ void __stdcall op_info(const HuEngineHandle* ref, const char* name, HuEngineRepl
     collect_info(n, &d);
 
     const NameEntry& ne = g_engine.inv.names[n];
+    if (is_compass(g_engine, n)) {
+        w.table();
+        w.set_string("name", ne.name);
+        w.set_bool("open", d.open);
+        w.set_bool("hidden", (d.want & kWantHidden) != 0);
+        w.set_bool("blocked", (d.want & kWantBlocked) != 0);
+        w.set_bool("hide_only", !blockable(n));
+        w.set_number("layer", 0);
+        w.set_number("policy", 0);
+        write_rows(w, ne);
+        w.set_bool("focused", false);
+        if (d.mem_ok) {
+            write_memory(w, d.mem, ref, d.owner[0] ? d.owner : NULL, NULL);
+            w.field("memory");
+        }
+        if (d.menu) {
+            set_hex(w, "address", d.menu);
+            w.set_number("state", d.state);
+        }
+        if (d.open) {
+            write_rect(w, "rect", d.rect);
+            write_rect(w, "default", d.deflt);
+            w.table();
+            w.set_number("x", d.origin[0]);
+            w.set_number("y", d.origin[1]);
+            w.field("origin");
+        }
+        return;
+    }
     const RowSpec& spec = kRowSpecs[ne.rows[0]];
     w.table();
     w.set_string("name", ne.name);
@@ -2901,16 +3136,17 @@ const char* element_type_name(int type) {
     }
 }
 
-// The names of the handles holding `bit` on window n, as a list under
-// `key`; true when `ref` is one of them.
-bool write_holders(ReplyWriter& w, const char* key, int n, uint8_t bit, const HuEngineHandle* ref) {
+// The names of the handles `holds` says hold, as a list under `key`; true
+// when `ref` is one of them.
+template <typename Holding>
+bool write_holding(ReplyWriter& w, const char* key, const HuEngineHandle* ref, Holding holds) {
     bool mine = false;
     w.table();
     int k = 0;
     lock();
     for (int i = 0; i < g_rt.handles.capacity; ++i) {
         const Handle& h = g_rt.handles.slots[i];
-        if (h.active && (h.holds[n] & bit)) {
+        if (h.active && holds(h)) {
             w.string(h.name);
             w.index(++k);
             mine = mine || (i == ref->slot && h.generation == ref->generation);
@@ -2919,6 +3155,74 @@ bool write_holders(ReplyWriter& w, const char* key, int n, uint8_t bit, const Hu
     unlock();
     w.field(key);
     return mine;
+}
+
+// The handles holding `bit` on window n.
+bool write_holders(ReplyWriter& w, const char* key, int n, uint8_t bit, const HuEngineHandle* ref) {
+    return write_holding(w, key, ref, [=](const Handle& h) { return (h.holds[n] & bit) != 0; });
+}
+
+// The macro keys: {blocked, blocked_by = the handles holding the block,
+// mine}.
+void __stdcall op_macros(const HuEngineHandle* ref, HuEngineReply* reply) {
+    ReplyWriter w = {reply};
+    if (!readable_for(ref, w)) {
+        return;
+    }
+    w.table();
+    w.set_bool("blocked", g_engine.holds.macros_want != 0);
+    w.set_bool("mine", write_holding(w, "blocked_by", ref, [](const Handle& h) { return h.macros_hold != 0; }));
+}
+
+// The compass's info: what every window has at the top but the layer, which
+// it has none of, its object's words under `detail`.
+void write_compass_info(const HuEngineHandle* ref, int n, const InfoData& d, ReplyWriter& w, bool v4) {
+    const NameEntry& ne = g_engine.inv.names[n];
+    w.table();
+    w.set_string("name", ne.name);
+    w.set_bool("open", d.open);
+    w.set_bool("hidden", (d.want & kWantHidden) != 0);
+    w.set_bool("blocked", (d.want & kWantBlocked) != 0);
+    if (v4) {
+        w.set_bool("blockable", blockable(n));
+        const bool hiding = write_holders(w, "hidden_by", n, kHoldHide, ref);
+        const bool blocking = write_holders(w, "blocked_by", n, kHoldBlock, ref);
+        w.table();
+        w.set_bool("hidden", hiding);
+        w.set_bool("blocked", blocking);
+        w.field("mine");
+    } else {
+        w.set_bool("hide_only", !blockable(n));
+    }
+    w.set_bool("docked", false);
+    w.set_bool("covered", false);
+    w.set_bool("focused", false);
+    w.table();
+    w.set_string("holds", "none");
+    w.field(v4 ? "resize" : "sizes");
+    if (d.mem_ok) {
+        write_memory3(w, d.mem, ref, d.owner[0] ? d.owner : NULL, NULL);
+        w.field("memory");
+    }
+    if (d.open) {
+        write_rect3(w, "rect", d.rect);
+        write_rect3(w, "default", d.deflt);
+        w.table();
+        w.set_number("x", d.origin[0]);
+        w.set_number("y", d.origin[1]);
+        w.field("origin");
+    }
+    w.table();
+    w.set_number("policy", 0);
+    write_rows(w, ne);
+    if (d.menu) {
+        set_hex(w, "address", d.menu);
+        w.set_number("state", d.state);
+        w.set_number("x", d.origin[0]);
+        w.set_number("y", d.origin[1]);
+        w.set_number("height", d.rect[3] - d.rect[1]);
+    }
+    w.field("detail");
 }
 
 // Engine abi 3's info, and with `v4` abi 4's: what an addon draws by at the
@@ -2934,6 +3238,10 @@ void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* repl
     InfoData d;
     collect_info(n, &d);
 
+    if (is_compass(g_engine, n)) {
+        write_compass_info(ref, n, d, w, v4);
+        return;
+    }
     const NameEntry& ne = g_engine.inv.names[n];
     const RowSpec& spec = kRowSpecs[ne.rows[0]];
     const Family* f = family_of(ne.name);
@@ -3041,11 +3349,11 @@ void __stdcall op_list(const HuEngineHandle* ref, HuEngineReply* reply) {
     w.table();
     for (int n = 0; n < g_engine.inv.count; ++n) {
         const NameEntry& ne = g_engine.inv.names[n];
-        const RowSpec& spec = kRowSpecs[ne.rows[0]];
+        const RowSpec& spec = spec_of(ne);
         const LONG want = g_engine.holds.want[n];
         MemEntry m;
         const bool read = g_engine.memory.read(n, &m);
-        const bool open = open_menu_guarded(n, NULL) != NULL;
+        const bool open = open_of(n);
         w.table();
         w.set_string("name", ne.name);
         w.set_number("layer", spec.layer);
@@ -3057,7 +3365,7 @@ void __stdcall op_list(const HuEngineHandle* ref, HuEngineReply* reply) {
         w.set_bool("blocked", (want & kWantBlocked) != 0);
         w.set_bool("moved", read && m.active);
         w.set_bool("resized", read && m.size_kind != 0);
-        w.set_bool("hide_only", hide_only(ne.name));
+        w.set_bool("hide_only", !blockable(n));
         if (const char* dock = dock_group_of(spec.policy)) {
             w.set_string("dock", dock);
         }
@@ -3075,21 +3383,23 @@ void write_list(const HuEngineHandle* ref, HuEngineReply* reply, bool v4) {
     w.table();
     for (int n = 0; n < g_engine.inv.count; ++n) {
         const NameEntry& ne = g_engine.inv.names[n];
-        const RowSpec& spec = kRowSpecs[ne.rows[0]];
+        const RowSpec& spec = spec_of(ne);
         const LONG want = g_engine.holds.want[n];
         MemEntry m;
         const bool read = g_engine.memory.read(n, &m);
         w.table();
         w.set_string("name", ne.name);
-        w.set_bool("open", open_menu_guarded(n, NULL) != NULL);
+        w.set_bool("open", open_of(n));
         w.set_bool("hidden", (want & kWantHidden) != 0);
         w.set_bool("blocked", (want & kWantBlocked) != 0);
         if (v4) {
-            w.set_bool("blockable", !hide_only(ne.name));
+            w.set_bool("blockable", blockable(n));
         } else {
-            w.set_bool("hide_only", hide_only(ne.name));
+            w.set_bool("hide_only", !blockable(n));
         }
-        w.set_number("layer", spec.layer);
+        if (!is_compass(g_engine, n)) {
+            w.set_number("layer", spec.layer);
+        }
         w.set_bool("moved", read && m.active);
         w.set_bool("resized", read && m.size_kind != 0);
         w.table();
@@ -3121,7 +3431,7 @@ void __stdcall op_opened(const HuEngineHandle* ref, HuEngineReply* reply) {
     w.table();
     int k = 0;
     for (int n = 0; n < g_engine.inv.count; ++n) {
-        if (open_menu_guarded(n, NULL)) {
+        if (open_of(n)) {
             w.string(g_engine.inv.names[n].name);
             w.index(++k);
         }
@@ -3179,7 +3489,7 @@ void write_groups(const HuEngineHandle* ref, HuEngineReply* reply, int version) 
     }
     uint32_t policy[kMaxNames];
     for (int n = 0; n < g_engine.inv.count; ++n) {
-        policy[n] = kRowSpecs[g_engine.inv.names[n].rows[0]].policy;
+        policy[n] = spec_of(g_engine.inv.names[n]).policy;
     }
     w.table();
     for (int g = 0; g < kGroupCount; ++g) {
@@ -3688,17 +3998,27 @@ void __stdcall op_rects5(const HuEngineHandle* ref, HuEngineReply* reply) {
     }
     w.table();
     for (int n = 0; n < g_engine.inv.count; ++n) {
-        const uint8_t* menu = open_menu_guarded(n, NULL);
-        if (!menu) {
-            continue;
+        int16_t r[4];
+        if (is_compass(g_engine, n)) {
+            const uint8_t* c = compass_guarded();
+            if (!compass_open(c)) {
+                continue;
+            }
+            compass_frame(c, r);
+        } else {
+            const uint8_t* menu = open_menu_guarded(n, NULL);
+            if (!menu) {
+                continue;
+            }
+            for (int i = 0; i < 4; ++i) {
+                r[i] = rd16(menu, kMenuRect + 2 * i);
+            }
         }
-        const int x = rd16(menu, kMenuRect);
-        const int y = rd16(menu, kMenuRect + 2);
         w.table();
-        w.set_number("x", x);
-        w.set_number("y", y);
-        w.set_number("w", rd16(menu, kMenuRect + 4) - x);
-        w.set_number("h", rd16(menu, kMenuRect + 6) - y);
+        w.set_number("x", r[0]);
+        w.set_number("y", r[1]);
+        w.set_number("w", r[2] - r[0]);
+        w.set_number("h", r[3] - r[1]);
         w.field(g_engine.inv.names[n].name);
     }
 }
@@ -3833,6 +4153,8 @@ void write_internals(ReplyWriter& w, const StatusData& s) {
     set_hex(w, "link5_latch", g_engine.game.link5_latch);
     set_hex(w, "link5_callback", g_engine.game.link5_callback);
     set_hex(w, "query_cancel_allowed", g_engine.game.query_cancel_allowed);
+    set_hex(w, "compass_global", g_engine.game.compass);
+    set_hex(w, "macro_object", g_engine.game.macro_object);
     w.field("functions");
     const GlyphTable& glyphs = g_engine.glyphs;
     if (glyphs.ready) {
@@ -3876,7 +4198,8 @@ void __stdcall op_status(HuEngineReply* reply) {
 // Engine abi 3's: what an addon acts on at the top, the engine's own words
 // under `detail`; the copy asked adds its role, and its image and the
 // resident's to `detail`. Abi 4's also has the game's UI size at the top
-// once the game is resolved.
+// once the game is resolved; from 0.9.0 both say whether the macro keys are
+// blocked.
 void write_status(HuEngineReply* reply, bool v4) {
     ReplyWriter w = {reply};
     StatusData s;
@@ -3888,6 +4211,7 @@ void write_status(HuEngineReply* reply, bool v4) {
     w.set_number("handles", s.handles);
     w.set_number("dropped", s.dropped);
     write_held(w);
+    w.set_bool("macros_blocked", g_engine.holds.macros_want != 0);
     if (v4 && s.resolved) {
         write_ui(w);
     }
@@ -4089,6 +4413,9 @@ const HuEngineApi kOwnApi = {
     &op_pending5,
     &op_rects5,
     &op_block5,
+    &op_block_macros,
+    &op_unblock_macros,
+    &op_macros,
 };
 
 // ---------------------------------------------------------------------------
@@ -4434,6 +4761,9 @@ Fn slot_of(const HuEngineApi* api, size_t offset) {
 
 // The first build whose table had the slot at `offset`.
 const char* first_build(size_t offset) {
+    if (offset >= HU_SLOT(block_macros)) {
+        return "0.9.0";
+    }
     if (offset >= HU_SLOT(move5)) {
         return "0.7.0";
     }
@@ -4449,7 +4779,7 @@ const char* first_build(size_t offset) {
 // The last slot this copy's calls use. A handle is made only through a
 // resident whose table reaches it: an older one would serve some of the
 // calls and refuse the rest.
-const size_t kNewestSlot = HU_SLOT(block5);
+const size_t kNewestSlot = HU_SLOT(macros);
 
 // "<verb> needs hideui <first build> or newer; the resident copy is <path>".
 void needs_text(const char* verb, const HuEngineApi* api, size_t offset, char* out, size_t size) {
@@ -4698,17 +5028,22 @@ int l_cancel(lua_State* L) {
     return verb_result(L, api->cancel5(&ref->h, name, has_id, id, why, sizeof(why)), why);
 }
 
-int l_reset_all(lua_State* L) {
+// A verb of no window.
+int handle_verb(lua_State* L, const char* verb, size_t offset) {
     HandleRef* ref = ref_at(L);
     int pushed = 0;
-    const HuEngineApi* api = table_for(L, ref, "reset_all", HU_SLOT(reset_all), &pushed);
+    const HuEngineApi* api = table_for(L, ref, verb, offset, &pushed);
     if (!api) {
         return pushed;
     }
     char why[kWhyBytes];
     why[0] = '\0';
-    return verb_result(L, api->reset_all(&ref->h, why, sizeof(why)), why);
+    return verb_result(L, slot_of<HuEngineVerb>(api, offset)(&ref->h, why, sizeof(why)), why);
 }
+
+int l_reset_all(lua_State* L) { return handle_verb(L, "reset_all", HU_SLOT(reset_all)); }
+int l_block_macros(lua_State* L) { return handle_verb(L, "block_macros", HU_SLOT(block_macros)); }
+int l_unblock_macros(lua_State* L) { return handle_verb(L, "unblock_macros", HU_SLOT(unblock_macros)); }
 
 // resize(name, rows) or resize(name, w, h). The numbers travel to the
 // resident as the text "rows" or "WxH", which it parses and checks.
@@ -4881,6 +5216,7 @@ int l_groups(lua_State* L) { return handle_read(L, "groups", HU_SLOT(groups4)); 
 int l_layout(lua_State* L) { return handle_read(L, "layout", HU_SLOT(layout)); }
 int l_pending(lua_State* L) { return handle_read(L, "pending", HU_SLOT(pending5)); }
 int l_rects(lua_State* L) { return handle_read(L, "rects", HU_SLOT(rects5)); }
+int l_macros(lua_State* L) { return handle_read(L, "macros", HU_SLOT(macros)); }
 
 const char* role_name(int role) {
     switch (role) {
@@ -5007,6 +5343,9 @@ const luaL_Reg kHandleMethods[] = {
     {"layout", l_layout},
     {"pending", l_pending},
     {"rects", l_rects},
+    {"block_macros", l_block_macros},
+    {"unblock_macros", l_unblock_macros},
+    {"macros", l_macros},
     {"poll", l_poll},
     {"release", l_release},
     {NULL, NULL},

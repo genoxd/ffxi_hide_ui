@@ -1,5 +1,5 @@
 // fake_ffximain - a stand-in FFXiMain.dll for the end-to-end harness. Its
-// .text carries the thirty signatures from signatures.h, each
+// .text carries the thirty-three signatures from signatures.h, each
 // at a routine that behaves as far as the engine relies on it: the registry,
 // manager, link5 cache, link5 latch, link5 open and query cancel sites hold
 // the addresses of this image's own data and code, SetPosition writes the
@@ -44,7 +44,16 @@
 // code) is the game's, byte for byte, around three stand-in callees: input
 // suspended while the manager's +0xB4 is 1, a menu up as the picker's callee
 // reads it, and on code 7 with no menu up the main menu's open, counted; its
-// call to the sink is the real call.
+// call to the sink is the real call. The compass draw entry is the game's
+// shape around three stand-in callees: the update counts its calls, the
+// manager's gate answers al 0 (it draws), and the render, reached by the
+// jump, counts its calls and records the anchor it saw; each frame runs it
+// after the update, as the game's does, on the compass object the global
+// names. The macro key gate is the game's shape around stand-in globals and
+// a callee, its body answering al 1; each frame the harness holds a number
+// key (macro_key), a macro fires when the gate, called through its site,
+// says so. The macro object's constructor site, the two copies of its
+// global, is never run.
 
 #define WIN32_LEAN_AND_MEAN
 #include "../core.h"
@@ -77,6 +86,18 @@ uint32_t g_close_frames;               // frames a closed instance outlives its 
 volatile LONG g_box_ticks;
 volatile LONG g_post_reply;
 volatile LONG g_query_waits;
+uint8_t g_compass[0x3C];               // the compass object: state 3, anchor 104,1058, height 42
+uint8_t* g_compass_ptr;                // the game's global naming it
+volatile LONG g_compass_draws;         // the render's calls
+volatile LONG g_compass_updates;       // the update's calls
+uint8_t g_macro_object[0x24];          // the macro key object: +0x0C the bar up, +0x0D the set, +0x18 bar-up
+uint8_t* g_macro_object_ptr;           // the game's global naming it
+volatile LONG g_macro_key;             // set by the harness: a number key is held this frame
+volatile LONG g_macros_fired;          // macros run
+int16_t g_macro_player = 1;            // the word the gate's prologue reads: the player's index
+void* g_macro_table[2];                // its pointer table, indexed by that word
+uint32_t g_macro_world = 0x60;         // the world state the gate compares with 0x60
+uint32_t* g_macro_world_ptr = &g_macro_world;
 
 // What the reply, re-dock and resize routines saw. Written on the game
 // thread; the harness reads it after waiting for frames.
@@ -116,6 +137,8 @@ struct FakeLog {
     void* sink_menu;
     int sink_code;
     int main_menu_opens;        // the routing routine's code 7 with no menu up
+    int compass_x;              // the anchor the compass render saw last
+    int compass_y;
 };
 FakeLog g_log;
 
@@ -168,6 +191,17 @@ struct FakeState {
     volatile LONG* query_waits; // set: the event waits on query's result word
     void* menu_input;           // thiscall (menu; code), ret 4: the sink
     void* menu_routing;         // thiscall (manager; code), ret 4: the routing routine
+    uint8_t* compass;           // the compass object
+    uint8_t** compass_ptr;      // the global naming it
+    void* compass_draw;         // cdecl (), plain ret: the compass draw entry
+    volatile LONG* compass_draws;
+    volatile LONG* compass_updates;
+    uint8_t* macro_object;      // the macro key object
+    uint8_t** macro_object_ptr; // the global naming it
+    void* macro_gate;           // cdecl (), al the answer: the macro key gate
+    uint8_t* macro_ctor_site;   // the constructor site naming the global twice
+    volatile LONG* macro_key;   // set: a number key is held each frame
+    volatile LONG* macros_fired;
 };
 
 void fake_query_confirm();
@@ -203,6 +237,9 @@ void fake_row_hit_test();
 void fake_row_hit_read();
 void fake_menu_sink();
 void fake_menu_routing();
+void fake_compass_draw();
+void fake_macro_gate();
+void fake_macro_ctor_site();
 
 }  // extern "C"
 
@@ -790,6 +827,19 @@ void query_wait() {
     area_close_by_name(key);
 }
 
+// The compass draw entry, as the game's update runs it after its own work.
+void draw_compass() {
+    reinterpret_cast<void (*)()>(&fake_compass_draw)();
+}
+
+// The macro key handler's question before a held number key runs its macro:
+// the gate through its site, al the answer.
+void run_macro_keys() {
+    if (g_macro_key && (reinterpret_cast<uint32_t (*)()>(&fake_macro_gate)() & 0xFF)) {
+        InterlockedIncrement(&g_macros_fired);
+    }
+}
+
 int h_frame(int, int, int, int) {
     const LONG now = InterlockedIncrement(&g_frames);
     for (int i = 0; i < g_dying_count;) {
@@ -811,7 +861,32 @@ int h_frame(int, int, int, int) {
     } else {
         g_query_seen = 0;
     }
+    draw_compass();
+    run_macro_keys();
     return 1;
+}
+
+// The compass draw entry's callees: its update (this = the compass), the
+// manager's gate (this = the manager; al 1 would skip the render), and its
+// render (this = the compass), which records the anchor it drew at.
+void __fastcall h_compass_update(uint8_t*, void*) {
+    InterlockedIncrement(&g_compass_updates);
+}
+
+uint32_t __fastcall h_compass_gate(uint8_t*, void*) {
+    return 0;
+}
+
+void __fastcall h_compass_render(uint8_t* c, void*) {
+    g_log.compass_x = word_at(c, 0x28);
+    g_log.compass_y = word_at(c, 0x2A);
+    InterlockedIncrement(&g_compass_draws);
+}
+
+// The macro key gate's callee (this = the manager): al 1 would say a modal
+// dim or the global hide is up, which here never is.
+uint32_t __fastcall h_macro_manager(uint8_t*, void*) {
+    return 0;
 }
 
 void h_never() {
@@ -924,6 +999,17 @@ __declspec(dllexport) FakeState* fake_state() {
     s.query_waits = &g_query_waits;
     s.menu_input = reinterpret_cast<void*>(&fake_menu_sink);
     s.menu_routing = reinterpret_cast<void*>(&fake_menu_routing);
+    s.compass = g_compass;
+    s.compass_ptr = &g_compass_ptr;
+    s.compass_draw = reinterpret_cast<void*>(&fake_compass_draw);
+    s.compass_draws = &g_compass_draws;
+    s.compass_updates = &g_compass_updates;
+    s.macro_object = g_macro_object;
+    s.macro_object_ptr = &g_macro_object_ptr;
+    s.macro_gate = reinterpret_cast<void*>(&fake_macro_gate);
+    s.macro_ctor_site = reinterpret_cast<uint8_t*>(&fake_macro_ctor_site);
+    s.macro_key = &g_macro_key;
+    s.macros_fired = &g_macros_fired;
     return &s;
 }
 
@@ -1285,13 +1371,78 @@ asm(
     "  .byte 0x66,0x83,0x7c,0x24,0x08,0x07,0x75,0x07,0x8b,0xce\n"
     "  call @h_route_main_menu@8\n"
     "  .byte 0x33,0xc0,0x5e,0xc2,0x04,0x00\n"
+
+    // The compass draw entry (no arguments), plain ret, the game's shape: the
+    // compass through its global, nothing when it is NULL; its update; the
+    // manager's gate, al 1 skipping the render; the render by a jump. Both
+    // je land on the ret, as the game's do.
+    ".p2align 4\n"
+    ".globl _fake_compass_draw\n"
+    "_fake_compass_draw:\n"
+    "  .byte 0x8b,0x0d\n"
+    "  .long _g_compass_ptr\n"
+    "  .byte 0x85,0xc9,0x74,0x1e\n"
+    "  call @h_compass_update@8\n"
+    "  .byte 0xb9\n"
+    "  .long _g_mcb\n"
+    "  call @h_compass_gate@8\n"
+    "  .byte 0x3c,0x01,0x74,0x0b\n"
+    "  .byte 0x8b,0x0d\n"
+    "  .long _g_compass_ptr\n"
+    "  .byte 0xe9\n"
+    "  .long @h_compass_render@8 - (. + 4)\n"
+    "  .byte 0xc3\n"
+
+    // The macro key gate (no arguments, al the answer), the game's shape: the
+    // player index word, its entity by the pointer table, the world state
+    // 0x60 through its pointer, the manager's callee, then a body that says
+    // yes. The je at +12 and both jne land on the tail that says no, as the
+    // game's do.
+    ".p2align 4\n"
+    ".globl _fake_macro_gate\n"
+    "_fake_macro_gate:\n"
+    "  .byte 0x66,0xa1\n"
+    "  .long _g_macro_player\n"
+    "  .byte 0x56,0x33,0xf6,0x66,0x85,0xc0,0x74\n"
+    "  .byte 1f - (. + 1)\n"
+    "  .byte 0x0f,0xbf,0xc0,0x8b,0x34,0x85\n"
+    "  .long _g_macro_table\n"
+    "  .byte 0x8b,0x0d\n"
+    "  .long _g_macro_world_ptr\n"
+    "  .byte 0x83,0x39,0x60,0x0f,0x85\n"
+    "  .long 1f - (. + 4)\n"
+    "  .byte 0xb9\n"
+    "  .long _g_mcb\n"
+    "  call @h_macro_manager@8\n"
+    "  .byte 0x84,0xc0,0x0f,0x85\n"
+    "  .long 1f - (. + 4)\n"
+    "  .byte 0xb0,0x01,0x5e,0xc3\n"
+    "1:\n"
+    "  .byte 0x32,0xc0,0x5e,0xc3\n"
+
+    // The macro subsystem's constructor site, never run: the object's global
+    // written at +15 and again at +23, the two imm32s the engine compares.
+    ".p2align 4\n"
+    ".globl _fake_macro_ctor_site\n"
+    "_fake_macro_ctor_site:\n"
+    "  .byte 0x8b,0x0d\n"
+    "  .long _g_net\n"
+    "  .byte 0x51,0x8b,0xc8\n"
+    "  call _h_never\n"
+    "  .byte 0xa3\n"
+    "  .long _g_macro_object_ptr\n"
+    "  .byte 0xeb,0x06,0x89,0x1d\n"
+    "  .long _g_macro_object_ptr\n"
+    "  .byte 0x6a,0x50\n"
+    "  call _h_never\n"
+    "  .byte 0xc3\n"
 );
 
 namespace {
 
 // A string as the game's text converter writes it: a character is itself
 // less 0x20, so a space is 0; \1 switches to green (-0x102) and \2 back to
-// the default colour (-0x101), \3 is a code the game does not draw (-0x7F),
+// the default color (-0x101), \3 is a code the game does not draw (-0x7F),
 // and \4 and \5 are the two-byte auto-translate brackets EF 27 and EF 28
 // (0x211D, 0x211E). Writes the codes and the 0 after them; returns the count.
 int put_glyphs(uint8_t* at, const char* text) {
@@ -1365,7 +1516,7 @@ void build_world() {
     const char* pieces[] = {"logwindo", "ability", "equip", "menuwind", "query", "buff",
                             "passinpu", "prtyjoin", "link5", "arealist", "scsibori", "delivery",
                             "post1", "post2", "partywin", "playermo", "targetwi", "subwindo",
-                            "dbdelsel"};
+                            "dbdelsel", "mcr1pall", "mcr2pall"};
     for (size_t i = 0; i < sizeof(pieces) / sizeof(pieces[0]); ++i) {
         for (int r = 0; r < kRowCount; ++r) {
             if (strcmp(kRowSpecs[r].name, pieces[i]) == 0) {
@@ -1388,6 +1539,16 @@ void build_world() {
     const uint16_t h = 1080;
     memcpy(g_mcb + 0x80, &w, 2);
     memcpy(g_mcb + 0x82, &h, 2);
+
+    g_compass[0x0D] = 3;
+    put_word(g_compass, 0x28, 104);
+    put_word(g_compass, 0x2A, 1058);
+    put_word(g_compass, 0x2C, 42);
+    g_compass[0x2E] = 1;
+    g_compass_ptr = g_compass;
+
+    g_macro_object_ptr = g_macro_object;
+    g_macro_table[1] = g_mcb;
 }
 
 }  // namespace

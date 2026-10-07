@@ -16,11 +16,14 @@ The client builds its interface out of 369 named windows. You can
 - read what a prompt offers and answer it in the window's place: an NPC's
   choice list, a text entry, a party invite, the linkshell and area lists, the
   delivery box
+- block the game's macro keys so Ctrl+number and Alt+number are yours to bind
 
 This library draws nothing (shameless plug for [ffxi_world_draw](https://github.com/genoxd/ffxi_world_draw)).
 
 Nameplates, damage numbers, the target cursor, the mouse cursor and the
 loading screen's graphics are not windows, and the library does not cover them.
+The compass is not a window either, but the library covers it all the same,
+under the name `compass`: see [The compass](#the-compass).
 
 ## Install
 
@@ -119,6 +122,7 @@ blocking them has consequences:
 | `post1`, `post2` (incoming delivery box; `post2` is its second screen) | the session stays open until `ui:cancel('post1')` (see [Prompts](#prompts)) |
 | `passinpu`, `link5`, `arealist` | the NPC's script waits until you `answer` or `cancel` it (see [Prompts](#prompts)) |
 | `prtyjoin` (the party menu's invite screen) | the invite waits until you `answer` or `cancel` it |
+| `mcr1pall`, `mcr2pall` (the Ctrl and Alt macro bars) | the bar is not drawn, and Enter on it can no longer run a macro; Ctrl+number and Alt+number still run them, since the macro keys never go through the bar (see [Macro keys](#macro-keys)) |
 
 Shops, the auction house (`auc1`), `inspect`, the target window, the cast bar
 (`casttime`) and the map windows are fine to block. Windows in neither list
@@ -192,6 +196,55 @@ equipment window opened outside the main menu closes again at once, and you see
 `opened` then `closed`. The prompts listed under [Prompts](#prompts) can only
 be opened by the game; use `cancel` to close them.
 
+## The compass
+
+The compass in the lower left, with the Vana'diel clock and the weather icon,
+is not one of the game's windows. The client draws it on its own, from the
+routine that runs the interface each frame. The library reaches it all the
+same, under the name `compass`:
+
+```lua
+ui:hide('compass')
+ui:unhide('compass')
+ui:move('compass', 200, 900)    -- top-left corner of its box
+ui:reset('compass')
+```
+
+Hidden, it is not drawn at all. Its box is 88 by 42 and sits above the
+chat log; `ui:info('compass').rect` says where, and `info` has no cursor or
+elements for it.
+
+The game puts the compass back above the log every time the log's top edge
+moves, and shows it again when whatever hid it ends: a cutscene, or a
+full-screen window like the map. A position you set is therefore written
+before every draw, so it holds until you reset it. The `opened` and
+`closed` events fire as the game hides the compass and brings it back.
+
+The game shows and hides the compass itself, every frame, so the other
+verbs fold into hide: `block` and `close` hide it, `unblock` and `open`
+bring it back, and each holds until you undo it, as `hide` does. It has no
+rows or frame to size, so `resize` is accepted and does nothing. The clock
+inside it is the game's own `/clock on` and `/clock off`.
+
+## Macro keys
+
+```lua
+ui:block_macros()     -- Ctrl+number and Alt+number run nothing, and the macro bars do not open
+ui:unblock_macros()   -- your hold dropped; still blocked while another addon holds one
+ui:macros()           -- { blocked = true, blocked_by = { 'myaddon' }, mine = true }
+```
+
+The game runs a macro straight from the key, without any window, so this
+is a verb of its own rather than a window name.
+
+While the block holds, Ctrl and Alt do nothing at all: no macro runs and
+no bar opens, so the keys are yours to bind through Windower. A bar that
+is open when you call `block_macros` is closed.
+
+The block is a hold, like a hide: it lasts until you call `unblock_macros`
+or your addon unloads, and with two addons holding one it lasts until both
+let go. `hideui.status().macros_blocked` says whether any addon holds one.
+
 ## Events
 
 ```lua
@@ -238,8 +291,7 @@ p.elements            -- while open: a list of {type = 'item', x = 44, y = 836, 
                       --   type is 'frame', 'item', 'cursor' or 'other'; the other fields only where the part has them
 p.hidden_by, p.blocked_by   -- names of the addons holding a hide or a block on it
 p.blockable           -- false only for query
-p.moved, p.resized    -- your addon's position or size is on it
-p.resize              -- {holds = 'reopen'|'trigger'|'frame', min_rows, max_rows}: how long a size lasts, and the row range if it has one
+p.resize              -- {holds = 'reopen'|'trigger'|'frame'|'none', min_rows, max_rows}: how long a size lasts, and the row range if it has one
 p.memory              -- the remembered position and size, as remembered() lists them
 p.covered             -- open but under another window
 p.docked              -- the game keeps it against another window
@@ -247,7 +299,7 @@ p.detail              -- internals; present only while hideui.debug(true) is on 
 
 ui:opened()           -- { 'logwindo', 'partywin', ... }: every window open now
 ui:focused()          -- the name of the window with the keyboard, or false
-ui:list()             -- every window's open/hidden/blocked state, keyed by name
+ui:list()             -- every window's open/hidden/blocked/moved/resized state, keyed by name
 ui:groups()           -- { chat_log = {anchor, anchor_open, origin, members, waiting}, ... }
 ui:remembered()       -- { targetwi = {position = {x, y, owner, mine}, size = {rows | w, h, owner, mine}}, ... }
 ui:rects()            -- { logwindo = {x = 16, y = 898, w = 1774, h = 166}, ... }: every open window's frame
@@ -398,7 +450,8 @@ a reason and the list of those entries, and applies the rest.
 ## More than one addon
 
 Several addons can use the library at once. Hides add up: a window hidden by
-two addons stays hidden until both unhide it. Moves do not: the library
+two addons stays hidden until both unhide it. So do macro blocks: a block
+holds until every addon holding one lets go. Moves do not: the library
 keeps one position per window, so a window moved by two addons sits where
 the later move put it, and when that addon unloads the window goes back to
 where the game puts it, not to the earlier addon's spot. A `blocked` event
@@ -420,9 +473,9 @@ changed the code it relies on. Show the reason and carry on without the
 handle.
 
 ```lua
-hideui.version()      -- 'hideui 0.7.5'
+hideui.version()      -- 'hideui 0.9.0'
 hideui.debug(true)    -- print this addon's library failures to chat while you develop; otherwise it prints nothing
-hideui.status()       -- .ok (installed), .ui.w, .ui.h, .dropped (every addon's), and .hidden, .blocked, .moved, .resized: names
+hideui.status()       -- .ok (installed), .ui.w, .ui.h, .dropped (every addon's), .macros_blocked, and .hidden, .blocked, .moved, .resized: names
 ui:status()           -- the same, with .dropped for this handle only
 ```
 
@@ -476,11 +529,12 @@ that one with the game closed.
 
 ## Under the hood
 
-The library finds the client's window table and a few of its own routines in
-the running game, hooks the one that opens windows and the one that runs the
-UI each frame, and makes every change from inside the game's own thread.
-If a game patch changes any of that, nothing installs and `new` returns the
-reason.
+The library finds the client's window table and a few of the client's own
+routines in the running game, and hooks seven of those routines: opening,
+showing and closing a window, the per-frame UI update, the mouse mode, the
+key routing and the compass draw. It makes every change from inside the
+game's own thread. If a game patch changes any of that, nothing installs
+and `new` returns the reason.
 
 Building it: [`engine/README.md`](engine/README.md) and
 [`daemon/README.md`](daemon/README.md).
@@ -563,6 +617,7 @@ A blank means it has not been identified yet; the name is still valid.
 | `comgenre` | search comment category |
 | `comment` | search comment editor |
 | `commenu` | friends and emotes menu |
+| `compass` | the compass with the clock and weather; not a window, see [The compass](#the-compass) |
 | `comyn` | confirm yes/no |
 | `conf11l` | log routing: chat |
 | `conf11m` | log routing menu |
@@ -606,7 +661,7 @@ A blank means it has not been identified yet; the name is still valid.
 | `friend` | friend list |
 | `fulllog` |  |
 | `fxfilter` | effects filter |
-| `gaugewin` |  |
+| `gaugewin` | HP/MP/TP block shown while engaged |
 | `gift` |  |
 | `gmtell` | GM tell window |
 | `guide00` | help guide |
@@ -683,7 +738,7 @@ A blank means it has not been identified yet; the name is still valid.
 | `magic` | spell list |
 | `magselec` |  |
 | `map0` | map menu |
-| `mapframe` | minimap with clock and weather |
+| `mapframe` | frame of the map window |
 | `maplist` | map list (other areas) |
 | `mapscan` | wide scan actions |
 | `mapv2` | map marker actions |

@@ -16,12 +16,12 @@ FLAGS=(-std=c++17 -O2 -Wall -Wextra -Wpedantic)
 
 i686-w64-mingw32-g++ "${FLAGS[@]}" -c -o hideui_daemon.o hideui_daemon.cpp
 
-# No dynamic initialisers, no exit-time work. GCC names a translation unit's
-# initialiser _GLOBAL__sub_I_*; a non-trivial destructor on a namespace-scope
+# No dynamic initializers, no exit-time work. GCC names a translation unit's
+# initializer _GLOBAL__sub_I_*; a non-trivial destructor on a namespace-scope
 # object shows up as a reference to atexit or __cxa_atexit.
 symbols=$(i686-w64-mingw32-nm hideui_daemon.o)
 if grep -q '_GLOBAL__sub_I' <<< "$symbols"; then
-    echo "BUILD FAILED: the daemon has a static initialiser"
+    echo "BUILD FAILED: the daemon has a static initializer"
     grep '_GLOBAL__sub_I' <<< "$symbols"
     exit 1
 fi
@@ -56,6 +56,6 @@ fi
 
 echo "built  : $(pwd)/hideui_daemon.dll"
 echo "export : hu_daemon_acquire (the only one)"
-echo "statics: no dynamic initialisers, no exit-time registrations"
+echo "statics: no dynamic initializers, no exit-time registrations"
 echo "md5    : $(md5sum hideui_daemon.dll | cut -d' ' -f1)"
 echo "NOT deployed. The daemon ships in each addon's own libs/ folder."
