@@ -113,6 +113,7 @@ const size_t kPostState = 0x14;         // post1's controller; request-close rea
 const size_t kPartyName = 0x14;         // prtyjoin's controller: the inviter, 16 bytes
 const size_t kPartyNameBytes = 16;
 const size_t kPartyKind = 1;            // the byte after the pending flag: 1 party, 0 alliance
+const size_t kAbilityCategory = 0x64;   // ability's controller, int32: the list its window shows; 1 job abilities, 2 pet commands, 3 weapon skills (20 in Monstrosity), 4 job traits
 const size_t kMcbUiW = 0x80;
 const size_t kMcbUiH = 0x82;
 const size_t kMcbActive = 0x54;
@@ -460,6 +461,11 @@ struct Engine {
     uint8_t compass_shown;
     volatile LONG compass_home;
     volatile LONG compass_home_valid;
+
+    // The kind the ability opener was called with, while its open of
+    // ability is in flight: the opened event's category. Game thread only.
+    int32_t ability_pending_kind;
+    uint8_t ability_pending;
 
     const Command* current;         // the command the drain is carrying out, on `current_thread`
     DWORD current_thread;
@@ -1907,6 +1913,14 @@ inline const uint8_t* controller_at(const Engine& e, int n) {
     return slot ? *slot : NULL;
 }
 
+// An event on window n; on ability, with the list its controller holds at
+// kAbilityCategory: the one the window shows, or showed last.
+inline uint32_t window_event(const Engine& e, int type, int n) {
+    const uint8_t* ctl = n >= 0 && n == e.inv.ability ? controller_at(e, n) : NULL;
+    return ctl ? pack_event_category(type, n, static_cast<int32_t>(rd32(ctl, kAbilityCategory)))
+               : pack_event(type, n);
+}
+
 inline void watch_init(Engine& e) {
     if (!e.watch_ready) {
         e.watch_delivery = static_cast<int16_t>(e.inv.find_exact("delivery"));
@@ -2027,7 +2041,7 @@ inline void drain(Engine& e) {
     for (int n = 0; n < e.inv.count; ++n) {
         if (e.covered[n] && !open_menu(e, n, NULL)) {
             e.covered[n] = 0;
-            e.events.post(pack_event(kEvClosed, n));
+            e.events.post(window_event(e, kEvClosed, n));
         }
     }
     watch_cursors(e);
@@ -2077,6 +2091,13 @@ inline void __cdecl hook_open_post(HuFrame* f) {
     if (e.place[n].applied_hidden) {
         menu[kMenuMouse] = 0;
     }
+    // The opener stores its kind in the controller only after this open
+    // returns, so the opened event takes the kind the opener's pre kept.
+    uint32_t opened = pack_event(kEvOpened, n);
+    if (n == e.inv.ability && e.ability_pending) {
+        opened = pack_event_category(kEvOpened, n, e.ability_pending_kind);
+        e.ability_pending = 0;
+    }
     const int waiting = waiting_on(e, n);
     const int game_x = rd16(menu, kMenuOrigin);
     const int game_y = rd16(menu, kMenuOrigin + 2);
@@ -2085,7 +2106,7 @@ inline void __cdecl hook_open_post(HuFrame* f) {
         carry_waiting(e, waiting, n, menu, game_x, game_y);
     }
     e.covered[n] = 0;
-    e.events.post(pack_event(kEvOpened, n));
+    e.events.post(opened);
 }
 
 // The show path, arg (menu): a menu becoming visible. Inside an open of the
@@ -2100,7 +2121,7 @@ inline int __cdecl hook_show_pre(HuFrame* f) {
     const int n = name_of_menu(e, menu);
     if (n >= 0 && !e.opens.contains(GetCurrentThreadId(), static_cast<int16_t>(n))) {
         e.covered[n] = 0;
-        e.events.post(pack_event(kEvUncovered, n));
+        e.events.post(window_event(e, kEvUncovered, n));
     }
     return 0;
 }
@@ -2119,7 +2140,7 @@ inline int __cdecl hook_close_pre(HuFrame* f) {
     if (n >= 0) {
         const bool closing = menu[kMenuClosing] != 0;
         e.covered[n] = closing ? 0 : 1;
-        e.events.post(pack_event(closing ? kEvClosed : kEvCovered, n));
+        e.events.post(window_event(e, closing ? kEvClosed : kEvCovered, n));
     }
     return 0;
 }
@@ -2199,6 +2220,34 @@ inline int __cdecl hook_macro_gate_pre(HuFrame* f) {
     }
     f->result = 0;
     return 1;
+}
+
+// The ability opener, args (kind, flag, extra), nothing returned. With the
+// ability window blocked whole, or its list `kind` blocked, the original
+// does not run: nothing opens, abisortw included, and blocked{ability}
+// carries the kind. Else the kind is kept for the opened event the open of
+// ability inside the original posts, and the post forgets it once the
+// original has returned, opened or not.
+inline int __cdecl hook_ability_open_pre(HuFrame* f) {
+    Engine& e = *static_cast<Engine*>(f->user);
+    const int n = e.inv.ability;
+    if (n < 0) {
+        return 0;
+    }
+    const int32_t kind = static_cast<int32_t>(f->args[0]);
+    const bool listed = kind >= 0 && kind < kCategoryBits && (e.holds.ability_want & (1L << kind)) != 0;
+    if ((e.holds.want[n] & kWantBlocked) || listed) {
+        e.events.post(pack_event_category(kEvBlocked, n, kind));
+        return 1;
+    }
+    e.ability_pending_kind = kind;
+    e.ability_pending = 1;
+    return 0;
+}
+
+inline void __cdecl hook_ability_open_post(HuFrame* f) {
+    Engine& e = *static_cast<Engine*>(f->user);
+    e.ability_pending = 0;
 }
 
 }  // namespace hu

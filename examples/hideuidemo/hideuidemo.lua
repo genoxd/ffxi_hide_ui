@@ -2,7 +2,9 @@
 --
 --   //hideuidemo help                        every command, one line each
 --   //hideuidemo hide|unhide <name>          invisible and open, takes no input (typed text still reaches passinpu) / back
---   //hideuidemo block|unblock <name>        closed if open, never opens again (implies hide) / back
+--   //hideuidemo block|unblock <name> [category]  closed if open, never opens again (implies hide) / back;
+--                                         ability alone takes a category, one of its lists: job_abilities,
+--                                         pet_commands, weapon_skills, job_traits or a number
 --   //hideuidemo move <name> <x> <y>         put a window's frame top-left at x,y (undocks it)
 --   //hideuidemo group <group> <x> <y>       move chat_log, party_list or target_window with what is docked to it;
 --                                         what it carries follows; with the anchor closed, at its next open
@@ -34,8 +36,9 @@
 --   //hideuidemo macros                      whether the macro keys are blocked, and by whom
 --   //hideuidemo layout                      what this addon placed, saved to data/settings.xml
 --   //hideuidemo apply                       put the saved layout back
---   //hideuidemo events on [name]            print opened/closed/covered/uncovered/blocked/cursor as they
---                                         happen, for one window, or for every window and pending ones too
+--   //hideuidemo events on [name [category]]  print opened/closed/covered/uncovered/blocked/cursor as they
+--                                         happen, for one window, one list of ability, or for every window
+--                                         and pending ones too
 --   //hideuidemo events off                  stop printing them
 --   //hideuidemo debug on|off                the library's own diagnostics, and debug: lines in info and status
 --   //hideuidemo status                      engine state and what it holds
@@ -101,6 +104,13 @@ local function print_problem(event)
     end
 end
 
+-- The window, and on ability the list the event is about, by its name or
+-- number.
+local function event_target(event)
+    local list = event.category_name or event.category
+    return list and ('%s %s'):format(event.name, tostring(list)) or event.name
+end
+
 local function print_event(event)
     if event.event == 'pending' then
         say(207, ('pending %s %s'):format(event.what, event.pending and 'appeared' or 'cleared'))
@@ -109,9 +119,10 @@ local function print_event(event)
     elseif event.event == 'cursor' then
         say(207, ('cursor %s row %d'):format(event.name, event.row))
     elseif event.event == 'blocked' and type(event.by) == 'table' and #event.by > 0 then
-        say(207, ('blocked %s (by %s%s)'):format(event.name, table.concat(event.by, ', '), event.mine and ', mine' or ''))
+        say(207, ('blocked %s (by %s%s)'):format(event_target(event), table.concat(event.by, ', '),
+            event.mine and ', mine' or ''))
     else
-        say(207, ('%s %s'):format(event.event, event.name))
+        say(207, ('%s %s'):format(event.event, event_target(event)))
     end
 end
 
@@ -127,6 +138,27 @@ end
 if ui then
     ui:on('error', print_problem)
     ui:on('resync', print_problem)
+end
+
+-- closeon: close a window on its opened event, for one of its lists only
+-- when a category is given. The window is drawn once before the event
+-- arrives, which is what this is for showing.
+local closeon = {}
+
+local function close_on_open(event)
+    local want = closeon[event.name]
+    if want == nil then
+        return
+    end
+    if want ~= true then
+        local p = call('info', event.name)
+        if not p or p.category ~= want then
+            return
+        end
+    end
+    local ok, why = call('close', event.name)
+    say(207, ok and ('closed %s on its opened event'):format(event.name)
+        or ('closeon %s failed: %s'):format(event.name, tostring(why)))
 end
 
 -- What a block of these windows does to the game. cancel undoes each of them
@@ -246,6 +278,10 @@ local function show_info(name)
     end
     if p.open then
         say(207, ('  rect %s, %s'):format(rect(p.rect), cursor_text(p)))
+        if p.category then
+            say(207, p.category_name and ('  category %d (%s)'):format(p.category, p.category_name)
+                or ('  category %d'):format(p.category))
+        end
         local count = #p.elements
         say(207, ('  %d elements%s%s'):format(count, p.elements_truncated and ', truncated' or '',
             count > shown_elements and (' (first %d of %d)'):format(shown_elements, count) or ''))
@@ -266,6 +302,10 @@ local function show_info(name)
         end
         if d.live_layer then
             say(207, ('debug: live layer %d'):format(d.live_layer))
+        end
+        if d.layout then
+            say(207, ('debug: template %s, controller %s, state %s'):format(tostring(d.layout),
+                tostring(d.controller), tostring(d.state)))
         end
     end
 end
@@ -437,7 +477,8 @@ end
 local help = {
     'help                    every command, one line each',
     'hide|unhide <name>      invisible and open, takes no input (typed text still reaches passinpu) / back',
-    'block|unblock <name>    closed if open, never opens again (implies hide) / back',
+    'block|unblock <name> [category]  closed if open, never opens again (implies hide) / back; ability alone takes'
+        .. ' a category: job_abilities, pet_commands, weapon_skills, job_traits or a number',
     'move <name> <x> <y>     put a window\'s frame top-left at x,y (undocks it)',
     'group <group> <x> <y>   move chat_log, party_list or target_window with what is docked to it',
     'reset <name> [position|size]  back to the game\'s placement and size, only what this addon placed',
@@ -461,8 +502,10 @@ local help = {
     'macros                  whether the macro keys are blocked, and by whom',
     'layout                  save what this addon placed to data/settings.xml',
     'apply                   put the saved layout back',
-    'events on [name]        print events, cursor moves too, as they happen, for every window or one',
+    'events on [name [category]]  print events, cursor moves too, as they happen, for every window, one, or one'
+        .. ' list of ability',
     'events off              stop printing them',
+    'closeon <name> [n] on|off  close the window on its opened event, only for list n of ability when given',
     'debug on|off            the library\'s diagnostics, and debug: lines in info and status',
     'status                  engine state and what it holds',
 }
@@ -524,11 +567,20 @@ windower.register_event('addon command', function(cmd, ...)
 
     elseif cmd == 'hide' or cmd == 'unhide' or cmd == 'block' or cmd == 'unblock'
             or cmd == 'open' or cmd == 'close' then
-        if not args[1] then say(123, 'usage: //hideuidemo ' .. cmd .. ' <name>') return end
+        local lists = cmd == 'block' or cmd == 'unblock'
+        if not args[1] then
+            say(123, 'usage: //hideuidemo ' .. cmd .. ' <name>' .. (lists and ' [category]' or '')) return
+        end
         local name = args[1]:lower()
-        local done, err = call(cmd, name)
-        report(done, err, cmd .. ' ' .. name)
-        if done and cmd == 'block' and block_consequence[name] then
+        local category = lists and args[2] and args[2]:lower() or nil
+        local done, err
+        if category then
+            done, err = call(cmd, name, category)
+        else
+            done, err = call(cmd, name)
+        end
+        report(done, err, cmd .. ' ' .. name .. (category and (' ' .. category) or ''))
+        if done and cmd == 'block' and not category and block_consequence[name] then
             say(207, ('  %s; way out: //hideuidemo %s %s'):format(block_consequence[name],
                 name == 'trade' and 'unblock' or 'cancel', name))
         end
@@ -703,17 +755,40 @@ windower.register_event('addon command', function(cmd, ...)
             end
         end
 
+    elseif cmd == 'closeon' then
+        local name = args[1] and args[1]:lower()
+        local n = tonumber(args[2])
+        local v = (n and args[3] or args[2] or ''):lower()
+        if not name or (v ~= 'on' and v ~= 'off') then
+            say(123, 'usage: //hideuidemo closeon <name> [n] on|off') return
+        end
+        ui:off('opened', name, close_on_open)
+        closeon[name] = nil
+        if v == 'on' then
+            closeon[name] = n or true
+            local done, err = call('on', 'opened', name, close_on_open)
+            if not done then say(123, 'closeon failed: ' .. tostring(err)) return end
+        end
+        say(207, ('closeon %s%s %s'):format(name, n and (' list ' .. n) or '', v))
     elseif cmd == 'events' then
         local v = (args[1] or ''):lower()
-        if v ~= 'on' and v ~= 'off' then say(123, 'usage: //hideuidemo events on [name] | events off') return end
+        if v ~= 'on' and v ~= 'off' then
+            say(123, 'usage: //hideuidemo events on [name [category]] | events off') return
+        end
         stop_events()
         if v == 'off' then
             say(207, 'events off')
             return
         end
         local window = args[2] and args[2]:lower()
+        local category = window and args[3] and args[3]:lower() or nil
         for _, event in ipairs(window_events) do
-            local done, err = call('on', event, window, print_event)
+            local done, err
+            if category then
+                done, err = call('on', event, window, category, print_event)
+            else
+                done, err = call('on', event, window, print_event)
+            end
             if not done then
                 stop_events()
                 say(123, 'events on failed: ' .. tostring(err))
@@ -725,7 +800,7 @@ windower.register_event('addon command', function(cmd, ...)
         end
         local s = call('status')
         local dropped = s and s.dropped or 0
-        say(207, ('events on: %s%s'):format(window or 'every window, and pending',
-            dropped > 0 and (' (' .. dropped .. ' dropped so far)') or ''))
+        say(207, ('events on: %s%s%s'):format(window or 'every window, and pending',
+            category and (' ' .. category) or '', dropped > 0 and (' (' .. dropped .. ' dropped so far)') or ''))
     end
 end)

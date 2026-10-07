@@ -55,6 +55,12 @@
 // handle: the gate hook's pre answers no while any handle holds it, the
 // block's command closes a bar the handler has up and zeroes the object's
 // bar bytes as the handler's own close does, and a null object is safe.
+// 0.10.0's own: the ability opener's hooks: the pre refuses a kind a handle
+// blocks as a category, or every kind while the window is blocked whole,
+// posting blocked with the kind, else keeps the kind for the opened event
+// the open inside the routine posts, which the post forgets; closed,
+// covered and uncovered on ability carry the controller's list; the
+// category holds counted once per handle and dropped by a release.
 
 #include "../signatures.h"
 #include "fake_glyph_convert.h"
@@ -1151,13 +1157,25 @@ int main() {
             "the 0.9.0 signatures parse: the macro key gate's 53 bytes, the word of mov ax at +2 and the manager of"
             " mov ecx at +40 masked, its cmp with 0x60 and its call; the constructor site's 30, the object's global"
             " the masked imm32 of mov at +15 and again at +23, before the push 0x50");
+        const size_t opener = parse_signature(kSigAbilityOpen, lb, lm, sizeof(lb));
+        const bool opener_ok = opener == 53 && kAbilityOpenGlobal == 1 && kAbilityOpenManagerImm == 29
+            && kAbilityOpenKeyImm == 43 && lb[0] == 0xa1 && lb[5] == 0x85 && lb[6] == 0xc0 && lb[7] == 0x74
+            && lb[9] == 0x53 && lb[14] == 0x80 && lb[15] == 0xfb && lb[16] == 0x01 && lb[17] == 0x75
+            && lb[23] == 0x68 && lb[28] == 0xb9 && lb[33] == 0xe8 && lb[42] == 0x68 && lb[47] == 0xb9
+            && lb[52] == 0xe8 && strcmp(lm, "x????xxx?xxxxxxxxx?xxxxx????x????x????xxxxx????x????x") == 0;
+        check(opener_ok,
+            "the 0.10.0 signature parses: the ability opener's 53 bytes, its global the masked imm32 of mov eax at"
+            " +1, the two key pushes' imm32s at +24 and +43 and the manager's of mov ecx at +29 and +48 masked, the"
+            " je and the jne displacements masked, cmp bl,1 and the two calls exact");
     }
     {
         static const char* const prologues[kSiteCount] = {
             "8b 44 24 04 83 ec 20", "83 ec 14 53 55 56 57",
             "53 56 8b 74 24 0c 33 db 57", "53 55 56 8b 74 24 10 32 db 57",
-            "56 8b f1 b9 ?? ?? ?? ??", "51 55 56 8b f1 57", "8b 0d ?? ?? ?? ??", "66 a1 ?? ?? ?? ??"};
-        static const uint32_t args[kSiteCount] = {12, 0, 20, 4, 0, 4, 0, 0};
+            "56 8b f1 b9 ?? ?? ?? ??", "51 55 56 8b f1 57", "8b 0d ?? ?? ?? ??", "66 a1 ?? ?? ?? ??",
+            "a1 ?? ?? ?? ??"};
+        static const uint32_t args[kSiteCount] = {12, 0, 20, 4, 0, 4, 0, 0, 12};
+        static const uint32_t pops[kSiteCount] = {1, 1, 1, 1, 1, 1, 1, 1, 0};
         bool ok = true;
         for (int i = 0; i < kSiteCount; ++i) {
             uint8_t sb[64];
@@ -1167,27 +1185,31 @@ int main() {
             parse_signature(kSites[i].signature, sb, sm, sizeof(sb));
             const size_t pl = parse_signature(prologues[i], pb, pm, sizeof(pb));
             ok = ok && pl == kSites[i].prologue && memcmp(sb, pb, pl) == 0
-                && kSites[i].arg_bytes == args[i] && kSites[i].pre != NULL;
+                && kSites[i].arg_bytes == args[i] && kSites[i].callee_pops == pops[i] && kSites[i].pre != NULL;
             const uint32_t imm = kSites[i].manager_imm;
             for (size_t k = 0; k < pl; ++k) {
                 const bool in_imm = (imm && k >= imm && k < imm + 4)
                     || (i == kSiteCompassDraw && k >= kCompassDrawGlobal && k < kCompassDrawGlobal + 4)
-                    || (i == kSiteMacroGate && k >= kMacroGateGlobal && k < kMacroGateGlobal + 4);
+                    || (i == kSiteMacroGate && k >= kMacroGateGlobal && k < kMacroGateGlobal + 4)
+                    || (i == kSiteAbilityOpen && k >= kAbilityOpenGlobal && k < kAbilityOpenGlobal + 4);
                 ok = ok && sm[k] == (in_imm ? '?' : 'x');
             }
-            ok = ok && (imm == 0 || imm + 4 <= pl || i == kSiteCompassDraw || i == kSiteMacroGate);
+            ok = ok && (imm == 0 || imm + 4 <= pl || i == kSiteCompassDraw || i == kSiteMacroGate
+                        || i == kSiteAbilityOpen);
         }
         check(ok && kSites[kSiteMouseMode].manager_imm == 4 && kSites[kSiteMouseMode].post == NULL
                 && kSites[kSiteMenuInput].manager_imm == 0 && kSites[kSiteMenuInput].post == NULL
                 && kSites[kSiteCompassDraw].manager_imm == 16 && kSites[kSiteCompassDraw].post == NULL
                 && kSites[kSiteMacroGate].manager_imm == 40 && kSites[kSiteMacroGate].post == NULL
-                && kSiteMacroGate == kSiteCount - 1,
+                && kSites[kSiteAbilityOpen].manager_imm == 29 && kSites[kSiteAbilityOpen].post != NULL
+                && kSiteAbilityOpen == kSiteCount - 1,
             "hooked prologues: open 7/12, ui_update 7/0, staged_close 9/20, show_path 10/4, menu_input 6/4, exact"
             " bytes; mouse_mode 8/0, exact but for the manager's imm32 at +4, which the engine fills in;"
             " compass_draw 6/0, exact but for the compass global's imm32 at +2, which the engine reads out of the"
             " entry's +31 and fills in, the manager's at +16 past the prologue; macro_gate 6/0, exact but for the"
             " word its mov ax reads at +2, which the engine reads out of the hit and fills in, the manager's at +40"
-            " past the prologue");
+            " past the prologue; ability_open 5/12, the caller popping, exact but for the global its mov eax reads"
+            " at +1, read out of the hit the same way, the manager's at +29 past the prologue, and a post");
     }
     {
         static uint8_t text[8192];
@@ -1798,6 +1820,108 @@ int main() {
             " written and nothing fails");
         macro[kMacroBar] = 0;
         macro[kMacroBarUp] = 0;
+    }
+
+    // the ability opener: its pre refuses a kind a handle blocks as a
+    // category, or every kind while the window is blocked whole, posting
+    // blocked{ability} with the kind; else it keeps the kind for the opened
+    // event the open of ability inside the routine posts, and the post
+    // forgets it. closed, covered and uncovered carry the controller's list.
+    {
+        const int a = name("ability");
+        uint8_t* actl = controller("ability");
+        if (!actl) {
+            actl = give_controller("ability", vt_self);
+        }
+        wr32(actl, kAbilityCategory, 0);
+        events(&cursor, ev, 64);
+        uint32_t args[3] = {4, 0, 1};
+        HuFrame f;
+        memset(&f, 0, sizeof(f));
+        f.args = args;
+        f.user = &g_e;
+        g_e.ability_pending = 0;
+        const bool kept = a >= 0 && g_e.inv.ability == a && hook_ability_open_pre(&f) == 0 && g_e.ability_pending == 1
+            && g_e.ability_pending_kind == 4 && events(&cursor, ev, 64) == 0;
+        uint8_t* menu = open_now("ability");
+        int n = events(&cursor, ev, 64);
+        const bool stamped = menu != NULL && n == 1 && is_event(ev[0], kEvOpened, "ability")
+            && event_has_category(ev[0]) && event_category(ev[0]) == 4 && g_e.ability_pending == 0;
+        wr32(actl, kAbilityCategory, 4);
+        uint8_t* again = open_now("ability");
+        n = events(&cursor, ev, 64);
+        const bool plain = again == menu && n == 1 && is_event(ev[0], kEvOpened, "ability")
+            && !event_has_category(ev[0]);
+        hook_ability_open_pre(&f);
+        hook_ability_open_post(&f);
+        open_now("ability");
+        n = events(&cursor, ev, 64);
+        const bool forgotten = g_e.ability_pending == 0 && n == 1 && is_event(ev[0], kEvOpened, "ability")
+            && !event_has_category(ev[0]);
+        check(kept && stamped && plain && forgotten,
+            "the opener's pre with nothing blocked runs the original and keeps kind 4; the open of ability inside"
+            " it posts opened{ability} carrying 4 and forgets the kind; an open of ability from anywhere else"
+            " carries none, and so does one after the opener's post ran with no open inside");
+
+        wr32(actl, kAbilityCategory, 2);
+        uint32_t margs[1] = {reinterpret_cast<uint32_t>(menu)};
+        HuFrame m;
+        memset(&m, 0, sizeof(m));
+        m.args = margs;
+        m.user = &g_e;
+        menu[kMenuClosing] = 0;
+        hook_close_pre(&m);
+        n = events(&cursor, ev, 64);
+        const bool covered = n == 1 && is_event(ev[0], kEvCovered, "ability") && event_category(ev[0]) == 2
+            && g_e.covered[a];
+        hook_show_pre(&m);
+        n = events(&cursor, ev, 64);
+        const bool uncovered = n == 1 && is_event(ev[0], kEvUncovered, "ability") && event_category(ev[0]) == 2;
+        menu[kMenuClosing] = 1;
+        hook_close_pre(&m);
+        n = events(&cursor, ev, 64);
+        const bool closed = n == 1 && is_event(ev[0], kEvClosed, "ability") && event_category(ev[0]) == 2;
+        menu[kMenuClosing] = 0;
+        check(covered && uncovered && closed,
+            "covered, uncovered and closed on ability carry the list its controller holds, 2");
+        run(cmd(kOpClose, "ability", 0, 0, s1, gen1));
+        events(&cursor, ev, 64);
+
+        g_e.holds.set_ability(h1, 2, true);
+        g_e.holds.set_ability(h1, 2, true);
+        const bool once = g_e.holds.ability_block_count[2] == 1 && g_e.holds.ability_want == (1L << 2)
+            && h1.ability_block == (1u << 2) && g_e.holds.want[a] == 0;
+        args[0] = 2;
+        g_e.ability_pending = 0;
+        const bool refused = hook_ability_open_pre(&f) == 1 && g_e.ability_pending == 0
+            && events(&cursor, ev, 64) == 1 && is_event(ev[0], kEvBlocked, "ability") && event_category(ev[0]) == 2;
+        args[0] = 1;
+        const bool other = hook_ability_open_pre(&f) == 0 && g_e.ability_pending == 1 && g_e.ability_pending_kind == 1
+            && events(&cursor, ev, 64) == 0;
+        hook_ability_open_post(&f);
+        g_e.holds.set_ability(h2, 20, true);
+        args[0] = 20;
+        const bool twenty = hook_ability_open_pre(&f) == 1 && events(&cursor, ev, 64) == 1
+            && is_event(ev[0], kEvBlocked, "ability") && event_category(ev[0]) == 20;
+        g_e.holds.set(h1, a, kHoldBlock, true);
+        args[0] = 1;
+        const bool whole = hook_ability_open_pre(&f) == 1 && events(&cursor, ev, 64) == 1
+            && is_event(ev[0], kEvBlocked, "ability") && event_category(ev[0]) == 1;
+        g_e.holds.set(h1, a, kHoldBlock, false);
+        g_e.holds.release(h1, g_e.inv.count);
+        const bool released = h1.ability_block == 0 && g_e.holds.ability_block_count[2] == 0
+            && g_e.holds.ability_want == (1L << 20) && h2.ability_block == (1u << 20);
+        g_e.holds.release(h2, g_e.inv.count);
+        args[0] = 2;
+        const bool free_again = g_e.holds.ability_want == 0 && g_e.holds.ability_block_count[20] == 0
+            && hook_ability_open_pre(&f) == 0 && events(&cursor, ev, 64) == 0;
+        hook_ability_open_post(&f);
+        drain(g_e);
+        check(once && refused && other && twenty && whole && released && free_again,
+            "a category hold, counted once however often one handle sets it, has the pre refuse that kind alone,"
+            " blocked{ability} carrying it, while another kind runs; a hold on 20 refuses 20; the whole-window"
+            " block refuses every kind through the opener, blocked carrying the kind; a release drops a handle's"
+            " category holds and leaves the other handle's");
     }
 
     // the unhide gives +0x77 back as the hide found it on the live instance;

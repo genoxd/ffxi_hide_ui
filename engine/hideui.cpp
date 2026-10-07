@@ -1,6 +1,6 @@
 // _HideUI - the hideui engine. Resolves FFXiMain by signature, hooks six of
-// its menu routines, the compass draw and the macro key gate through
-// hideui_daemon.dll, and serves hideui.lua.
+// its menu routines, the ability opener, the compass draw and the macro key
+// gate through hideui_daemon.dll, and serves hideui.lua.
 //
 // Every addon ships its own copy. The first copy to install in a client is
 // the resident and publishes a table of its operations; every later copy
@@ -675,7 +675,7 @@ bool site_matches(int32_t id, const SiteSpec& spec, const uint8_t* prologue, HuS
         return false;
     }
     return info->prologue_bytes == spec.prologue && info->stack_arg_bytes == spec.arg_bytes
-        && info->callee_pops == 1 && memcmp(info->original, prologue, spec.prologue) == 0;
+        && info->callee_pops == spec.callee_pops && memcmp(info->original, prologue, spec.prologue) == 0;
 }
 
 // A candidate whose first bytes are already a jump is ours only if the daemon
@@ -687,7 +687,7 @@ bool daemon_owns(const uint8_t* at, const SiteSpec& spec, const Sig& s) {
     desc.target = at;
     desc.prologue_bytes = spec.prologue;
     desc.stack_arg_bytes = spec.arg_bytes;
-    desc.callee_pops = 1;
+    desc.callee_pops = spec.callee_pops;
     const int32_t id = g_rt.daemon->install(&desc);
     HuSiteInfo info;
     return id >= 0 && site_matches(id, spec, s.bytes, &info);
@@ -726,12 +726,14 @@ bool pin_compass_global(const uint8_t* text, size_t size, Sig& s, char* why, siz
     return true;
 }
 
-// The word the macro key gate's prologue reads, pinned at +2 before the
-// site is scanned for: the engine knows it from nowhere else, so it is read
-// out of the one hit, or, on a hit the daemon has already patched (the jump
-// covers +2), out of the original the daemon saved there, which the site's
-// acceptance compares against the pinned prologue in turn.
-bool pin_macro_gate(const uint8_t* text, size_t size, const SiteSpec& spec, Sig& s, char* why, size_t len) {
+// An imm32 a site's prologue reads that the engine knows from nowhere else
+// (the macro key gate's word at +2, the ability opener's global at +1),
+// pinned at `at` before the site is scanned for: read out of the one hit,
+// or, on a hit the daemon has already patched (the jump covers it), out of
+// the original the daemon saved there, which the site's acceptance compares
+// against the pinned prologue in turn. `*hit_out` is that hit.
+bool pin_prologue_imm(const uint8_t* text, size_t size, const SiteSpec& spec, Sig& s, size_t at,
+                      const uint8_t** hit_out, char* why, size_t len) {
     ScanResult r;
     scan(text, size, s.bytes, s.mask, true, &r);
     if (r.count == 0) {
@@ -751,19 +753,39 @@ bool pin_macro_gate(const uint8_t* text, size_t size, const SiteSpec& spec, Sig&
         desc.target = hit;
         desc.prologue_bytes = spec.prologue;
         desc.stack_arg_bytes = spec.arg_bytes;
-        desc.callee_pops = 1;
+        desc.callee_pops = spec.callee_pops;
         const int32_t id = g_rt.daemon->install(&desc);
         memset(&info, 0, sizeof(info));
         info.size = sizeof(info);
         if (id < 0 || g_rt.daemon->site_info(id, &info) != HU_OK || info.prologue_bytes < spec.prologue
-            || memcmp(info.original, s.bytes, kMacroGateGlobal) != 0) {
+            || memcmp(info.original, s.bytes, at) != 0) {
             snprintf(why, len, "signature %s: not found (client patched, or another hook owns it)", spec.name);
             return false;
         }
         source = info.original;
     }
-    memcpy(s.bytes + kMacroGateGlobal, source + kMacroGateGlobal, 4);
-    memset(s.mask + kMacroGateGlobal, 'x', 4);
+    memcpy(s.bytes + at, source + at, 4);
+    memset(s.mask + at, 'x', 4);
+    *hit_out = hit;
+    return true;
+}
+
+// The ability opener: its global pinned, then the imm32 of its second key
+// push, past the daemon's jump either way, must point at the registry's
+// ability key: the open that routine makes is the one the engine's events
+// and category blocks go by.
+bool pin_ability_open(const uint8_t* text, size_t size, const SiteSpec& spec, Sig& s, char* why, size_t len) {
+    const uint8_t* hit = NULL;
+    if (!pin_prologue_imm(text, size, spec, s, kAbilityOpenGlobal, &hit, why, len)) {
+        return false;
+    }
+    const int ability = g_engine.inv.ability;
+    const uint8_t* key = rdptr(hit, kAbilityOpenKeyImm);
+    if (ability < 0 || !readable(key, kKeyLen) || memcmp(key, g_engine.inv.names[ability].key, kKeyLen) != 0) {
+        snprintf(why, len, "ability_open: its key push at +%u does not name the registry's ability key",
+            static_cast<unsigned>(kAbilityOpenKeyImm));
+        return false;
+    }
     return true;
 }
 
@@ -788,7 +810,12 @@ bool resolve_sites(const uint8_t* text, size_t size, char* why, size_t len) {
         if (i == kSiteCompassDraw && !pin_compass_global(text, size, s, why, len)) {
             return false;
         }
-        if (i == kSiteMacroGate && !pin_macro_gate(text, size, spec, s, why, len)) {
+        const uint8_t* pinned = NULL;
+        if (i == kSiteMacroGate
+            && !pin_prologue_imm(text, size, spec, s, kMacroGateGlobal, &pinned, why, len)) {
+            return false;
+        }
+        if (i == kSiteAbilityOpen && !pin_ability_open(text, size, spec, s, why, len)) {
             return false;
         }
         for (uint32_t k = 0; k < spec.prologue; ++k) {
@@ -899,7 +926,7 @@ bool install_engine() {
         desc.target = g_rt.targets[i];
         desc.prologue_bytes = spec.prologue;
         desc.stack_arg_bytes = spec.arg_bytes;
-        desc.callee_pops = 1;
+        desc.callee_pops = spec.callee_pops;
         const int32_t id = g_rt.daemon->install(&desc);
         HuSiteInfo info;
         memset(&info, 0, sizeof(info));
@@ -916,10 +943,11 @@ bool install_engine() {
                 snprintf(why, sizeof(why), "hook %s: the daemon could not describe its site there", spec.name);
             } else {
                 snprintf(why, sizeof(why), "hook %s: the daemon's site there has another shape"
-                    " (prologue %u, %u argument bytes, pops %u; this build's %u, %u, 1)",
+                    " (prologue %u, %u argument bytes, pops %u; this build's %u, %u, %u)",
                     spec.name, static_cast<unsigned>(info.prologue_bytes),
                     static_cast<unsigned>(info.stack_arg_bytes), static_cast<unsigned>(info.callee_pops),
-                    static_cast<unsigned>(spec.prologue), static_cast<unsigned>(spec.arg_bytes));
+                    static_cast<unsigned>(spec.prologue), static_cast<unsigned>(spec.arg_bytes),
+                    static_cast<unsigned>(spec.callee_pops));
             }
             release_claim();
             if (!g_rt.pinned_busy) {
@@ -1156,6 +1184,8 @@ void set_hex(ReplyWriter& w, const char* key, const void* p) {
 
 const char kQueryHideOnly[] =
     "query cannot be blocked or closed; answer it with answer('query', value) or cancel('query')";
+
+const char* category_name(int32_t category);
 
 // Under the lock. NULL with `why` filled when the call cannot go ahead.
 Handle* usable(const HuEngineHandle* ref, char* why, size_t size) {
@@ -1554,6 +1584,105 @@ int32_t __stdcall op_block5(const HuEngineHandle* ref, const char* name, char* w
             // follows, the game never attempts an open of it.
             g_engine.holds.set(*h, n, kHoldBlock, true);
             ok = true;
+        }
+    }
+    unlock();
+    return ok;
+}
+
+// The lists of ability as block7 and unblock7 name them, as a bit mask: a
+// name the engine has for a category takes every number bearing it (the
+// weapon skill list is 3, and 20 in Monstrosity); a number 1..kCategoryBits-1
+// in digits takes that one. 0 with `why` filled for anything else.
+uint32_t ability_categories(const char* text, char* why, size_t size) {
+    char low[16];
+    if (Inventory::lower_name(text, low)) {
+        uint32_t mask = 0;
+        for (int c = 1; c < kCategoryBits; ++c) {
+            const char* named = category_name(c);
+            if (named && strcmp(named, low) == 0) {
+                mask |= 1u << c;
+            }
+        }
+        if (mask) {
+            return mask;
+        }
+        int value = 0;
+        bool digits = low[0] != '\0';
+        for (const char* d = low; *d && digits; ++d) {
+            digits = *d >= '0' && *d <= '9';
+            value = value * 10 + (*d - '0');
+            digits = digits && value < kCategoryBits;
+        }
+        if (digits && value >= 1) {
+            return 1u << value;
+        }
+    }
+    snprintf(why, size, "no such category: %s (job_abilities, pet_commands, weapon_skills, job_traits, or a number"
+        " 1..31)", text ? text : "(not a string)");
+    return 0;
+}
+
+// Engine abi 7's block: with a category, the hold on that list of ability
+// alone, and the game's own close of the window when it shows that list
+// now, queued with it as block5 queues the whole window's; without one,
+// block5. A full queue refuses the block whole.
+int32_t __stdcall op_block7(const HuEngineHandle* ref, const char* name, const char* category, char* why,
+                            uint32_t size) {
+    if (!category || !category[0]) {
+        return op_block5(ref, name, why, size);
+    }
+    bool ok = false;
+    lock();
+    Handle* h = usable(ref, why, size);
+    const int n = h ? window_index(name, why, size) : -1;
+    if (n >= 0) {
+        if (n != g_engine.inv.ability) {
+            snprintf(why, size, "only ability has categories");
+        } else {
+            const uint32_t mask = ability_categories(category, why, size);
+            uint8_t* ctl = NULL;
+            const int32_t shown = open_menu_guarded(n, &ctl) && readable(ctl, kAbilityCategory + 4)
+                ? static_cast<int32_t>(rd32(ctl, kAbilityCategory)) : -1;
+            const bool showing = shown >= 0 && shown < kCategoryBits && (mask & (1u << shown));
+            if (mask && (!showing || enqueue(command(kOpBlockClose, n, 0, 0, ref, 0, kVerbBlock), why, size))) {
+                for (int c = 1; c < kCategoryBits; ++c) {
+                    if (mask & (1u << c)) {
+                        g_engine.holds.set_ability(*h, c, true);
+                    }
+                }
+                ok = true;
+            }
+        }
+    }
+    unlock();
+    return ok;
+}
+
+// Engine abi 7's unblock: with a category, that list's hold dropped and
+// nothing else; without one, unblock3, the whole-window hold alone.
+int32_t __stdcall op_unblock7(const HuEngineHandle* ref, const char* name, const char* category, char* why,
+                              uint32_t size) {
+    if (!category || !category[0]) {
+        return op_unblock3(ref, name, why, size);
+    }
+    bool ok = false;
+    lock();
+    Handle* h = usable(ref, why, size);
+    const int n = h ? window_index(name, why, size) : -1;
+    if (n >= 0) {
+        if (n != g_engine.inv.ability) {
+            snprintf(why, size, "only ability has categories");
+        } else {
+            const uint32_t mask = ability_categories(category, why, size);
+            if (mask) {
+                for (int c = 1; c < kCategoryBits; ++c) {
+                    if (mask & (1u << c)) {
+                        g_engine.holds.set_ability(*h, c, false);
+                    }
+                }
+                ok = true;
+            }
         }
     }
     unlock();
@@ -2633,9 +2762,12 @@ int32_t __stdcall op_poll4(const HuEngineHandle* ref, HuEngineEvent4* out, uint3
 }
 
 bool write_holders(ReplyWriter& w, const char* key, int n, uint8_t bit, const HuEngineHandle* ref);
+bool write_blockers(ReplyWriter& w, const char* key, int n, int category, const HuEngineHandle* ref);
 
 // One event for engine abi 5's poll, as a table on the reply; false for one
-// that is not this handle's or names nothing. Under the lock.
+// that is not this handle's or names nothing. Under the lock. A blocked
+// event's `by` names the handles whose hold refused the open: the window's
+// whole-window holders, and on ability the holders of the list it carries.
 bool write_event(ReplyWriter& w, const HuEngineHandle* ref, uint32_t raw) {
     const int type = event_type(raw);
     if (type == kEvCursor) {
@@ -2682,8 +2814,16 @@ bool write_event(ReplyWriter& w, const HuEngineHandle* ref, uint32_t raw) {
     w.table();
     w.set_string("event", event);
     w.set_string("name", g_engine.inv.names[name].name);
+    int category = -1;
+    if (event_has_category(raw)) {
+        category = event_category(raw);
+        w.set_number("category", category);
+        if (const char* named = category_name(category)) {
+            w.set_string("category_name", named);
+        }
+    }
     if (type == kEvBlocked) {
-        w.set_bool("mine", write_holders(w, "by", name, kHoldBlock, ref));
+        w.set_bool("mine", write_blockers(w, "by", name, category, ref));
     }
     return true;
 }
@@ -2692,7 +2832,8 @@ bool write_event(ReplyWriter& w, const HuEngineHandle* ref, uint32_t raw) {
 uint32_t g_poll_raw[kEventCapacity];
 
 // Engine abi 5's poll: every event past the handle's cursor as a list of
-// tables, {event, name} and each type's own fields, closed by {event =
+// tables, {event, name} and each type's own fields (on ability, the list
+// the event is about as category and category_name), closed by {event =
 // 'resync', dropped} when events were lost; then the count lost. The
 // cursor moves only when the reply fits, so a retry with `used` bytes
 // reads the same events.
@@ -2874,6 +3015,8 @@ struct InfoData {
     bool has_cursor;
     int cursor;                     // the row; query's and arealist's, the option or row under it
     int top;                        // query's and arealist's first shown; 0 for every other window
+    bool has_category;
+    int32_t category;               // ability's kAbilityCategory, the list its window shows
     int16_t items;
     ElementInfo elements[kMaxElements];
     int element_count;
@@ -2949,6 +3092,10 @@ void collect_info(int n, InfoData* d) {
         } else {
             d->cursor = rd16(menu, kMenuCursor);
             d->has_cursor = true;
+        }
+        if (strcmp(nm, "ability") == 0 && readable(ctl, kAbilityCategory + 4)) {
+            d->has_category = true;
+            d->category = static_cast<int32_t>(rd32(ctl, kAbilityCategory));
         }
         d->items = rd16(menu, kMenuItems);
         d->element_count = read_elements(menu, d->elements, kMaxElements, &d->truncated);
@@ -3162,6 +3309,16 @@ bool write_holders(ReplyWriter& w, const char* key, int n, uint8_t bit, const Hu
     return write_holding(w, key, ref, [=](const Handle& h) { return (h.holds[n] & bit) != 0; });
 }
 
+// The handles blocking window n whole, and, for `category` 0 or more on
+// ability, those blocking that list of it.
+bool write_blockers(ReplyWriter& w, const char* key, int n, int category, const HuEngineHandle* ref) {
+    const uint32_t bit = n == g_engine.inv.ability && category >= 0 && category < kCategoryBits
+        ? 1u << category : 0u;
+    return write_holding(w, key, ref, [=](const Handle& h) {
+        return (h.holds[n] & kHoldBlock) != 0 || (h.ability_block & bit) != 0;
+    });
+}
+
 // The macro keys: {blocked, blocked_by = the handles holding the block,
 // mine}.
 void __stdcall op_macros(const HuEngineHandle* ref, HuEngineReply* reply) {
@@ -3225,10 +3382,62 @@ void write_compass_info(const HuEngineHandle* ref, int n, const InfoData& d, Rep
     w.field("detail");
 }
 
+// The list ability's window shows, by its controller's category; NULL for a
+// value the engine has no name for.
+const char* category_name(int32_t category) {
+    switch (category) {
+    case 1: return "job_abilities";
+    case 2: return "pet_commands";
+    case 3: return "weapon_skills";
+    case 4: return "job_traits";
+    case 20: return "weapon_skills";    // the Monstrosity form: the game substitutes 20 for 3 there
+    default: return NULL;
+    }
+}
+
+// The lists of ability in `mask`, each by its name, or by its number where
+// the engine has none, as a list under `key`. A name two numbers share (the
+// weapon skill list's two forms) is listed once.
+void write_categories(ReplyWriter& w, const char* key, uint32_t mask) {
+    w.table();
+    int k = 0;
+    for (int c = 0; c < kCategoryBits; ++c) {
+        if (!(mask & (1u << c))) {
+            continue;
+        }
+        if (const char* named = category_name(c)) {
+            bool listed = false;
+            for (int earlier = 0; earlier < c && !listed; ++earlier) {
+                const char* other = category_name(earlier);
+                listed = (mask & (1u << earlier)) && other && strcmp(other, named) == 0;
+            }
+            if (listed) {
+                continue;
+            }
+            w.string(named);
+        } else {
+            w.number(c);
+        }
+        w.index(++k);
+    }
+    w.field(key);
+}
+
+// The lists of ability the handle blocks, as a mask; 0 for a released one.
+uint32_t own_categories(const HuEngineHandle* ref) {
+    lock();
+    const Handle* h = g_rt.handles.get(ref->slot, ref->generation);
+    const uint32_t mask = h ? h->ability_block : 0;
+    unlock();
+    return mask;
+}
+
 // Engine abi 3's info, and with `v4` abi 4's: what an addon draws by at the
 // top, the engine's and the game's own words under `detail`. Abi 4 has
 // `blockable` for abi 3's `hide_only`, the handles holding each hide and
 // block, `resize` for `sizes`, and `elements_truncated` beside `elements`.
+// On ability, `blocked_categories` lists the lists any handle blocks, and
+// mine.blocked_categories this handle's.
 void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* reply, bool v4) {
     ReplyWriter w = {reply};
     const int n = read_target(ref, name, true, w);
@@ -3250,6 +3459,10 @@ void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* repl
     w.set_bool("open", d.open);
     w.set_bool("hidden", (d.want & kWantHidden) != 0);
     w.set_bool("blocked", (d.want & kWantBlocked) != 0);
+    const bool lists = n == g_engine.inv.ability;
+    if (lists) {
+        write_categories(w, "blocked_categories", static_cast<uint32_t>(g_engine.holds.ability_want));
+    }
     if (v4) {
         w.set_bool("blockable", !hide_only(ne.name));
         const bool hiding = write_holders(w, "hidden_by", n, kHoldHide, ref);
@@ -3257,6 +3470,9 @@ void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* repl
         w.table();
         w.set_bool("hidden", hiding);
         w.set_bool("blocked", blocking);
+        if (lists) {
+            write_categories(w, "blocked_categories", own_categories(ref));
+        }
         w.field("mine");
     } else {
         w.set_bool("hide_only", hide_only(ne.name));
@@ -3288,6 +3504,12 @@ void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* repl
         }
         if (d.top) {
             w.set_number("top", d.top);
+        }
+        if (d.has_category) {
+            w.set_number("category", d.category);
+            if (const char* named = category_name(d.category)) {
+                w.set_string("category_name", named);
+            }
         }
         w.set_number("items", d.items);
         w.table();
@@ -4416,6 +4638,8 @@ const HuEngineApi kOwnApi = {
     &op_block_macros,
     &op_unblock_macros,
     &op_macros,
+    &op_block7,
+    &op_unblock7,
 };
 
 // ---------------------------------------------------------------------------
@@ -4761,6 +4985,9 @@ Fn slot_of(const HuEngineApi* api, size_t offset) {
 
 // The first build whose table had the slot at `offset`.
 const char* first_build(size_t offset) {
+    if (offset >= HU_SLOT(block7)) {
+        return "0.10.0";
+    }
     if (offset >= HU_SLOT(block_macros)) {
         return "0.9.0";
     }
@@ -4779,7 +5006,7 @@ const char* first_build(size_t offset) {
 // The last slot this copy's calls use. A handle is made only through a
 // resident whose table reaches it: an older one would serve some of the
 // calls and refuse the rest.
-const size_t kNewestSlot = HU_SLOT(macros);
+const size_t kNewestSlot = HU_SLOT(unblock7);
 
 // "<verb> needs hideui <first build> or newer; the resident copy is <path>".
 void needs_text(const char* verb, const HuEngineApi* api, size_t offset, char* out, size_t size) {
@@ -4976,10 +5203,31 @@ int place_verb(lua_State* L, const char* verb, size_t offset) {
     return verb_result(L, slot_of<HuEnginePlaceVerb>(api, offset)(&ref->h, name, x, y, why, sizeof(why)), why);
 }
 
+// block(name[, category]) and unblock(name[, category]): with a category,
+// engine abi 7's slot; without one, the slot each call has had, so a
+// resident older than 0.10.0 still serves the whole-window form.
+int category_verb(lua_State* L, const char* verb, size_t plain, size_t with) {
+    if (lua_isnoneornil(L, 3)) {
+        return window_verb(L, verb, plain);
+    }
+    HandleRef* ref = ref_at(L);
+    const char* name = check_string(L, 2);
+    const char* category = check_string(L, 3);
+    int pushed = 0;
+    const HuEngineApi* api = table_for(L, ref, verb, with, &pushed);
+    if (!api) {
+        return pushed;
+    }
+    char why[kWhyBytes];
+    why[0] = '\0';
+    return verb_result(L, slot_of<HuEngineCategoryVerb>(api, with)(&ref->h, name, category, why, sizeof(why)),
+                       why);
+}
+
 int l_hide(lua_State* L) { return window_verb(L, "hide", HU_SLOT(hide3)); }
 int l_unhide(lua_State* L) { return window_verb(L, "unhide", HU_SLOT(unhide3)); }
-int l_block(lua_State* L) { return window_verb(L, "block", HU_SLOT(block5)); }
-int l_unblock(lua_State* L) { return window_verb(L, "unblock", HU_SLOT(unblock3)); }
+int l_block(lua_State* L) { return category_verb(L, "block", HU_SLOT(block5), HU_SLOT(block7)); }
+int l_unblock(lua_State* L) { return category_verb(L, "unblock", HU_SLOT(unblock3), HU_SLOT(unblock7)); }
 int l_open(lua_State* L) { return window_verb(L, "open", HU_SLOT(open3)); }
 int l_close(lua_State* L) { return window_verb(L, "close", HU_SLOT(close4)); }
 int l_reset_group(lua_State* L) { return window_verb(L, "reset_group", HU_SLOT(reset_group5)); }

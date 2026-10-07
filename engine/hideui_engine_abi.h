@@ -16,11 +16,11 @@
 #include "../daemon/hideui_abi.h"
 
 // Bumped only when fields are appended to HuEngineApi: the table's version.
-#define HU_ENGINE_ABI 6u
+#define HU_ENGINE_ABI 7u
 
 // Bumped whenever the engine binary changes, ABI or not: two addons can ship
 // different builds at one ABI, and status names the one serving.
-#define HU_ENGINE_BUILD "0.9.0"
+#define HU_ENGINE_BUILD "0.10.0"
 
 // Written into the record last, behind a barrier. Any other value, zero
 // included, means no resident: a copy that died mid-publish or a resident
@@ -129,6 +129,13 @@ typedef int32_t (__stdcall* HuEngineCancel4)(const HuEngineHandle*, const char* 
 // size, else "position" or "size"; -1 for any other aspect.
 typedef int32_t (__stdcall* HuEngineReset5)(const HuEngineHandle*, const char* name, const char* aspect,
                                             char* why, uint32_t why_size);
+
+// Engine abi 7's block and unblock: `category` NULL or empty for the whole
+// window, as block5 and unblock3 take it; else one list of the ability
+// window, by name (job_abilities, pet_commands, weapon_skills, job_traits)
+// or by number 1..31. A category on any other name is refused.
+typedef int32_t (__stdcall* HuEngineCategoryVerb)(const HuEngineHandle*, const char* name, const char* category,
+                                                  char* why, uint32_t why_size);
 
 // The Lua type of answer()'s value: a number or boolean (1/0) in `number`,
 // a string in `text`.
@@ -260,6 +267,15 @@ typedef struct HuEngineApi {
     HuEngineVerb block_macros;
     HuEngineVerb unblock_macros;
     HuEngineRead macros;
+
+    /* engine abi 7, the 0.10.0 API: one list of the ability window. block7
+       with a category holds that list off for the handle and closes the
+       window when it shows that list now; unblock7 with one drops that
+       hold alone. Without a category they are block5 and unblock3. poll5's
+       events on ability carry category and category_name, and info of
+       ability lists blocked_categories. */
+    HuEngineCategoryVerb block7;
+    HuEngineCategoryVerb unblock7;
 } HuEngineApi;
 
 // What the resident publishes into the pid-scoped mapping. `module` is its
@@ -292,7 +308,7 @@ HU_STATIC_ASSERT(offsetof(HuEngineEvent4, pending) == 268, "HuEngineEvent4 layou
 HU_STATIC_ASSERT(sizeof(HuEngineReply) == 16, "HuEngineReply size is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineReply, used) == 12, "HuEngineReply layout is ABI");
 
-HU_STATIC_ASSERT(sizeof(HuEngineApi) == 340, "HuEngineApi size is ABI");
+HU_STATIC_ASSERT(sizeof(HuEngineApi) == 348, "HuEngineApi size is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, handle_new) == 8, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, hide) == 16, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, move) == 32, "HuEngineApi layout is ABI");
@@ -316,12 +332,14 @@ HU_STATIC_ASSERT(offsetof(HuEngineApi, block5) == 324, "HuEngineApi layout is AB
 HU_STATIC_ASSERT(offsetof(HuEngineApi, block_macros) == 328, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, unblock_macros) == 332, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, macros) == 336, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, block7) == 340, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, unblock7) == 344, "HuEngineApi layout is ABI");
 
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, module) == 12, "HuEngineRecord layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, resident_path) == 16, "HuEngineRecord layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, resident_build) == 276, "HuEngineRecord layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, api) == 340, "the api comes last so appending to it moves nothing");
-HU_STATIC_ASSERT(sizeof(HuEngineRecord) == 680, "HuEngineRecord size is ABI");
+HU_STATIC_ASSERT(sizeof(HuEngineRecord) == 688, "HuEngineRecord size is ABI");
 HU_STATIC_ASSERT(sizeof(HU_ENGINE_BUILD) <= HU_BUILD_MAX, "the build string must fit the record");
 HU_STATIC_ASSERT(sizeof(HuEngineRecord) <= HU_ENGINE_MAPPING_BYTES, "the record must fit the fixed section");
 HU_STATIC_ASSERT(sizeof(HU_ENGINE_MAPPING_NAME_FORMAT) + 8 <= HU_NAME_MAX, "the mapping name must fit for every pid");

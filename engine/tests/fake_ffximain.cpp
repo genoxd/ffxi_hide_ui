@@ -1,5 +1,5 @@
 // fake_ffximain - a stand-in FFXiMain.dll for the end-to-end harness. Its
-// .text carries the thirty-three signatures from signatures.h, each
+// .text carries the thirty-four signatures from signatures.h, each
 // at a routine that behaves as far as the engine relies on it: the registry,
 // manager, link5 cache, link5 latch, link5 open and query cancel sites hold
 // the addresses of this image's own data and code, SetPosition writes the
@@ -53,7 +53,12 @@
 // a callee, its body answering al 1; each frame the harness holds a number
 // key (macro_key), a macro fires when the gate, called through its site,
 // says so. The macro object's constructor site, the two copies of its
-// global, is never run.
+// global, is never run. The ability opener is the game's shape around a
+// stand-in player global, the two key pushes naming 16-byte keys in this
+// image's data, the manager and two real calls to the open routine, then a
+// body standing in for the controller method, which stores the kind at the
+// ability controller's +0x64 and records it; the harness calls it as the
+// game's callers do, cdecl (kind, flag, extra).
 
 #define WIN32_LEAN_AND_MEAN
 #include "../core.h"
@@ -98,6 +103,10 @@ int16_t g_macro_player = 1;            // the word the gate's prologue reads: th
 void* g_macro_table[2];                // its pointer table, indexed by that word
 uint32_t g_macro_world = 0x60;         // the world state the gate compares with 0x60
 uint32_t* g_macro_world_ptr = &g_macro_world;
+uint32_t g_ability_player = 1;         // the global the ability opener tests first: non-zero, in the world
+char g_key_abisortw[17] = "menu    abisortw";   // the opener's two key pushes, 16 bytes each
+char g_key_ability[17] = "menu    ability ";
+int32_t g_ability_last_kind = -1;      // the kind the opener's body stored last
 
 // What the reply, re-dock and resize routines saw. Written on the game
 // thread; the harness reads it after waiting for frames.
@@ -202,6 +211,8 @@ struct FakeState {
     uint8_t* macro_ctor_site;   // the constructor site naming the global twice
     volatile LONG* macro_key;   // set: a number key is held each frame
     volatile LONG* macros_fired;
+    void* ability_open;         // cdecl (kind, flag, extra), nothing returned: the ability opener
+    int32_t* ability_last_kind;
 };
 
 void fake_query_confirm();
@@ -240,6 +251,7 @@ void fake_menu_routing();
 void fake_compass_draw();
 void fake_macro_gate();
 void fake_macro_ctor_site();
+void fake_ability_open();
 
 }  // extern "C"
 
@@ -889,6 +901,16 @@ uint32_t __fastcall h_macro_manager(uint8_t*, void*) {
     return 0;
 }
 
+// The ability opener's body, standing in for the controller method it hands
+// the kind to: stored at the ability controller's +0x64, and recorded.
+void __stdcall h_ability_kind(int kind) {
+    uint8_t* ctl = ctl_named("ability");
+    if (ctl) {
+        memcpy(ctl + 0x64, &kind, 4);
+    }
+    g_ability_last_kind = kind;
+}
+
 void h_never() {
 }
 
@@ -1010,6 +1032,8 @@ __declspec(dllexport) FakeState* fake_state() {
     s.macro_ctor_site = reinterpret_cast<uint8_t*>(&fake_macro_ctor_site);
     s.macro_key = &g_macro_key;
     s.macros_fired = &g_macros_fired;
+    s.ability_open = reinterpret_cast<void*>(&fake_ability_open);
+    s.ability_last_kind = &g_ability_last_kind;
     return &s;
 }
 
@@ -1436,6 +1460,38 @@ asm(
     "  .byte 0x6a,0x50\n"
     "  call _h_never\n"
     "  .byte 0xc3\n"
+
+    // The ability opener(kind, flag, extra), cdecl, nothing returned, the
+    // game's shape: the player global, abisortw opened by name when flag is
+    // 1 and ability by name, both through the open routine with the manager
+    // in ecx, then the stand-in for the controller method storing the kind.
+    // The je at +7 lands on the ret and the jne at +17 past the abisortw
+    // open, as the game's do.
+    ".p2align 4\n"
+    ".globl _fake_ability_open\n"
+    "_fake_ability_open:\n"
+    "  .byte 0xa1\n"
+    "  .long _g_ability_player\n"
+    "  .byte 0x85,0xc0,0x74\n"
+    "  .byte 1f - (. + 1)\n"
+    "  .byte 0x53,0x8b,0x5c,0x24,0x0c,0x80,0xfb,0x01,0x75\n"
+    "  .byte 2f - (. + 1)\n"
+    "  .byte 0x6a,0x00,0x6a,0x01,0x68\n"
+    "  .long _g_key_abisortw\n"
+    "  .byte 0xb9\n"
+    "  .long _g_mcb\n"
+    "  call _fake_open\n"
+    "2:\n"
+    "  .byte 0x6a,0x00,0x6a,0x01,0x68\n"
+    "  .long _g_key_ability\n"
+    "  .byte 0xb9\n"
+    "  .long _g_mcb\n"
+    "  call _fake_open\n"
+    "  .byte 0xff,0x74,0x24,0x08\n"
+    "  call _h_ability_kind@4\n"
+    "  .byte 0x5b\n"
+    "1:\n"
+    "  .byte 0xc3\n"
 );
 
 namespace {
@@ -1516,7 +1572,7 @@ void build_world() {
     const char* pieces[] = {"logwindo", "ability", "equip", "menuwind", "query", "buff",
                             "passinpu", "prtyjoin", "link5", "arealist", "scsibori", "delivery",
                             "post1", "post2", "partywin", "playermo", "targetwi", "subwindo",
-                            "dbdelsel", "mcr1pall", "mcr2pall"};
+                            "dbdelsel", "mcr1pall", "mcr2pall", "abisortw"};
     for (size_t i = 0; i < sizeof(pieces) / sizeof(pieces[0]); ++i) {
         for (int r = 0; r < kRowCount; ++r) {
             if (strcmp(kRowSpecs[r].name, pieces[i]) == 0) {

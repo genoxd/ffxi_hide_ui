@@ -8,11 +8,11 @@
 #                    The engine is copied into build/a and build/b, one
 #                    basename in two folders as two addons ship it, which the
 #                    loader maps as two images, and hideui.lua beside the one
-#                    in build/a; build/c, build/d, build/e and build/f hold
-#                    copies built from the same source that publish engine
-#                    abi 2's, abi 3's, abi 4's and abi 5's tables, standing
-#                    for a 0.4.x, a 0.5.0, a 0.5.1 to 0.6.3 and a 0.7.0 to
-#                    0.8.0 resident.
+#                    in build/a; build/c, build/d, build/e, build/f and
+#                    build/g hold copies built from the same source that
+#                    publish engine abi 2's, abi 3's, abi 4's, abi 5's and
+#                    abi 6's tables, standing for a 0.4.x, a 0.5.0, a 0.5.1
+#                    to 0.6.3, a 0.7.0 to 0.8.0 and a 0.9.0 resident.
 #   lua_client_test  examples/hideuidemo's Lua under lua5.1, against a stand-in
 #                    native module
 #   image_check.exe  the signatures and the menu table against an unpacked
@@ -38,15 +38,16 @@ i686-w64-mingw32-g++ "${FLAGS[@]}" -shared -o FFXiMain.dll fake_ffximain.cpp
 i686-w64-mingw32-g++ "${FLAGS[@]}" -static -o e2e_test.exe e2e_test.cpp
 i686-w64-mingw32-g++ "${FLAGS[@]}" -static -o image_check.exe image_check.cpp
 
-mkdir -p build/a build/b build/c build/d build/e build/f
+mkdir -p build/a build/b build/c build/d build/e build/f build/g
 for copy in a b; do
     cp "$ENGINE" "build/$copy/_HideUI.dll"
     cp "$DAEMON" "build/$copy/hideui_daemon.dll"
 done
 cp "$ADDON/libs/hideui.lua" build/a/hideui.lua
 # Engine abi 2's table ends at query_options, 140 bytes; abi 3's at status3,
-# 236; abi 4's at status4, 284; abi 5's at block5, 328.
-for table in "c 2 140" "d 3 236" "e 4 284" "f 5 328"; do
+# 236; abi 4's at status4, 284; abi 5's at block5, 328; abi 6's at macros,
+# 340.
+for table in "c 2 140" "d 3 236" "e 4 284" "f 5 328" "g 6 340"; do
     read -r copy abi bytes <<< "$table"
     if ! log=$(HIDEUI_DEFINES="-DHU_ENGINE_ABI_BUILT=${abi}u -DHU_ENGINE_PUBLISHED_SIZE=${bytes}u" \
             bash ../build.sh "$(pwd)/build/$copy/_HideUI.dll" 2>&1); then
@@ -60,11 +61,12 @@ status=0
 echo "== engine_test (wine)"
 env -u DISPLAY WINEDEBUG="${WINEDEBUG:--all}" wine engine_test.exe || status=1
 echo
-echo "== e2e_test (wine): $(md5sum "$ENGINE" | cut -c1-12) engine as copies a and b, $(md5sum build/c/_HideUI.dll | cut -c1-12) engine abi 2 table as copy c, $(md5sum build/d/_HideUI.dll | cut -c1-12) engine abi 3 table as copy d, $(md5sum build/e/_HideUI.dll | cut -c1-12) engine abi 4 table as copy e, $(md5sum build/f/_HideUI.dll | cut -c1-12) engine abi 5 table as copy f, $(md5sum "$DAEMON" | cut -c1-12) daemon, $(md5sum "$LUACORE" | cut -c1-12) LuaCore"
+echo "== e2e_test (wine): $(md5sum "$ENGINE" | cut -c1-12) engine as copies a and b, $(md5sum build/c/_HideUI.dll | cut -c1-12) engine abi 2 table as copy c, $(md5sum build/d/_HideUI.dll | cut -c1-12) engine abi 3 table as copy d, $(md5sum build/e/_HideUI.dll | cut -c1-12) engine abi 4 table as copy e, $(md5sum build/f/_HideUI.dll | cut -c1-12) engine abi 5 table as copy f, $(md5sum build/g/_HideUI.dll | cut -c1-12) engine abi 6 table as copy g, $(md5sum "$DAEMON" | cut -c1-12) daemon, $(md5sum "$LUACORE" | cut -c1-12) LuaCore"
 env -u DISPLAY WINEDEBUG="${WINEDEBUG:--all}" wine e2e_test.exe \
     "Z:$LUACORE" "Z:$(pwd)/build/a/_HideUI.dll" "Z:$(pwd)/FFXiMain.dll" \
     "Z:$(pwd)/build/b/_HideUI.dll" "Z:$(pwd)/build/c/_HideUI.dll" "Z:$(pwd)/build/a/hideui.lua" \
-    "Z:$(pwd)/build/d/_HideUI.dll" "Z:$(pwd)/build/e/_HideUI.dll" "Z:$(pwd)/build/f/_HideUI.dll" || status=1
+    "Z:$(pwd)/build/d/_HideUI.dll" "Z:$(pwd)/build/e/_HideUI.dll" "Z:$(pwd)/build/f/_HideUI.dll" \
+    "Z:$(pwd)/build/g/_HideUI.dll" || status=1
 echo
 echo "== lua_client_test (lua5.1)"
 lua5.1 lua_client_test.lua "$ADDON" || status=1
@@ -72,7 +74,8 @@ lua5.1 lua_client_test.lua "$ADDON" || status=1
 # The addresses below are the 2026-05-10 build's: table, manager, mask table,
 # SetPosition, close, open, UI update, staged close, show path, the mouse mode
 # picker, the menu input sink, the compass draw entry, the macro key gate, the
-# eleven called routines in signatures.h's kCalls order, then the link5 cache
+# ability opener, the eleven called routines in signatures.h's kCalls order,
+# then the link5 cache
 # site and cache, the query cancel site and its cancel-allowed byte, SetCursor,
 # the link5 latch site and latch, the link5 open site, its controller global
 # and its callback, the text-to-glyph converter, the row hit test and its
@@ -86,7 +89,7 @@ elif [ -f "$IMAGE" ]; then
     echo "== image_check (wine): $IMAGE $(md5sum "$IMAGE" | cut -c1-12)"
     env -u DISPLAY WINEDEBUG="${WINEDEBUG:--all}" wine image_check.exe "Z:$IMAGE" \
         103712D0 105EDD10 10375294 10118FB0 1015E7A0 1015E1E0 1015F890 1015E570 1015E3C0 \
-        10125160 10118100 1021E870 101A2F10 \
+        10125160 10118100 1021E870 101A2F10 10222670 \
         10205F50 100E9330 10202D10 101E3EB0 1020EA00 1020F020 100F7E40 1014CEB0 \
         1015F5F0 1011A790 1011A440 \
         101E41D6 10487B00 1014E30E 10484A68 \

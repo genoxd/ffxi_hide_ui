@@ -50,8 +50,14 @@
         resync     events were lost, .dropped of them, and the rest of this
                    frame's came before it: read the state again
     All but pending and resync name their window in .name; on(event, name,
-    fn) takes a window name for those alone. Events start at new(): sync with
-    ui:opened(), ui:info() and ui:pending() after it.
+    fn) takes a window name for those alone. On ability, opened, closed,
+    covered, uncovered and blocked carry .category, the list the window
+    shows or was asked for (1 job_abilities, 2 pet_commands, 3
+    weapon_skills, 4 job_traits), and .category_name for the ones the
+    engine names; on(event, 'ability', category, fn) takes one of those
+    names or a number, and off(event, 'ability', category[, fn]) the same.
+    Events start at new(): sync with ui:opened(), ui:info() and ui:pending()
+    after it.
 
     A hidden window takes no input of any kind: no click lands on it, and
     none of the player's keys or gamepad buttons reach it. The addon owns
@@ -70,7 +76,13 @@
 
     block(name) refuses the window's opens and hides it, and closes it
     through the game's own close when it is open (not the prompt windows
-    close() refuses). move and move_group take the frame's top-left,
+    close() refuses). block('ability', category) refuses one list of the
+    ability window alone, the others opening as before, and closes the
+    window when it shows that list; unblock('ability', category) drops
+    that hold, and unblock('ability') the whole-window one alone.
+    info('ability').blocked_categories lists the lists any handle blocks,
+    .mine.blocked_categories this handle's. move and move_group take the
+    frame's top-left,
     info(name).rect's x and y, for every window. reset(name[, 'position' |
     'size']) and reset_group(group) reset only what this handle placed, and
     refuse, naming who placed it, when another handle did.
@@ -407,8 +419,31 @@ local function window_call(verb, usage, reads)
     end
 end
 
-for _, verb in ipairs({'hide', 'unhide', 'block', 'unblock', 'open', 'close'}) do
+for _, verb in ipairs({'hide', 'unhide', 'open', 'close'}) do
     Handle[verb] = window_call(verb, verb .. '(name)')
+end
+
+-- block(name[, category]) and unblock(name[, category]): a category names
+-- one list of ability, by name or number, and reaches the engine only when
+-- given, so a resident older than 0.10.0 still serves the plain call.
+local function category_call(verb)
+    local usage = verb .. '(name[, category])'
+    return function(self, name, category)
+        check_self(self, verb)
+        need(type(name) == 'string', usage .. ': name must be a string')
+        need(category == nil or type(category) == 'string', usage .. ': category must be a string')
+        if not self.native then
+            return nil, released
+        end
+        if category == nil then
+            return call(self, verb, name)
+        end
+        return call(self, verb, name, category)
+    end
+end
+
+for _, verb in ipairs({'block', 'unblock'}) do
+    Handle[verb] = category_call(verb)
 end
 
 for _, verb in ipairs({'info', 'options'}) do
@@ -777,39 +812,72 @@ local function check_window(self, verb, event, name)
     end
 end
 
--- handle:on(event, fn) or handle:on(event, name, fn) -> fn. fn(event) runs
--- on the frame after it happened; with a name, only for that window.
-function Handle:on(event, name, fn)
-    check_self(self, 'on')
-    if fn == nil and type(name) ~= 'string' then
-        name, fn = nil, name
+-- The forms of on() and off(): (event, fn), (event, name, fn) and (event,
+-- name, category, fn), off's each without the fn too. The name and the
+-- category are the strings present, in that order.
+local function listener_args(name, category, fn)
+    if fn == nil then
+        if category == nil and type(name) ~= 'string' then
+            return nil, nil, name
+        end
+        if type(category) ~= 'string' then
+            return name, nil, category
+        end
     end
+    return name, category, fn
+end
+
+-- The category on(), off() take: nil, or one list of ability by the name
+-- or number its events carry; only ability's events carry one.
+local function check_category(verb, name, category)
+    if category == nil then
+        return
+    end
+    if type(category) ~= 'string' then
+        error(('%s(event, name, category, fn): category must be a string'):format(verb), 3)
+    end
+    if type(name) ~= 'string' or name:lower() ~= 'ability' then
+        error('category filters apply to ability only', 3)
+    end
+end
+
+-- handle:on(event, fn), handle:on(event, name, fn) or handle:on(event,
+-- name, category, fn) -> fn. fn(event) runs on the frame after it
+-- happened; with a name, only for that window; with a category, only for
+-- that list of ability.
+function Handle:on(event, name, category, fn)
+    check_self(self, 'on')
+    name, category, fn = listener_args(name, category, fn)
     check_event(event)
     check_window(self, 'on', event, name)
+    check_category('on', name, category)
     if type(fn) ~= 'function' then
-        error('on(event[, name], fn) needs a function', 2)
+        error('on(event[, name[, category]], fn) needs a function', 2)
     end
     local list = self.callbacks[event]
-    list[#list + 1] = {fn = fn, name = name and name:lower()}
+    list[#list + 1] = {fn = fn, name = name and name:lower(), category = category and category:lower()}
     return fn
 end
 
--- handle:off(event [, name] [, fn]): the callbacks for the event, those for
--- one window, one function, or one function for one window.
-function Handle:off(event, name, fn)
+-- handle:off(event [, name [, category]] [, fn]): the callbacks for the
+-- event, those for one window, those for one list of ability, one
+-- function, or one function for one window or list.
+function Handle:off(event, name, category, fn)
     check_self(self, 'off')
-    if fn == nil and type(name) ~= 'string' then
-        name, fn = nil, name
-    end
+    name, category, fn = listener_args(name, category, fn)
     check_event(event)
     check_window(self, 'off', event, name)
+    check_category('off', name, category)
     if fn ~= nil and type(fn) ~= 'function' then
-        error('off(event[, name], fn): fn must be a function', 2)
+        error('off(event[, name[, category]], fn): fn must be a function', 2)
     end
     local list = self.callbacks[event]
     local window = name and name:lower()
+    local wanted = category and category:lower()
     for i = #list, 1, -1 do
-        if (window == nil or list[i].name == window) and (fn == nil or list[i].fn == fn) then
+        local c = list[i]
+        if (window == nil or c.name == window) and (wanted == nil or c.category == wanted)
+                and (fn == nil or c.fn == fn) then
             table.remove(list, i)
         end
     end
@@ -919,6 +987,16 @@ function hideui.debug(on)
     debugging = on
 end
 
+-- A callback's category filter against the event's: the name the engine
+-- gives the list, or its number.
+local function category_matches(c, event)
+    if c.category == nil or event.category_name == c.category then
+        return true
+    end
+    local number = tonumber(c.category)
+    return number ~= nil and event.category == number
+end
+
 -- A callback that fails is counted every time and posted to the handle as
 -- an error event the first time; one failing on an error event is only
 -- counted.
@@ -930,7 +1008,7 @@ local function deliver(handle, event)
     local snapshot = {unpack(list)}
     for i = 1, #snapshot do
         local c = snapshot[i]
-        if c.name == nil or c.name == event.name then
+        if (c.name == nil or c.name == event.name) and category_matches(c, event) then
             local ok, message = pcall(c.fn, event)
             if not ok then
                 handle.callback_errors = handle.callback_errors + 1

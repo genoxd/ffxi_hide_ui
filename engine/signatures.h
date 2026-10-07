@@ -1,5 +1,5 @@
 // signatures.h - how the engine finds FFXiMain's routines and data, the
-// routines it calls, and the eight routines it hooks.
+// routines it calls, and the nine routines it hooks.
 
 #ifndef HIDEUI_SIGNATURES_H_
 #define HIDEUI_SIGNATURES_H_
@@ -8,7 +8,7 @@
 
 namespace hu {
 
-// The 33 signatures the engine scans for; build.sh checks the count. Not one
+// The 34 signatures the engine scans for; build.sh checks the count. Not one
 // verbatim.
 const char kSigRegistry[] =
     "a0 ?? ?? ?? ?? 53 56 57 33 ff 84 c0 74 ?? 8b 5c 24 ?? b8 ?? ?? ?? ?? 8b f0 6a 10 53 50 e8 ?? ?? ?? ?? 83 c4 0c 85 c0 74 ?? 8a 4e 2c 83 c6 2c";
@@ -68,6 +68,24 @@ const char kSigMacroGate[] =
     "66 a1 ?? ?? ?? ?? 56 33 f6 66 85 c0 74 ?? 0f bf c0 8b 34 85 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 83 39 60 0f 85 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 84 c0 0f 85";
 const size_t kMacroGateGlobal = 2;
 const size_t kMacroGateManagerImm = 40;
+
+// The ability opener (kind, flag, extra; cdecl, the caller popping the 12
+// bytes, nothing returned), hooked: the one routine every open of the job
+// ability, pet command, weapon skill and job trait lists goes through, from
+// the abilities menu rows and the /ja, /ws and /pet commands. It tests a
+// player global, opens abisortw by name when flag is 1, opens ability by
+// name, then hands kind to the controller, which stores it at
+// kAbilityCategory (game.h). The prologue, mov eax,[imm32], reads a global
+// the engine knows from nowhere else, so it is read out of the hit and
+// pinned at +1 before the scan that resolves the site, as the macro gate's
+// word is; the manager's imm32 at +29 is pinned as the mouse mode picker's.
+// The second push's imm32, at +43, must point at the registry's ability
+// key, checked once the site is found.
+const char kSigAbilityOpen[] =
+    "a1 ?? ?? ?? ?? 85 c0 74 ?? 53 8b 5c 24 0c 80 fb 01 75 ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8";
+const size_t kAbilityOpenGlobal = 1;
+const size_t kAbilityOpenManagerImm = 29;
+const size_t kAbilityOpenKeyImm = 43;
 
 // The macro key object's global, read out of the macro subsystem's
 // constructor, a data site never run or hooked: the global is the imm32 at
@@ -188,12 +206,15 @@ const uint32_t kDockMaskTable[5] = {0x1000, 0x2000, 0x4000, 0x10000000, 0};
 // The prologue is the run of whole, position-independent instructions the
 // daemon relocates; each lies inside the exact bytes of its signature, but
 // for `manager_imm`: an imm32 in it that must be the manager's address, which
-// the engine writes into the signature before it scans.
+// the engine writes into the signature before it scans. `callee_pops` is 1
+// for a routine that pops its own arguments (thiscall, stdcall), 0 for one
+// whose caller does (cdecl).
 struct SiteSpec {
     const char* name;
     const char* signature;
     uint32_t prologue;
     uint32_t arg_bytes;
+    uint32_t callee_pops;
     HuPreFn pre;
     HuPostFn post;
     uint32_t manager_imm;           // 0: none
@@ -201,19 +222,21 @@ struct SiteSpec {
 
 enum {
     kSiteOpen, kSiteUpdate, kSiteStagedClose, kSiteShow, kSiteMouseMode, kSiteMenuInput, kSiteCompassDraw,
-    kSiteMacroGate,
+    kSiteMacroGate, kSiteAbilityOpen,
     kSiteCount
 };
 
 const SiteSpec kSites[kSiteCount] = {
-    {"open_by_name", kSigOpen, 7, 12, &hook_open_pre, &hook_open_post, 0},
-    {"ui_update", kSigUpdate, 7, 0, &hook_update_pre, NULL, 0},
-    {"staged_close", kSigStagedClose, 9, 20, &hook_close_pre, NULL, 0},
-    {"show_path", kSigShow, 10, 4, &hook_show_pre, NULL, 0},
-    {"mouse_mode", kSigMouseMode, 8, 0, &hook_mouse_mode_pre, NULL, kMouseModeManagerImm},
-    {"menu_input", kSigMenuInput, 6, 4, &hook_menu_input_pre, NULL, 0},
-    {"compass_draw", kSigCompassDraw, 6, 0, &hook_compass_pre, NULL, kCompassDrawManagerImm},
-    {"macro_gate", kSigMacroGate, 6, 0, &hook_macro_gate_pre, NULL, kMacroGateManagerImm},
+    {"open_by_name", kSigOpen, 7, 12, 1, &hook_open_pre, &hook_open_post, 0},
+    {"ui_update", kSigUpdate, 7, 0, 1, &hook_update_pre, NULL, 0},
+    {"staged_close", kSigStagedClose, 9, 20, 1, &hook_close_pre, NULL, 0},
+    {"show_path", kSigShow, 10, 4, 1, &hook_show_pre, NULL, 0},
+    {"mouse_mode", kSigMouseMode, 8, 0, 1, &hook_mouse_mode_pre, NULL, kMouseModeManagerImm},
+    {"menu_input", kSigMenuInput, 6, 4, 1, &hook_menu_input_pre, NULL, 0},
+    {"compass_draw", kSigCompassDraw, 6, 0, 1, &hook_compass_pre, NULL, kCompassDrawManagerImm},
+    {"macro_gate", kSigMacroGate, 6, 0, 1, &hook_macro_gate_pre, NULL, kMacroGateManagerImm},
+    {"ability_open", kSigAbilityOpen, 5, 12, 0, &hook_ability_open_pre, &hook_ability_open_post,
+     kAbilityOpenManagerImm},
 };
 
 }  // namespace hu

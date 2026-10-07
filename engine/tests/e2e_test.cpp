@@ -82,13 +82,25 @@
 // holds it and goes with a release; the gate resolved again over the
 // daemon's jump; the gate, its manager imm32 and the macro object's
 // constructor site failing closed; and a 0.8.0 resident (copy f) making no
-// handle for this copy.
+// handle for this copy. 0.10.0's own: the ability opener, on the stand-in's
+// site (the game's shape around a stand-in global, the two keys in the
+// stand-in's data, the manager and two real calls to the open routine, and
+// a body storing the kind at the controller's +0x64), called cdecl on the
+// game thread as the game's callers do: an open through it stamps the
+// opened event with its kind, closed carries the controller's list, a
+// category block refuses that kind alone with blocked carrying it while
+// the others open, the whole-window block refuses every kind, info lists
+// the categories blocked and each handle's own, a release drops them,
+// hideui.lua's on() with a category filter, the site resolved again over
+// the daemon's jump, the site, its manager imm32 and its key push failing
+// closed, and a 0.9.0 resident (copy g) making no handle for this copy.
 //
 // e2e_test.exe <LuaCore.dll> <a/_HideUI.dll> <FFXiMain.dll> <b/_HideUI.dll> <c/_HideUI.dll> <hideui.lua>
-//              <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll>
+//              <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll> <g/_HideUI.dll>
 //
 // Copy e publishes engine abi 4's table, standing for a 0.5.1 to 0.6.3
-// resident; copy f engine abi 5's, standing for a 0.7.0 to 0.8.0 one.
+// resident; copy f engine abi 5's, standing for a 0.7.0 to 0.8.0 one; copy
+// g engine abi 6's, standing for a 0.9.0 one.
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -164,7 +176,7 @@ const char kPrelude[] =
     "  return open()\n"
     "end\n"
     "function copy_of(path)\n"
-    "  return path and path:match('[/\\\\]([abcdef])[/\\\\]_[Hh]ide[Uu][Ii]%.dll$')\n"
+    "  return path and path:match('[/\\\\]([abcdefg])[/\\\\]_[Hh]ide[Uu][Ii]%.dll$')\n"
     "end\n"
     "function finish()\n"
     "  local text = table.concat(out, '\\n')\n"
@@ -442,6 +454,8 @@ struct FakeState {
     uint8_t* macro_ctor_site;
     volatile LONG* macro_key;
     volatile LONG* macros_fired;
+    void* ability_open;
+    int32_t* ability_last_kind;
 };
 
 // fake_arealist.h's Log, field for field.
@@ -469,6 +483,7 @@ FakeState* g_fake;
 
 typedef void (__fastcall* UpdateFn)(void* mcb, void* edx);
 typedef void* (__fastcall* OpenFn)(void* mcb, void* edx, const char* key, int activate, int overlap);
+typedef void (__cdecl* AbilityOpenFn)(int kind, int flag, int extra);
 
 volatile LONG g_stop;
 volatile LONG g_pending;
@@ -477,6 +492,8 @@ volatile LONG g_paused;
 const char* g_open_key;
 void* g_open_result;
 HANDLE g_open_done;
+volatile LONG g_ability_pending;
+int g_ability_args[3];
 
 // Plays the game's main thread: runs a frame every couple of milliseconds
 // and carries out the opens the harness asks for, on this thread.
@@ -496,6 +513,13 @@ DWORD WINAPI game_thread(LPVOID) {
         if (g_pending) {
             g_open_result = open(g_fake->mcb, NULL, g_open_key, 1, 1);
             g_pending = 0;
+            SetEvent(g_open_done);
+        }
+        if (g_ability_pending) {
+            AbilityOpenFn ability_open;
+            memcpy(&ability_open, &g_fake->ability_open, sizeof(ability_open));
+            ability_open(g_ability_args[0], g_ability_args[1], g_ability_args[2]);
+            g_ability_pending = 0;
             SetEvent(g_open_done);
         }
         update(g_fake->mcb, NULL);
@@ -524,6 +548,15 @@ void* open_on_game_thread(const char* key) {
     g_pending = 1;
     WaitForSingleObject(g_open_done, 5000);
     return g_open_result;
+}
+
+// The ability opener as the game's callers run it, on the game thread.
+void ability_open_on_game_thread(int kind, int flag, int extra) {
+    g_ability_args[0] = kind;
+    g_ability_args[1] = flag;
+    g_ability_args[2] = extra;
+    g_ability_pending = 1;
+    WaitForSingleObject(g_open_done, 5000);
 }
 
 // The hooked open from this thread, for an open that must come while no
@@ -701,12 +734,12 @@ DWORD WINAPI never_runs(LPVOID) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 10) {
+    if (argc < 11) {
         std::printf("usage: e2e_test.exe <LuaCore.dll> <a/_HideUI.dll> <FFXiMain.dll> <b/_HideUI.dll>"
-            " <c/_HideUI.dll> <hideui.lua> <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll>\n");
+            " <c/_HideUI.dll> <hideui.lua> <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll> <g/_HideUI.dll>\n");
         return 2;
     }
-    for (int i = 2; i < 10; ++i) {
+    for (int i = 2; i < 11; ++i) {
         to_backslashes(argv[i]);
     }
     g_dll = argv[2];
@@ -728,13 +761,13 @@ int main(int argc, char** argv) {
             "check(not s.ok and s.state == 'failed' and s.role == 'none' and s.error == nil"
             "  and tostring(d.error):find('FFXiMain', 1, true),"
             "  'no FFXiMain.dll: status().detail.error names the failure: ' .. tostring(d.error))\n"
-            "check(s.engine == '0.9.0' and s.handles == 0 and s.dropped == 0 and type(s.hidden) == 'table'"
-            "  and type(s.resized) == 'table' and d.image and d.image.abi == 6 and s.ui == nil,"
+            "check(s.engine == '0.10.0' and s.handles == 0 and s.dropped == 0 and type(s.hidden) == 'table'"
+            "  and type(s.resized) == 'table' and d.image and d.image.abi == 7 and s.ui == nil,"
             "  'status: the public fields at the top, the image under detail')\n"
             "local ok, err = pcall(hu.new, 42)\n"
             "check(not ok and tostring(err):find('string expected', 1, true), 'new(42) raises: ' .. tostring(err))\n"
             "check(hu.shutdown() == true, 'shutdown of an engine that never installed is a no-op')\n"
-            "check(hu.version() == 'hideui 0.9.0', 'version: ' .. hu.version())\n"
+            "check(hu.version() == 'hideui 0.10.0', 'version: ' .. hu.version())\n"
             "return finish()\n");
         lua.close(L);
         check(!engine_mapped(), "a failed engine holds no pin: closing Lua unmaps it");
@@ -811,6 +844,9 @@ int main(int argc, char** argv) {
         snprintf(macro_addresses[i], sizeof(macro_addresses[i]), "0x%08X",
             static_cast<unsigned>(reinterpret_cast<uintptr_t>(macro_fns[i])));
     }
+    char ability_address[16];
+    snprintf(ability_address, sizeof(ability_address), "0x%08X",
+        static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->ability_open)));
     const char* globals[] = {"OPEN", addresses[0], "UPDATE", addresses[1], "STAGED", addresses[2],
                              "SHOW", addresses[3], "SETPOS", addresses[4], "CLOSE", addresses[5],
                              "REGISTRY", addresses[6], "MCB", addresses[7], "PENDING", addresses[8],
@@ -826,7 +862,7 @@ int main(int argc, char** argv) {
                              "MOUSEREAD", mouse_addresses[2], "SINK", input_addresses[0],
                              "ROUTING", input_addresses[1], "COMPASS", compass_addresses[0],
                              "COMPASSGLOBAL", compass_addresses[1], "MACROGATE", macro_addresses[0],
-                             "MACROOBJECT", macro_addresses[1], NULL};
+                             "MACROOBJECT", macro_addresses[1], "ABILITYOPEN", ability_address, NULL};
 
     const char kExpectFailure[] =
         "local hu = load_engine()\n"
@@ -1063,6 +1099,36 @@ int main(int argc, char** argv) {
             " or whose two globals disagree, install nothing; no key held, no macro fired");
     }
 
+    // -- the 0.10.0 site: the ability opener, whose imm32 at +29 must be the
+    //    manager and whose key push at +43 must name the registry's ability key
+    {
+        uint8_t* opener = static_cast<uint8_t*>(g_fake->ability_open);
+        const uint8_t opener_first = opener[0];
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[3] = {
+            {opener + 9, 0x90, "signature ability_open: not found"},
+            {opener + 29, static_cast<uint8_t>(opener[29] + 1), "signature ability_open: not found"},
+            {opener + 43, static_cast<uint8_t>(opener[43] + 1),
+             "ability_open: its key push at +43 does not name the registry's ability key"},
+        };
+        for (int i = 0; i < 3; ++i) {
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+        }
+        check(static_cast<uint8_t*>(g_fake->open)[0] == open_first && opener[0] == opener_first && !engine_mapped(),
+            "an ability opener that differs, whose imm32 is not the manager, or whose second key push names another"
+            " key, installs nothing");
+    }
+
     // -- a signature that matches twice
     {
         poke(g_fake->spare_set_position, 0x83);
@@ -1151,7 +1217,7 @@ int main(int argc, char** argv) {
         "local d = s.detail or {}\n"
         "check(s.ok and s.state == 'installed' and s.role == 'resident' and h ~= nil,"
         "  'installs against the stand-in FFXiMain: ' .. tostring(d.error))\n"
-        "check(s.engine == '0.9.0' and s.handles == 1 and s.dropped == 0 and hu.version() == 'hideui 0.9.0'"
+        "check(s.engine == '0.10.0' and s.handles == 1 and s.dropped == 0 and hu.version() == 'hideui 0.10.0'"
         "  and s.registry == nil and s.functions == nil,"
         "  'status: engine, handles and dropped at the top, the internals under detail; version is hideui 0.7.0')\n"
         "check(s.ui and s.ui.w == 1920 and s.ui.h == 1080 and d.ui and d.ui.w == 1920,"
@@ -1179,6 +1245,8 @@ int main(int argc, char** argv) {
         "check(f.macro_gate == MACROGATE and f.macro_object == MACROOBJECT,"
         "  'the macro key gate and the macro object global resolved to the stand-in: '"
         "  .. tostring(f.macro_gate) .. ' ' .. tostring(f.macro_object))\n"
+        "check(f.ability_open == ABILITYOPEN, 'the ability opener resolved to the stand-in: '"
+        "  .. tostring(f.ability_open))\n"
         "check(calls == 11 and all and f.prtyjoin_pending == PENDING and f.query_confirm == nil"
         "  and f.list_select == nil,"
         "  'the eleven reply, re-dock and resize routines, arealist\\'s close+reset and latch clear among them,'"
@@ -1415,6 +1483,194 @@ int main(int argc, char** argv) {
         check(!live_menu(kRowAbility)
                 && memcmp(registry_row(kRowAbility), g_fake->pristine + kRowAbility * 0x2C, 0x2C) == 0,
             "ability closed, its registry row as the table has it");
+    }
+
+    // -- info('ability').category: the controller's +0x64, the list the window
+    //    shows, named for the known values, reported only while it is open
+    {
+        const int kRowAbility = row_named("ability");
+        uint8_t* actl = controller_named("ability");
+        put32(actl, 0x64, 2);
+        check(open_on_game_thread("menu    ability") != NULL, "ability opens with 2 in its controller's +0x64");
+        wait_frames(3);
+        phase(L,
+            "local p = h:info('ability')\n"
+            "check(p.open and p.category == 2 and p.category_name == 'pet_commands',"
+            "  'info(ability): category 2, category_name pet_commands: ' .. tostring(p.category) .. ' '"
+            "  .. tostring(p.category_name))\n"
+            "return finish()\n");
+        put32(actl, 0x64, 7);
+        phase(L,
+            "local p = h:info('ability')\n"
+            "check(p.category == 7 and p.category_name == nil, 'category 7: the number and no name: '"
+            "  .. tostring(p.category) .. ' ' .. tostring(p.category_name))\n"
+            "check(h:close('ability') == true, 'close of ability queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(!live_menu(kRowAbility), "ability closed, 7 still in its controller");
+        phase(L,
+            "local p = h:info('ability')\n"
+            "check(not p.open and p.category == nil and p.category_name == nil,"
+            "  'info(ability) closed: neither field: ' .. tostring(p.category) .. ' ' .. tostring(p.category_name))\n"
+            "h:poll()\n"
+            "return finish()\n");
+        put32(actl, 0x64, 0);
+    }
+
+    // -- the ability opener (0.10.0): the stand-in's site, hooked. An open
+    //    through it opens ability with the kind stored in the controller and
+    //    an opened event carrying it; closed carries the controller's list;
+    //    a category block refuses that kind alone, blocked carrying it and
+    //    naming the holder, and the others open; the whole-window block
+    //    refuses every kind through it; info lists the categories blocked,
+    //    each handle its own; a release drops them
+    {
+        const int kRowAbility = row_named("ability");
+        const int kRowSort = row_named("abisortw");
+        uint8_t* actl = controller_named("ability");
+        check(static_cast<uint8_t*>(g_fake->ability_open)[0] == 0xE9, "the daemon's jump is on the stand-in's ability opener");
+        phase(L, "h:poll()\nreturn finish()\n");
+        ability_open_on_game_thread(2, 0, 1);
+        wait_frames(3);
+        check(live_menu(kRowAbility) && !live_menu(kRowSort) && *g_fake->ability_last_kind == 2 && get32(actl, 0x64) == 2,
+            "ability_open(2, 0, 1) through the site opens ability alone, its body storing 2 at the controller's +0x64");
+        *g_fake->close_frames = 1;
+        phase(L,
+            "local p = h:info('ability')\n"
+            "check(p.open and p.category == 2 and p.category_name == 'pet_commands' and #p.blocked_categories == 0"
+            "  and #p.mine.blocked_categories == 0, 'info(ability): open on pet_commands, no category blocked: '"
+            "  .. tostring(p.category) .. ' ' .. tostring(p.category_name))\n"
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name .. ':' .. tostring(e.category)"
+            "  .. ':' .. tostring(e.category_name) end\n"
+            "check(table.concat(seen, ' ') == 'opened:ability:2:pet_commands',"
+            "  'the opened event carries the opener\\'s kind, 2, named pet_commands: ' .. table.concat(seen, ' '))\n"
+            "check(h:close('ability') == true, 'close of ability queues')\n"
+            "return finish()\n");
+        wait_frames(4);
+        *g_fake->close_frames = 0;
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name .. ':' .. tostring(e.category)"
+            "  .. ':' .. tostring(e.category_name) end\n"
+            "check(table.concat(seen, ' ') == 'closed:ability:2:pet_commands',"
+            "  'the closed event carries the list the controller holds: ' .. table.concat(seen, ' '))\n"
+            "local r, why = h:block('equip', 'pet_commands')\n"
+            "check(r == nil and why == 'only ability has categories', 'block(equip, pet_commands): ' .. tostring(why))\n"
+            "r, why = h:unblock('compass', '2')\n"
+            "check(r == nil and why == 'only ability has categories', 'unblock(compass, 2): ' .. tostring(why))\n"
+            "r, why = h:block('ability', 'spells')\n"
+            "check(r == nil and tostring(why):find('no such category: spells', 1, true) == 1,"
+            "  'block(ability, spells): ' .. tostring(why))\n"
+            "r, why = h:block('ability', '32')\n"
+            "check(r == nil and tostring(why):find('no such category: 32', 1, true) == 1, 'block(ability, 32): ' .. tostring(why))\n"
+            "check(h:block('ability', 'pet_commands') == true, 'block(ability, pet_commands) holds')\n"
+            "local p = h:info('ability')\n"
+            "check(not p.blocked and not p.hidden and #p.blocked_categories == 1 and p.blocked_categories[1] == 'pet_commands'"
+            "  and p.mine.blocked_categories[1] == 'pet_commands' and p.mine.blocked == false,"
+            "  'info(ability): not blocked or hidden whole, pet_commands blocked, mine')\n"
+            "local all = h:list()\n"
+            "local listed = false\n"
+            "for _, nm in ipairs(hu.status().blocked) do listed = listed or nm == 'ability' end\n"
+            "check(all.ability.blocked == false and not listed,"
+            "  'list() and status(): ability\\'s blocked stays the whole-window flag')\n"
+            "return finish()\n");
+        *g_fake->ability_last_kind = -1;
+        ability_open_on_game_thread(2, 0, 1);
+        wait_frames(3);
+        check(!live_menu(kRowAbility) && *g_fake->ability_last_kind == -1,
+            "ability_open(2, 0, 1) with pet_commands blocked: the hooked opener runs nothing; nothing opens, no kind"
+            " stored");
+        ability_open_on_game_thread(2, 1, 1);
+        wait_frames(3);
+        check(!live_menu(kRowAbility) && !live_menu(kRowSort) && *g_fake->ability_last_kind == -1,
+            "with flag 1 neither abisortw nor ability opens");
+        ability_open_on_game_thread(1, 0, 1);
+        wait_frames(3);
+        check(live_menu(kRowAbility) && *g_fake->ability_last_kind == 1 && get32(actl, 0x64) == 1,
+            "ability_open(1, 0, 1) still opens ability on job_abilities");
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name .. ':' .. tostring(e.category)"
+            "  .. ':' .. tostring(e.category_name)"
+            "  .. (e.event == 'blocked' and (':' .. table.concat(e.by, '+') .. ':' .. tostring(e.mine)) or '') end\n"
+            "check(table.concat(seen, ' ') == 'blocked:ability:2:pet_commands:alpha:true blocked:ability:2:pet_commands:alpha:true"
+            " opened:ability:1:job_abilities',"
+            "  'two blocked events carrying 2, by alpha and mine, then opened carrying 1: ' .. table.concat(seen, ' '))\n"
+            "check(h:unblock('ability', 'pet_commands') == true and #h:info('ability').blocked_categories == 0,"
+            "  'unblock(ability, pet_commands) drops it')\n"
+            "check(h:close('ability') == true, 'close ability')\n"
+            "return finish()\n");
+        wait_frames(3);
+        ability_open_on_game_thread(2, 0, 1);
+        wait_frames(3);
+        check(live_menu(kRowAbility) && get32(actl, 0x64) == 2,
+            "unblocked: ability_open(2, 0, 1) opens again on pet_commands");
+        phase(L,
+            "h:poll()\n"
+            "check(h:block('ability', '2') == true, 'block(ability, 2) by number with the window on list 2 queues its close')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(!live_menu(kRowAbility), "the category block closed the window showing that list");
+        ability_open_on_game_thread(3, 0, 1);
+        wait_frames(3);
+        phase(L,
+            "h:poll()\n"
+            "check(h:block('ability', 'job_abilities') == true, 'block(ability, job_abilities) with the window on list 3')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(live_menu(kRowAbility) && get32(actl, 0x64) == 3,
+            "a category block leaves the window open on another list");
+        phase(L,
+            "check(h:unblock('ability', '2') == true and h:unblock('ability', 'job_abilities') == true, 'both dropped')\n"
+            "check(h:block('ability') == true, 'block(ability) whole, the window open: queues its close')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(!live_menu(kRowAbility), "the whole block closed it");
+        *g_fake->ability_last_kind = -1;
+        ability_open_on_game_thread(1, 0, 1);
+        ability_open_on_game_thread(4, 0, 1);
+        ability_open_on_game_thread(20, 0, 1);
+        wait_frames(3);
+        check(!live_menu(kRowAbility) && *g_fake->ability_last_kind == -1,
+            "blocked whole: kinds 1, 4 and 20 through the opener open nothing");
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do if e.event == 'blocked' then seen[#seen + 1] = tostring(e.category) .. ':'"
+            "  .. tostring(e.category_name) .. ':' .. table.concat(e.by, '+') .. ':' .. tostring(e.mine) end end\n"
+            "check(table.concat(seen, ' ') == '1:job_abilities:alpha:true 4:job_traits:alpha:true 20:weapon_skills:alpha:true',"
+            "  'blocked events carry each kind, 4 named job_traits and 20 weapon_skills, by alpha: ' .. table.concat(seen, ' '))\n"
+            "local p = h:info('ability')\n"
+            "check(p.blocked and #p.blocked_categories == 0, 'info(ability): blocked whole, no category')\n"
+            "check(h:unblock('ability') == true, 'unblock(ability)')\n"
+            "hl = hu.new('lists')\n"
+            "check(hl:block('ability', '4') == true and hl:block('ability', 'weapon_skills') == true"
+            "  and h:block('ability', '7') == true, 'lists blocks 4 by number and weapon_skills by name, alpha 7')\n"
+            "p = h:info('ability')\n"
+            "local mine = hl:info('ability').mine\n"
+            "check(table.concat(p.blocked_categories, ' ') == 'weapon_skills job_traits 7'"
+            "  and table.concat(p.mine.blocked_categories, ' ') == '7'"
+            "  and table.concat(mine.blocked_categories, ' ') == 'weapon_skills job_traits',"
+            "  'info(ability).blocked_categories lists every handle\\'s, named where the engine has a name, in category'"
+            "  .. ' order; mine each handle\\'s own: ' .. table.concat(p.blocked_categories, ' ') .. ' / '"
+            "  .. table.concat(mine.blocked_categories, ' '))\n"
+            "check(hl:release() == true, 'lists releases')\n"
+            "p = h:info('ability')\n"
+            "check(table.concat(p.blocked_categories, ' ') == '7', 'the release dropped its two: '"
+            "  .. table.concat(p.blocked_categories, ' '))\n"
+            "check(h:unblock('ability', '7') == true and #h:info('ability').blocked_categories == 0, 'alpha unblocks 7')\n"
+            "return finish()\n");
+        ability_open_on_game_thread(4, 0, 1);
+        wait_frames(3);
+        check(live_menu(kRowAbility) && get32(actl, 0x64) == 4, "nothing held: ability_open(4, 0, 1) opens job traits");
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. tostring(e.category_name) end\n"
+            "check(table.concat(seen, ' ') == 'opened:job_traits', 'opened carrying 4, job_traits: ' .. table.concat(seen, ' '))\n"
+            "check(h:close('ability') == true, 'close ability')\n"
+            "return finish()\n");
+        wait_frames(3);
+        put32(actl, 0x64, 0);
     }
 
     // -- the compass (0.8.0): the stand-in's object and draw entry, hooked;
@@ -2548,7 +2804,7 @@ int main(int argc, char** argv) {
         "local f = s.detail.functions\n"
         "check(f.open_by_name == OPEN and f.ui_update == UPDATE"
         "  and f.staged_close == STAGED and f.show_path == SHOW and f.compass_draw == COMPASS"
-        "  and f.macro_gate == MACROGATE, 'at the same addresses')\n"
+        "  and f.macro_gate == MACROGATE and f.ability_open == ABILITYOPEN, 'at the same addresses')\n"
         "check(h:hide('buff') == true, 'and hides through them')\n"
         "return finish()\n");
     wait_frames(3);
@@ -2882,7 +3138,7 @@ int main(int argc, char** argv) {
         phase(L,
             "hu = load_engine()\n"
             "h = hu.new('six')\n"
-            "check(hu.status().ok and hu.status().engine == '0.9.0', 'a fresh engine for the six-member party list: '"
+            "check(hu.status().ok and hu.status().engine == '0.10.0', 'a fresh engine for the six-member party list: '"
             "  .. tostring(hu.status().detail.error))\n"
             "local p, e = h:info('partywin'), h:info('equip')\n"
             "check(p.detail.layout == 'bottom' and p.rect.y == p.default.y and p.rect.bottom == p.default.bottom"
@@ -3582,7 +3838,7 @@ int main(int argc, char** argv) {
             "_addon = {name = 'layout'}\n"
             "hideui = dofile(HIDEUI)\n"
             "ui = hideui.new()\n"
-            "check(ui ~= nil and ui.name == 'layout' and hideui.version() == 'hideui 0.9.0' and hideui.status().handles == 1,"
+            "check(ui ~= nil and ui.name == 'layout' and hideui.version() == 'hideui 0.10.0' and hideui.status().handles == 1,"
             "  'hideui.lua loads copy A beside it and makes a handle, named after _addon.name')\n"
             "seen = {}\n"
             "ui:on('opened', 'ability', function(e) seen[#seen + 1] = e.event .. ':' .. e.name end)\n"
@@ -3641,6 +3897,32 @@ int main(int argc, char** argv) {
         check(origin(log, 1) == 930 && origin(party2, 1) == 930 && origin(equip, 0) == 100 + kRowEquip
                 && get16(menuwind_now, 0x3E) - get16(menuwind_now, 0x3A) == 120,
             "reset_all put the log, partywin, equip and menuwind's size back");
+        phase(L,
+            "ui:off('opened', 'ability')\n"
+            "lists = {}\n"
+            "ui:on('opened', 'ability', 'pet_commands', function(e) lists[#lists + 1] = 'pets:' .. tostring(e.category) end)\n"
+            "ui:on('opened', 'ability', '1', function(e) lists[#lists + 1] = 'one:' .. tostring(e.category_name) end)\n"
+            "ui:on('blocked', 'ability', 'job_traits', function(e) lists[#lists + 1] = 'traits:' .. tostring(e.category)"
+            "  .. ':' .. tostring(e.mine) end)\n"
+            "local ok, err = pcall(ui.on, ui, 'opened', 'equip', 'pet_commands', function() end)\n"
+            "check(not ok and tostring(err):find('category filters apply to ability only', 1, true) ~= nil,"
+            "  'on(opened, equip, pet_commands, fn) raises: ' .. tostring(err))\n"
+            "check(ui:block('ability', 'job_traits') == true, 'block(ability, job_traits) through hideui.lua')\n"
+            "return finish()\n");
+        ability_open_on_game_thread(2, 0, 1);
+        ability_open_on_game_thread(1, 0, 1);
+        ability_open_on_game_thread(4, 0, 1);
+        wait_frames(3);
+        phase(L,
+            "handlers.prerender()\n"
+            "check(table.concat(lists, ' ') == 'pets:2 one:job_abilities traits:4:true',"
+            "  'on(event, ability, category, fn) fires for its list alone, by name or number, blocked too: '"
+            "  .. table.concat(lists, ' '))\n"
+            "check(ui:unblock('ability', 'job_traits') == true and ui:close('ability') == true,"
+            "  'unblock(ability, job_traits) and close through hideui.lua')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(!live_menu(row_named("ability")), "ability closed again");
         phase(L,
             "check(ui:apply(layout) == true, 'apply(layout) queues every entry')\n"
             "return finish()\n");
@@ -3739,6 +4021,7 @@ int main(int argc, char** argv) {
     const char* const dll_d = argv[7];
     const char* const dll_e = argv[8];
     const char* const dll_f = argv[9];
+    const char* const dll_g = argv[10];
     char daemon_b[MAX_PATH];
     char daemon_c[MAX_PATH];
     beside(dll_b, "hideui_daemon.dll", daemon_b, sizeof(daemon_b));
@@ -3752,7 +4035,7 @@ int main(int argc, char** argv) {
         "local s = hu.status()\n"
         "local d = s.detail\n"
         "check(s.ok and s.role == 'resident' and copy_of(d.image.path) == 'a' and d.resident"
-        "  and copy_of(d.resident.path) == 'a' and d.resident.abi == 6 and d.resident.build == s.engine,"
+        "  and copy_of(d.resident.path) == 'a' and d.resident.abi == 7 and d.resident.build == s.engine,"
         "  'copy A installs and is resident: ' .. tostring(d.error))\n"
         "check(ha:hide('buff') == true and ha:block('menuwind') == true and ha:move('equip', 300, 200) == true,"
         "  'A hides buff, blocks menuwind and moves equip')\n"
@@ -3773,7 +4056,7 @@ int main(int argc, char** argv) {
         "  and copy_of(d.resident.path) == 'a' and d.resident.build == s.engine,"
         "  'copy B forwards; its status names A as resident: ' .. tostring(d.resident and d.resident.path))\n"
         "check(s.handles == 2, 'one handle table in the client: B counts the handle of A and its own')\n"
-        "check(hu.version() == 'hideui 0.9.0', 'the version of B is its own: ' .. hu.version())\n"
+        "check(hu.version() == 'hideui 0.10.0', 'the version of B is its own: ' .. hu.version())\n"
         "check(hb:hide('buff') == true and hb:move('equip', 10, 20) == true, 'B hides buff and moves equip after A')\n"
         "return finish()\n");
     check(!mapped(daemon_b), "B loaded no daemon: it installs nothing of its own");
@@ -4010,12 +4293,12 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.9.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'c', 'new() through A to C: ' .. tostring(why))\n"
         "local s, why2 = hu.status()\n"
         "check(s == nil and tostring(why2):find('status needs hideui 0.5.1 or newer; the resident copy is ', 1, true) == 1,"
         "  'status() through A to C: ' .. tostring(why2))\n"
-        "check(hu.version() == 'hideui 0.9.0', 'A\\'s version is its own')\n"
+        "check(hu.version() == 'hideui 0.10.0', 'A\\'s version is its own')\n"
         "local ok, why3, kind = hu.shutdown()\n"
         "check(ok == false and kind == 'handles', 'A\\'s shutdown, an engine abi 1 slot, reaches C: ' .. tostring(why3))\n"
         "return finish()\n");
@@ -4043,7 +4326,7 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.9.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'd', 'new() through A to D, a 0.5.0 resident: no handle at all: ' .. tostring(why))\n"
         "local ok, why2, kind = hu.shutdown()\n"
         "check(ok == false and kind == 'handles', 'A\\'s shutdown reaches D, which refuses while D holds a handle')\n"
@@ -4073,7 +4356,7 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.9.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'e', 'new() through A to E, a 0.6.3 resident: no handle, and the copy to update: '"
         "  .. tostring(why))\n"
         "local s = hu.status()\n"
@@ -4092,7 +4375,7 @@ int main(int argc, char** argv) {
     check(!mapped(dll_a) && !mapped(dll_e), "and neither copy stays mapped");
 
     // -- F resident: its table is engine abi 5's, as a 0.7.0 to 0.8.0
-    //    resident's is; a 0.9.0 copy makes no handle through it, the macro
+    //    resident's is; a 0.10.0 copy makes no handle through it, the macro
     //    slots past its table, and names the copy to update, while the calls
     //    whose slots F has still reach it; F's own handle blocks the keys
     lua_State* LF = fresh_from(dll_f, globals);
@@ -4110,7 +4393,7 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.9.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'f', 'new() through A to F, a 0.8.0 resident: no handle, and the copy to update: '"
         "  .. tostring(why))\n"
         "local s = hu.status()\n"
@@ -4127,6 +4410,43 @@ int main(int argc, char** argv) {
     check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
     lua.close(LF);
     check(!mapped(dll_a) && !mapped(dll_f), "and neither copy stays mapped");
+
+    // -- G resident: its table is engine abi 6's, as a 0.9.0 resident's is;
+    //    a 0.10.0 copy makes no handle through it, the category slots past
+    //    its table, and names the copy to update, while the calls whose
+    //    slots G has still reach it; G's own handle blocks a list of ability
+    lua_State* LG = fresh_from(dll_g, globals);
+    phase(LG,
+        "hu = load_engine()\n"
+        "hg = hu.new('addon_g')\n"
+        "local s = hu.status()\n"
+        "check(hg ~= nil and s.ok and s.role == 'resident' and copy_of(s.detail.resident.path) == 'g'"
+        "  and s.detail.resident.abi == 6, 'G installs and is resident, publishing engine abi 6\\'s table')\n"
+        "check(hg:block('ability', 'pet_commands') == true and hg:info('ability').mine.blocked_categories[1] == 'pet_commands'"
+        "  and hg:block_macros() == true, 'G\\'s own handle, on its own full table, blocks a list of ability and the keys')\n"
+        "return finish()\n");
+    LA = fresh_from(dll_a, globals);
+    phase(LA,
+        "hu = load_engine()\n"
+        "local h, why = hu.new('addon_a')\n"
+        "local path = tostring(why):match('; the resident copy is (.+)$')\n"
+        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
+        "  and copy_of(path) == 'g', 'new() through A to G, a 0.9.0 resident: no handle, and the copy to update: '"
+        "  .. tostring(why))\n"
+        "local s = hu.status()\n"
+        "check(s and s.ok and s.role == 'forwarder' and copy_of(s.detail.resident.path) == 'g' and s.handles == 1"
+        "  and s.macros_blocked == true, 'status() through A to G, a slot G has, still answers, macros_blocked with it')\n"
+        "local ok, why2, kind = hu.shutdown()\n"
+        "check(ok == false and kind == 'handles', 'A\\'s shutdown reaches G, which refuses while G holds a handle')\n"
+        "return finish()\n");
+    lua.close(LA);
+    phase(LG,
+        "check(hg:unblock('ability', 'pet_commands') == true and hg:unblock_macros() == true and hg:release() == true"
+        "  and hu.shutdown() == true, 'G unblocks, releases and shuts down')\n"
+        "return finish()\n");
+    check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
+    lua.close(LG);
+    check(!mapped(dll_a) && !mapped(dll_g), "and neither copy stays mapped");
 
     InterlockedExchange(&g_stop, 1);
     WaitForSingleObject(game, 5000);

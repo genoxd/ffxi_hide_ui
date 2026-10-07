@@ -65,13 +65,13 @@ if pid=$(mapped_by "$where/$(basename "$OUT")"); then
     exit 1
 fi
 
-# signatures.h holds the 33 signatures the engine scans for.
+# signatures.h holds the 34 signatures the engine scans for.
 python3 - "$ENGINE_DIR/signatures.h" <<'EOF'
 import re, sys
 src = open(sys.argv[1], encoding='utf-8').read()
 sigs = re.findall(r'const char (kSig\w+)\[\] =\s*"([^"]+)";', src)
-if len(sigs) != 33:
-    sys.exit('  FAIL: expected 33 signatures in signatures.h, found %d' % len(sigs))
+if len(sigs) != 34:
+    sys.exit('  FAIL: expected 34 signatures in signatures.h, found %d' % len(sigs))
 print('  OK signatures: %d in signatures.h' % len(sigs))
 EOF
 

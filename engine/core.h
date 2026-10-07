@@ -138,6 +138,7 @@ struct Inventory {
     int16_t name_of_row[kRowCount];
     int count;
     int16_t compass;        // the compass entry's index; -1 until built
+    int16_t ability;        // the ability entry's index, whose events and blocks carry a category; -1 until built
 
     // Every record, whatever its type, then the compass; rows share an entry
     // only when type and name both match. Fails on an inventory the engine
@@ -146,6 +147,7 @@ struct Inventory {
     bool build() {
         count = 0;
         compass = -1;
+        ability = -1;
         for (int r = 0; r < kRowCount; ++r) {
             name_of_row[r] = -1;
             const char* tp = kRowSpecs[r].type;
@@ -182,6 +184,7 @@ struct Inventory {
         if (count == 0 || count >= kMaxNames || find_exact(kCompassName) >= 0) {
             return false;
         }
+        ability = static_cast<int16_t>(find_exact("ability"));
         NameEntry& c = names[count];
         memset(&c, 0, sizeof(c));
         memcpy(c.name, kCompassName, strlen(kCompassName));
@@ -564,12 +567,17 @@ const uint8_t kHoldBlock = 2;
 const LONG kWantHidden = 1;
 const LONG kWantBlocked = 2;
 
+// The ability window's lists a block can name one of: the category its
+// controller stores (game.h's kAbilityCategory), a bit each.
+const int kCategoryBits = 32;
+
 struct Handle {
     uint32_t generation;
     uint8_t active;
     char name[48];
     uint8_t holds[kMaxNames];
     uint8_t macros_hold;    // this handle blocks the macro keys
+    uint32_t ability_block; // bit k: this handle blocks ability's list k
     uint32_t cursor;        // event ring position this handle has read up to
     uint32_t dropped;
 };
@@ -647,6 +655,8 @@ struct Holds {
     volatile LONG want[kMaxNames];
     uint32_t macros_count;          // handles blocking the macro keys
     volatile LONG macros_want;      // 1 while any does
+    uint32_t ability_block_count[kCategoryBits];    // handles blocking each list of ability
+    volatile LONG ability_want;     // bit k while any blocks list k
 
     LONG want_of(int n) const {
         LONG w = 0;
@@ -694,6 +704,29 @@ struct Holds {
         InterlockedExchange(&macros_want, macros_count ? 1 : 0);
     }
 
+    // One list of ability, `category` 0..kCategoryBits-1: a hold under the
+    // name's category bit, counted once per handle.
+    void set_ability(Handle& h, int category, bool on) {
+        const uint32_t bit = 1u << category;
+        if (((h.ability_block & bit) != 0) == on) {
+            return;
+        }
+        if (on) {
+            h.ability_block |= bit;
+            ++ability_block_count[category];
+        } else {
+            h.ability_block &= ~bit;
+            --ability_block_count[category];
+        }
+        uint32_t want = 0;
+        for (int k = 0; k < kCategoryBits; ++k) {
+            if (ability_block_count[k]) {
+                want |= 1u << k;
+            }
+        }
+        InterlockedExchange(&ability_want, static_cast<LONG>(want));
+    }
+
     void release(Handle& h, int names) {
         for (int n = 0; n < names; ++n) {
             if (h.holds[n] & kHoldHide) {
@@ -704,6 +737,11 @@ struct Holds {
             }
         }
         set_macros(h, false);
+        for (int k = 0; k < kCategoryBits; ++k) {
+            if (h.ability_block & (1u << k)) {
+                set_ability(h, k, false);
+            }
+        }
     }
 };
 
@@ -1049,7 +1087,8 @@ struct CommandRing {
 
 // kEvError carries the position of its ErrorRecord in place of a name,
 // kEvPending what changed and whether it is pending now, kEvCursor the
-// window and its row packed by pack_cursor.
+// window and its row packed by pack_cursor. The other five on the ability
+// window carry its list, packed by pack_event_category.
 enum EventType {
     kEvOpened = 1,
     kEvClosed = 2,
@@ -1073,6 +1112,16 @@ inline uint32_t pack_event(int type, int name) {
 }
 inline int event_type(uint32_t e) { return static_cast<int>(e & 0xFF); }
 inline int event_name(uint32_t e) { return static_cast<int>(e >> 16); }
+
+// An opened, closed, covered, uncovered or blocked event carrying a
+// category: the category + 1 in bits 8..15, 0 for none, so 0..254 travels
+// and any other value goes without one.
+inline uint32_t pack_event_category(int type, int name, int category) {
+    const uint32_t c = category >= 0 && category <= 254 ? static_cast<uint32_t>(category) + 1u : 0u;
+    return pack_event(type, name) | (c << 8);
+}
+inline bool event_has_category(uint32_t e) { return ((e >> 8) & 0xFF) != 0; }
+inline int event_category(uint32_t e) { return static_cast<int>((e >> 8) & 0xFF) - 1; }
 
 // A cursor event: the name in 9 bits (kMaxNames is under 512), the row in
 // the 15 above it, clamped to 0..0x7FFF.

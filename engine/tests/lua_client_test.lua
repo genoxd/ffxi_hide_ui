@@ -138,6 +138,8 @@ local function make_native()
                 default = {x = 1, y = 2, w = 3, h = 4, right = 4, bottom = 6}, origin = {x = 1, y = 2},
                 cursor = name == 'query' and 2 or name == 'arealist' and 3 or 1,
                 top = name == 'query' and 1 or name == 'arealist' and 2 or nil, items = 3,
+                category = name == 'ability' and 2 or nil,
+                category_name = name == 'ability' and 'pet_commands' or nil,
                 elements = {{type = 'frame', x = 1, y = 2, w = 3, h = 4, right = 4, bottom = 6, text = ''},
                             {type = 'item', x = 1, y = 2, w = 3, h = 4, right = 4, bottom = 6,
                              text = native_state.item_text or 'Party'},
@@ -408,6 +410,10 @@ local info, list, pending = ui:info('equip'), ui:list(), ui:pending()
 check(info.detail == nil and info.hidden and list.logwindo.detail == nil and list.logwindo.hidden
         and pending.post.detail == nil and pending.post.box == 'delivery' and pending.invite.inviter == 'Zaldon',
     'info, list and pending with debug off: the public fields, no detail')
+local ability = ui:info('ability')
+check(ability.category == 2 and ability.category_name == 'pet_commands' and info.category == nil
+        and info.category_name == nil,
+    'info(ability).category and category_name pass through untouched; a window without them has neither')
 hideui.debug(true)
 s = ui:status()
 check(s.dropped == 2 and s.detail.callback_errors == 2 and s.detail.functions.open_by_name == '0x1',
@@ -501,6 +507,82 @@ do
             and tostring(dot2_err):find('use ui:macros(...)', 1, true),
         'a refusal of block_macros comes back as nil and the reason; a dot for a colon raises: ' .. tostring(why))
     native_state.macros, native_state.status.macros_blocked = nil, false
+end
+
+-- one list of ability: block and unblock with a category, on and off with a
+-- category filter, and the category fields on ability's events
+do
+    native_state.calls = {}
+    local c1 = ui:block('ability', 'pet_commands')
+    local c2 = ui:unblock('ability', '2')
+    local c3 = ui:block('menuwind')
+    local c4 = ui:unblock('menuwind')
+    local calls = native_state.calls
+    check(c1 == true and c2 == true and c3 == true and c4 == true and #calls == 4
+            and calls[1].verb == 'block' and calls[1].n == 2 and calls[1].args[1] == 'ability'
+            and calls[1].args[2] == 'pet_commands' and calls[2].verb == 'unblock' and calls[2].n == 2
+            and calls[2].args[2] == '2' and calls[3].n == 1 and calls[4].n == 1,
+        'block and unblock pass a category to the engine only when given, as the string it is')
+    local ok, err = pcall(ui.block, ui, 'ability', 2)
+    local ok2, err2 = pcall(ui.unblock, ui, 'ability', {})
+    check(not ok and tostring(err):find('block(name[, category]): category must be a string', 1, true) and not ok2
+            and tostring(err2):find('unblock(name[, category]): category must be a string', 1, true),
+        'a category that is no string raises at the addon\'s line: ' .. tostring(err))
+    native_state.results.block = {nil, 'only ability has categories'}
+    local r, why = ui:block('equip', 'pet_commands')
+    native_state.results.block = nil
+    check(r == nil and why == 'only ability has categories', 'the engine\'s refusal comes back as nil and the reason')
+
+    local got = {}
+    local pets = ui:on('opened', 'ability', 'pet_commands', function(e) got[#got + 1] = 'pets:' .. tostring(e.category) end)
+    local two = ui:on('opened', 'ability', '2', function(e) got[#got + 1] = 'two:' .. tostring(e.category_name) end)
+    ui:on('closed', 'ability', 'job_traits', function(e) got[#got + 1] = 'traits:' .. tostring(e.category) end)
+    ui:on('blocked', 'ability', '20', function(e)
+        got[#got + 1] = 'twenty:' .. tostring(e.category_name) .. ':' .. table.concat(e.by, '+') .. ':' .. tostring(e.mine)
+    end)
+    ui:on('opened', 'ability', function(e) got[#got + 1] = 'any:' .. tostring(e.category) end)
+    first_native.queue = {{event = 'opened', name = 'ability', category = 2, category_name = 'pet_commands'},
+                          {event = 'opened', name = 'ability', category = 1, category_name = 'job_abilities'},
+                          {event = 'opened', name = 'ability'},
+                          {event = 'closed', name = 'ability', category = 4, category_name = 'job_traits'},
+                          {event = 'blocked', name = 'ability', category = 20, category_name = 'weapon_skills',
+                           by = {'first'}, mine = true},
+                          {event = 'opened', name = 'equip'}}
+    fire('prerender')
+    check(table.concat(got, ' ') == 'pets:2 two:pet_commands any:2 any:1 any:nil traits:4 twenty:weapon_skills:first:true',
+        'on(event, ability, category, fn) fires for that list alone, by name or number, and passes category and'
+            .. ' category_name through; without a category, for every list: ' .. table.concat(got, ' '))
+    ok, err = pcall(ui.on, ui, 'opened', 'equip', 'pet_commands', function() end)
+    ok2, err2 = pcall(ui.on, ui, 'opened', 'ability', 2, function() end)
+    local ok3, err3 = pcall(ui.off, ui, 'closed', 'equip', 'job_traits')
+    local ok4, err4 = pcall(ui.on, ui, 'opened', 'ability', 'pet_commands', 42)
+    check(not ok and tostring(err):find('category filters apply to ability only', 1, true) and not ok2
+            and tostring(err2):find('on(event, name, category, fn): category must be a string', 1, true) and not ok3
+            and tostring(err3):find('category filters apply to ability only', 1, true) and not ok4
+            and tostring(err4):find('needs a function', 1, true),
+        'a category filter on another window raises, on and off alike; a category that is no string, and a'
+            .. ' missing function: ' .. tostring(err))
+    ui:off('opened', 'ability', 'pet_commands')
+    got = {}
+    first_native.queue = {{event = 'opened', name = 'ability', category = 2, category_name = 'pet_commands'}}
+    fire('prerender')
+    local after_off = table.concat(got, ' ')
+    ui:off('opened', 'ability', '2', pets)
+    got = {}
+    first_native.queue = {{event = 'opened', name = 'ability', category = 2, category_name = 'pet_commands'}}
+    fire('prerender')
+    local wrong_fn = table.concat(got, ' ')
+    ui:off('opened', 'ability', '2', two)
+    got = {}
+    first_native.queue = {{event = 'opened', name = 'ability', category = 2, category_name = 'pet_commands'}}
+    fire('prerender')
+    local right_fn = table.concat(got, ' ')
+    ui:off('opened')
+    ui:off('closed')
+    ui:off('blocked')
+    check(after_off == 'two:pet_commands any:2' and wrong_fn == 'two:pet_commands any:2' and right_fn == 'any:2',
+        'off(event, ability, category[, fn]) removes the callbacks for that list, or that one of them, alone: '
+            .. after_off .. ' / ' .. wrong_fn .. ' / ' .. right_fn)
 end
 
 -- the game's text as UTF-8, its bytes beside it as raw; segments' colors named
@@ -756,10 +838,13 @@ native_state.pending = {invite = {name = 'prtyjoin', inviter = 'Zaldon', allianc
                         post = {name = 'delivery', box = 'delivery', id = 3, detail = {state = 5}}}
 local commands = {
     {'hide', 'logwindo'}, {'unhide', 'logwindo'}, {'block', 'menuwind'}, {'unblock', 'menuwind'},
+    {'block', 'ability', 'pet_commands'}, {'unblock', 'ability', 'Pet_Commands'}, {'block'},
+    {'events', 'on', 'ability', 'pet_commands'},
     {'move', 'equip', '300', '200'}, {'group', 'chat_log', '16', '830'}, {'reset', 'equip'},
     {'reset', 'equip', 'position'}, {'reset', 'equip', 'size'}, {'reset', 'equip', 'all'}, {'reset'},
     {'resetgroup', 'chat_log'}, {'resetgroup'}, {'rects'},
-    {'resetall'}, {'open', 'equip'}, {'close', 'equip'}, {'info', 'equip'}, {'info', 'query'}, {'list'},
+    {'resetall'}, {'open', 'equip'}, {'close', 'equip'}, {'info', 'equip'}, {'info', 'query'}, {'info', 'ability'},
+    {'list'},
     {'list', 'log'},
     {'opened'}, {'focused'}, {'remembered'}, {'groups'}, {'info', 'arealist'}, {'resize', 'partywin', '3'},
     {'resize', 'equip', '300', '200'}, {'resize', 'partywin', 'ptw3'},
@@ -788,6 +873,21 @@ check(chat_has('resizes by rows 1..6') and chat_has('until its owner re-sizes it
 check(chat_has('rect 1,2 3x4, cursor 1') and chat_has('cursor 2 of 3 (top 1)') and chat_has('cursor 3 of 3 (top 2)'),
     'hideuidemo info prints a window\'s cursor row, and query\'s and arealist\'s as the option or row under it of'
         .. ' all options(name) lists, with the first shown')
+check(chat_has('  category 2 (pet_commands)') and not chat_has('  category 1'),
+    'hideuidemo info prints the list ability shows, its category number and name, and nothing for other windows')
+do
+    local lists = {}
+    for _, c in ipairs(native_state.calls) do
+        if (c.verb == 'block' or c.verb == 'unblock') and c.args[1] == 'ability' then
+            lists[#lists + 1] = c.verb .. ':' .. tostring(c.args[2]) .. ':' .. c.n
+        end
+    end
+    check(table.concat(lists, ' ') == 'block:pet_commands:2 unblock:pet_commands:2' and chat_has('block ability pet_commands')
+            and chat_has('unblock ability pet_commands') and chat_has('usage: //hideuidemo block <name> [category]')
+            and chat_has('events on: ability pet_commands'),
+        'hideuidemo block and unblock pass a category, lower-cased, and events on takes one after the name: '
+            .. table.concat(lists, ' '))
+end
 check(chat_has('3: cursor at 5,6') and not chat_has('3: cursor at 5,6 size') and chat_has('4: other')
         and not chat_has('4: other at'),
     'hideuidemo info prints the element types by name, and only the box fields an element has')
@@ -935,13 +1035,20 @@ local addon_handle = native_state.handles[#native_state.handles]
 addon_handle.queue = {{event = 'blocked', name = 'menuwind', by = {'hideuidemo'}, mine = true},
                       {event = 'error', name = 'equip', verb = 'open', reason = 'the game refused it'},
                       {event = 'pending', what = 'invite', pending = true},
-                      {event = 'cursor', name = 'equip', row = 3}, {event = 'cursor', name = 'query', row = 4}}
+                      {event = 'cursor', name = 'equip', row = 3}, {event = 'cursor', name = 'query', row = 4},
+                      {event = 'opened', name = 'ability', category = 2, category_name = 'pet_commands'},
+                      {event = 'blocked', name = 'ability', category = 7, by = {'hideuidemo'}, mine = true},
+                      {event = 'closed', name = 'ability'}}
 fire('prerender')
 check(chat_has('blocked menuwind (by hideuidemo, mine)') and chat_has('error: open equip: the game refused it')
         and chat_has('pending invite appeared') and chat_has('cursor equip row 3')
         and chat_has('cursor query option 4'),
     'events on: hideuidemo prints events as they arrive, who blocks, cursor moves and pending ones too, and errors'
         .. ' always')
+check(chat_has('opened ability pet_commands') and chat_has('blocked ability 7 (by hideuidemo, mine)')
+        and chat_has('closed ability') and not chat_has('closed ability nil'),
+    'events on: hideuidemo prints the list after ability\'s name, by its name or number, and nothing when the'
+        .. ' event carries none')
 command('events', 'off')
 chat = {}
 addon_handle.queue = {{event = 'opened', name = 'equip'},

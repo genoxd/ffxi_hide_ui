@@ -5,7 +5,7 @@
 // never run: no loader, no DllMain, no TLS callbacks.
 //
 // image_check.exe <unpacked FFXiMain.dll> [registry mcb masks set_position close open update staged show
-//                  mouse_mode menu_input compass_draw macro_gate
+//                  mouse_mode menu_input compass_draw macro_gate ability_open
 //                  the eleven called routines in signatures.h's kCalls order
 //                  link5_cache_site link5_cache query_cancel_site query_cancel_allowed
 //                  set_cursor link5_latch_site link5_latch link5_open_site link5_global
@@ -288,6 +288,29 @@ int main(int argc, char** argv) {
         snprintf(label, sizeof(label), "macro_gate: the word its prologue reads, 0x%08X, is data in the image, outside .text",
             static_cast<unsigned>(reinterpret_cast<uintptr_t>(word)));
         check(word >= image && word + 2 <= image + image_size && !(word >= text && word < text + size), label);
+    }
+    if (sites[kSiteAbilityOpen]) {
+        const uint8_t* site = sites[kSiteAbilityOpen];
+        const uint8_t* global = rdptr(site, kAbilityOpenGlobal);
+        char label[192];
+        snprintf(label, sizeof(label), "ability_open: the global its prologue reads, 0x%08X, is data in the image, outside .text",
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(global)));
+        check(global >= image && global + 4 <= image + image_size && !(global >= text && global < text + size), label);
+        check(rd32(site, kAbilityOpenManagerImm) == rd32(site, kAbilityOpenManagerImm + 19),
+            "ability_open: its two manager imm32s, at +29 and +48, agree");
+        Inventory inv;
+        inv.build();
+        const uint8_t* first = rdptr(site, kAbilityOpenKeyImm - 19);
+        const uint8_t* key = rdptr(site, kAbilityOpenKeyImm);
+        const bool first_data = first >= image && first + kKeyLen <= image + image_size
+            && !(first >= text && first < text + size);
+        const bool key_data = key >= image && key + kKeyLen <= image + image_size && !(key >= text && key < text + size);
+        snprintf(label, sizeof(label), "ability_open: its first key push, at +%u, names the registry's abisortw key (0x%08X)",
+            static_cast<unsigned>(kAbilityOpenKeyImm - 19), static_cast<unsigned>(reinterpret_cast<uintptr_t>(first)));
+        check(first_data && inv.find_key16(first) >= 0 && inv.find_key16(first) == inv.find_exact("abisortw"), label);
+        snprintf(label, sizeof(label), "ability_open: its second key push, at +%u, names the registry's ability key (0x%08X)",
+            static_cast<unsigned>(kAbilityOpenKeyImm), static_cast<unsigned>(reinterpret_cast<uintptr_t>(key)));
+        check(key_data && inv.ability >= 0 && memcmp(key, inv.names[inv.ability].key, kKeyLen) == 0, label);
     }
     if (macro_site) {
         check(rd32(macro_site, kMacroObjectImm) == rd32(macro_site, kMacroObjectImm2),

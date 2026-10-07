@@ -7,7 +7,7 @@ The client builds its interface out of 369 named windows. You can
 
 - hide any window, or block it so the game never opens it
 - move the windows
-- resize windows (doesn't look great)
+- resize windows; their contents do not reflow
 - open and close windows
 - subscribe to events when the game opens, closes, covers or uncovers a window, or
   tries to open one that is blocked
@@ -28,19 +28,18 @@ loading screen's graphics are not windows, and the library does not cover them.
 
 ## Install
 
-Copy three files into your addon's own `libs/` folder (not Windower's shared
-`addons/libs/`). They are prebuilt, in the example addon's folder,
-[`examples/hideuidemo/libs/`](examples/hideuidemo/libs). `hideui.lua` is the
-library; the two DLLs are what it loads.
+Three files go in your addon's own `libs/` folder, not Windower's shared
+`addons/libs/`. They are prebuilt: copy them from the example addon's folder,
+[`examples/hideuidemo/libs/`](examples/hideuidemo/libs).
 
 ```
 addons/myaddon/
 ├── myaddon.lua
-├── data/                     only if you save a layout (see below)
+├── data/                     only if you save a layout, see Save a layout
 └── libs/
-    ├── hideui.lua
-    ├── _HideUI.dll
-    └── hideui_daemon.dll
+    ├── hideui.lua            the Lua side, what your addon requires
+    ├── _HideUI.dll           the engine it loads
+    └── hideui_daemon.dll     the daemon: patches the game's routines
 ```
 
 ```lua
@@ -48,9 +47,9 @@ _addon.name = 'myaddon'                 -- every addon sets this; hideui.new() r
 
 local hideui = require('libs.hideui')
 
-local ui, why = hideui.new()            -- labelled with your addon's name
+local ui, why = hideui.new()            -- labeled with your addon's name
 if not ui then
-    windower.add_to_chat(123, 'myaddon: ' .. why)   -- e.g. after a game patch
+    windower.add_to_chat(123, 'myaddon: ' .. why)   -- nil and the reason when the library cannot install
     return
 end
 
@@ -62,8 +61,10 @@ end)
 `ui` is your handle. Everything you do goes through it, and unloading your
 addon undoes all of it: hidden windows come back, blocked ones can open,
 moved and resized windows go home. `ui:release()` does the same without
-unloading. The handle carries your addon's name, which other addons see when
-they ask who moved a window; `hideui.new('other')` labels it differently.
+unloading.
+
+The handle carries your addon's name, which other addons see when they ask
+who moved a window. To go by another name, pass it to `hideui.new`.
 
 Calls that change something return `true`, or `nil` and a reason. `true`
 means the change is queued for the game's next frame. If the game refuses it
@@ -79,12 +80,12 @@ Every window has a short name of the game's own, up to eight characters:
 `logwindo` the chat log, `partywin` the party list, `targetwi` the target
 window, `equip` the equipment window, `inventor` the inventory, `iteminfo` an
 item's description, `query` every NPC choice list. To find a name, load the
-example addon (see [Try it first](#try-it-first)) and open the window in
-game:
+example addon from [Try it first](#try-it-first) and turn its event printing
+on; every window then prints its name as it opens:
 
 ```
 //lua load hideuidemo
-//hideuidemo events on        every window prints its name as it opens
+//hideuidemo events on
 ```
 
 ## Hide and block
@@ -97,37 +98,52 @@ ui:block('equip')          -- the equipment window can no longer open
 ui:unblock('equip')        -- it can again
 ```
 
-A hidden window keeps running but takes no mouse, keyboard or gamepad
-input. The one exception is typed text: a hidden text entry (`passinpu`)
-can still receive characters, though not Enter or Escape. Its contents
-still update, so you can read them, and it stays hidden through its closes
-and opens until you unhide it. Escape does not close a hidden window;
-closing it is your addon's job, with `close` or, for a prompt, `cancel`.
+A hidden window keeps running but takes no mouse, keyboard or gamepad input,
+and it stays hidden through its closes and opens until you unhide it. The one
+exception to the input rule is typed text: a hidden text entry, `passinpu`,
+still receives characters, though not Enter or Escape. Escape does not close
+a hidden window; closing it is your addon's job, with `close`, described
+under [Open and close](#open-and-close), which also says which windows take
+`cancel` instead.
 
 A blocked window never opens. The open is refused before anything is drawn,
-and every addon gets a `blocked` event; `e.mine` is true for the addon
-whose block it is. If the window is open when
-you block it, the game's own close closes it first; a prompt that is open
-when you block it (`passinpu`, `prtyjoin`, `link5`, `arealist`, the
-delivery boxes) is hidden instead of closed, because closing it would strand
-what the game is waiting on. `query` cannot be blocked at all.
+and every addon gets a `blocked` event, described under [Events](#events). If
+the window is open when you block it, the library closes it through the
+game's own close routine, the one Escape runs, so the window's own cleanup
+happens. A prompt that is open when you block it is hidden instead of closed,
+because closing it would strand what the game is waiting on; the prompts are
+listed under [Prompts](#prompts).
 
 Some windows are part of something the game is in the middle of, and
 blocking them has consequences:
 
 | window | if blocked |
 |---|---|
-| `query` (every NPC choice list) | `block` is refused: the game would crash. Hide it and answer it (see [Prompts](#prompts)) |
-| `trade` | the trade is cancelled |
-| `delivery` (outgoing delivery box) | the player cannot move until you call `ui:cancel('delivery')` and the server answers (see [Prompts](#prompts)) |
-| `post1`, `post2` (incoming delivery box; `post2` is its second screen) | the session stays open until `ui:cancel('post1')` (see [Prompts](#prompts)) |
-| `passinpu`, `link5`, `arealist` | the NPC's script waits until you `answer` or `cancel` it (see [Prompts](#prompts)) |
-| `prtyjoin` (the party menu's invite screen) | the invite waits until you `answer` or `cancel` it |
-| `mcr1pall`, `mcr2pall` (the Ctrl and Alt macro bars) | the bar no longer shows, but Ctrl+number and Alt+number still run the macros; to stop those, see [Macro keys](#macro-keys) |
+| `query` | `block` is refused: the game would crash. Hide it and answer it, see [Prompts](#prompts) |
+| `trade` | the trade is canceled |
+| `delivery`, the outgoing delivery box | the player cannot move until you call `ui:cancel('delivery')` and the server answers, see [Prompts](#prompts) |
+| `post1` and `post2`, the incoming delivery box | the session stays open until `ui:cancel('post1')`, see [Prompts](#prompts) |
+| `passinpu`, `link5`, `arealist` | the NPC's script waits until you `answer` or `cancel` it, see [Prompts](#prompts) |
+| `prtyjoin`, the party menu's invite screen | the invite waits until you `answer` or `cancel` it |
+| `mcr1pall` and `mcr2pall`, the Ctrl and Alt macro bars | the bar no longer shows; for the keys themselves, see [Macro keys](#macro-keys) |
 
-Shops, the auction house (`auc1`), `inspect`, the target window, the cast bar
-(`casttime`) and the map windows are fine to block. Windows in neither list
-have not been checked.
+Checked and fine to block: the shop windows, `auc1`, `inspect`, `targetwi`,
+`casttime` and the map windows. Windows in neither list have not been checked.
+
+One window takes a second argument. Job abilities, pet commands, weapon
+skills and job traits are all the same window, `ability`, showing a
+different list, so `block('ability')` would take all four away. Name the
+list to block just one: `job_abilities`, `pet_commands`, `weapon_skills` or
+`job_traits`, or its number, 1 to 4 in that order, as a string.
+
+```lua
+ui:block('ability', 'pet_commands')     -- only the pet command list; the other lists still open
+ui:unblock('ability', 'pet_commands')
+```
+
+If that list is on screen when you block it, it closes. `unblock('ability')`
+with no list drops only a whole-window block; a list is unblocked by naming
+it again.
 
 ## Move
 
@@ -138,23 +154,28 @@ ui:reset('targetwi', 'position') -- one aspect only; 'size' is the other
 ui:reset_all()                   -- every window your addon was the last to move or resize
 ```
 
-Coordinates are the game's UI coordinates: 0,0 is the top left, and
-`hideui.status().ui` gives the size as `{w = 1920, h = 1080}` (see
-[When it cannot work](#when-it-cannot-work)). The position lasts as long as
-your addon is loaded: every time the game opens the window again, it lands
-there.
+Positions are in UI pixels, the units the game lays its interface out in,
+with 0,0 at the top left. `hideui.status().ui` gives the width and height,
+`{w = 1920, h = 1080}` on a 1080p screen.
+
+Every time the game opens the window again, it lands where you put it.
 
 `reset` touches only what your addon placed; a window another addon placed
 is refused with that addon's name.
 
 Some windows are docked: the game places them against another window and
-puts them back there whenever that window moves (the target window sits on
-the party list, for example). Moving a docked window undocks it.
+puts them back there whenever that window moves; the target window sits on
+the party list, for example. Moving a docked window undocks it.
 
 To move a window with everything docked to it, name the group instead. There
-are three, and they nest: `target_window` (`targetwi` and its sub-target
-panel) sits inside `party_list` (`partywin` and the windows on it), which
-sits inside `chat_log` (`logwindo` and the menus that open above it).
+are three groups, each named for its anchor, the window the others are
+docked to:
+
+| group | anchor | contains |
+|---|---|---|
+| `target_window` | `targetwi` | the target window and its sub-target panel |
+| `party_list` | `partywin` | the party list and the windows docked on it, the `target_window` group among them |
+| `chat_log` | `logwindo` | the chat log, the menus that open above it, and the `party_list` group |
 
 ```lua
 ui:move_group('chat_log', 16, 830)        -- the chat log, the party list and the target window with it
@@ -162,28 +183,37 @@ ui:move_group('party_list', 1700, 900)    -- the party list, the target window, 
 ui:move_group('target_window', 1700, 980) -- the target window and the sub-target panel
 ```
 
-Both chat logs and the party list grow upward: their frame's top moves as lines
-or members come and go. `move` and `move_group` still take the frame's top-left
-for them, as for every window. If the group's window is closed when you call
-this, the move happens when the game opens it. `ui:reset_group('chat_log')`
-undoes a group move.
+`ui:reset_group('chat_log')` undoes a group move.
+
+The chat log and its second window, `logwin2`, and the party list grow
+upward from a fixed bottom: their frame's top moves as lines or members come
+and go. `move` and `move_group` still take the frame's top-left for them,
+where the frame's top is at the moment of the call, and the library works
+out the bottom from the current height.
+
+If a group's anchor is closed when you call `move_group`, the move waits and
+happens when the game opens it.
 
 ## Resize
 
 ```lua
-ui:resize('partywin', 3)        -- the party list at 3 rows (1-6)
-ui:resize('playermo', 4)        -- the action menu at 4 rows (1-10)
-ui:resize('targetwi', 200, 60)  -- any window, to a width and height (same units as move)
+ui:resize('partywin', 3)        -- the party list at 3 rows
+ui:resize('playermo', 4)        -- the action menu at 4 rows
+ui:resize('targetwi', 200, 60)  -- most windows, to a width and height in UI pixels
 ```
 
-Rows use the game's own layouts. Three windows have them: `partywin` 1-6,
-`playermo` 1-10 and `mp_pmode` (the Monstrosity action menu) 1-8. A width
-and height only change the frame; the contents do not reflow. A size is put
-back every time the window opens, and `reset` undoes it. The party list
-re-sizes itself on a roster change and the action menu on a row change;
-after that the size is theirs until the next open. The item descriptions
-(`iteminfo`, `itemxinf`) size themselves every frame, so a resize of them
-does not last.
+Rows use the game's own layouts, and three windows have them: `partywin` 1-6,
+`playermo` 1-10 and the Monstrosity action menu `mp_pmode` 1-8. A width and
+height change only the window's outline; the contents stay as they are.
+
+How long a size lasts depends on the window, and `info(name).resize.holds`
+names the case, described under [Read a window](#read-a-window). Most windows
+take the size back every time they open, until `reset` undoes it. The party
+list and the action menu re-size themselves when the roster or the row count
+changes, and the size is then the game's until the next open. The item
+descriptions `iteminfo` and `itemxinf` size themselves on every draw, so a
+size on them does not last.
+
 
 ## Open and close
 
@@ -192,10 +222,10 @@ ui:open('equip')
 ui:close('equip')
 ```
 
-`open` works where the game itself would open that window at that moment. The
-equipment window opened outside the main menu closes again at once, and you see
-`opened` then `closed`. The prompts listed under [Prompts](#prompts) can only
-be opened by the game; use `cancel` to close them.
+`open` works only in the context the game itself opens that window from, so
+the equipment window opened outside the main menu closes again at once, and
+you see `opened` then `closed`. The prompts listed under [Prompts](#prompts)
+can only be opened by the game, and `close` refuses them; use `cancel`.
 
 ## The compass
 
@@ -211,28 +241,30 @@ ui:move('compass', 200, 900)    -- top-left corner of its box
 ui:reset('compass')
 ```
 
-Its box is 88 by 42 and normally sits just above the chat log;
-`ui:info('compass').rect` tells you where it is right now. Left alone, the
-game keeps it above the chat log, moving it whenever the log grows or
-shrinks, and shows it again after a cutscene or when you close the map.
-Once you move it, it stays where you put it until you reset it.
+Its box is 88 by 42 UI pixels, and `ui:info('compass').rect` tells you where
+it is right now. Left alone, the game keeps the box just above the chat log,
+moving it whenever the log grows or shrinks. Once you move it, it stays
+where you put it until you reset it.
 
-The other calls are simpler for the compass than for a window. `block` and
-`close` do the same thing as `hide`, and `unblock` and `open` the same as
-`unhide`: the game shows and hides the compass by itself, so there is
-nothing else to block or close. `resize` is accepted and does nothing,
-because the compass has no rows or frame to size. `info('compass')`
-reports no cursor and no elements, since it has neither. The `closed`
-event fires when the game hides the compass for a cutscene, and `opened`
-when it brings it back. The clock inside it is switched with the game's
-own `/clock on` and `/clock off`; the library leaves it alone.
+The game shows and hides the compass by itself, so there is nothing to block
+or close: `block` and `close` do the same as `hide`, and `unblock` and `open`
+the same as `unhide`. `resize` is accepted and does nothing, because the
+compass has no rows and no frame to size, and `info('compass')` reports no
+cursor and no elements.
+
+The game hides the compass for a cutscene and shows it again when the
+cutscene ends, and closing the map shows it too; the `closed` and `opened`
+events follow that.
+
+The clock inside it is switched with the game's own `/clock on` and `/clock
+off`; the library leaves it alone.
 
 ## Macro keys
 
-Ctrl+1 through Ctrl+0 and Alt+1 through Alt+0 run the game's macros.
-Blocking the macro bar windows does not stop that, because the bar is only
-a display and the game handles the keys separately. To take those keys for
-your own Windower binds, block the macros themselves:
+Ctrl+1 through Ctrl+0 and Alt+1 through Alt+0 run the game's macros, and
+the macro bar is only a display of them: blocking the bar windows leaves
+the keys working. To take those keys for your own Windower binds, block the
+macros themselves:
 
 ```lua
 ui:block_macros()     -- Ctrl+number and Alt+number no longer run macros
@@ -240,26 +272,30 @@ ui:unblock_macros()
 ui:macros()           -- { blocked = true, blocked_by = { 'myaddon' }, mine = true }
 ```
 
-While the block is on, pressing Ctrl or Alt shows no bar, and Ctrl+number
-and Alt+number do nothing. If a bar is showing when you call
-`block_macros`, it closes. The block stays on until you call
-`unblock_macros` or your addon unloads. If two addons have blocked the
-macros, they stay blocked until both have unblocked them.
-`hideui.status().macros_blocked` tells you whether any addon has a block
-on.
+While the block is on, pressing Ctrl or Alt shows no bar and Ctrl+number and
+Alt+number do nothing; a bar that is showing when you call `block_macros`
+closes. The block stays on until you call `unblock_macros` or your addon
+unloads.
 
 ## Events
 
 ```lua
 ui:on('opened', 'equip', function(e) print('equip opened') end)   -- one window
 ui:on('closed', function(e) print(e.name .. ' closed') end)      -- every window
+ui:on('blocked', 'ability', 'pet_commands', function(e) end)     -- one list of the ability window
 
 local fn = ui:on('opened', 'equip', function(e) end)
 ui:off('opened', 'equip', fn)                                    -- remove one
 ui:off('opened')                                                 -- remove every opened handler
 ```
 
-Every event carries `e.name` except `pending` and `resync`.
+Every event carries `e.name` except `pending`, `resync` and an `error` about
+a call that names no window. The `opened`, `closed`, `covered`, `uncovered`
+and `blocked` events for `ability` also carry `e.category`, the game's number
+for the list, and `e.category_name`
+for the four lists named under [Hide and block](#hide-and-block). Naming the
+list as a third argument to `on` or `off`, as in the example, keeps the
+handler to that list.
 
 | event | when |
 |---|---|
@@ -267,18 +303,24 @@ Every event carries `e.name` except `pending` and `resync`.
 | `closed` | the window is gone |
 | `covered` | another window went over it; it is still open underneath |
 | `uncovered` | it came back out |
-| `blocked` | the game tried to open a window some addon blocked |
-| `error` | the game refused something you asked for, or one of your own callbacks raised (`e.verb` is `'callback'`): `e.verb`, `e.name`, `e.reason` |
-| `cursor` | the game's cursor in an open window moved to row `e.row`; for `query` and `arealist`, `e.row` is the index into the list `options()` returns |
-| `pending` | a party invite or a delivery-box session started or ended (see [Prompts](#prompts)): `e.what` is `'invite'` or `'post'`, `e.pending` true or false |
-| `resync` | the library keeps the last 4096 events for you; if your addon falls further behind than that, it gets this single event instead of the ones it missed, with `e.dropped` set to how many. Re-read `opened()`, `info()` and `pending()` to catch up |
+| `blocked` | the game tried to open a window some addon blocked; `e.mine` is true when the block is yours, and `e.by` lists every addon holding one |
+| `error` | the game refused something you asked for, or one of your own callbacks raised. `e.verb` names the call, or is `'callback'`; `e.name` names the window and `e.reason` says why |
+| `cursor` | the game's cursor in an open window moved to row `e.row`; for `query` and `arealist`, `e.row` is the index into the list `options()` returns, see [Prompts](#prompts) |
+| `pending` | a party invite or a delivery-box session started or ended, see [Prompts](#prompts); `e.what` is `'invite'` or `'post'`, `e.pending` true or false |
+| `resync` | the library holds events for you between frames, the last 4096 of them. If your addon falls so far behind that events it has not taken are overwritten, it gets this one event in their place, with `e.dropped` set to how many were lost; re-read `opened()`, `info()` and `pending()` to catch up |
+
+Every event table carries `e.event`, so one handler can serve several
+events.
 
 Callbacks run on the frame after the event, so a window may already be gone
-when `opened` reaches you; check `ui:info(name).open`. A window already
-open when your addon loads does not send `opened`; check on load. A callback
-that raises never stops the others. Its first raise comes back as an `error`
-event and later ones are only counted; `hideui.debug(true)` prints them.
-Every event table has `e.event`, so one handler can serve several events.
+by the time `opened` reaches you; check `ui:info(name).open` before acting
+on it. A window already open when your addon loads sends no `opened`, so
+check what is open on load.
+
+A callback that raises never stops the others. Its first raise comes back
+to you as an `error` event with `e.verb == 'callback'`; later raises are
+only counted, and `hideui.debug(true)` shows the count, see
+[Status and debugging](#status-and-debugging).
 
 ## Read a window
 
@@ -288,25 +330,39 @@ p.open                -- true/false
 p.hidden, p.blocked   -- by any addon
 p.rect.x, p.rect.y, p.rect.w, p.rect.h   -- while open
 p.cursor              -- the row the game's cursor is on, 1-based, while open; for query and arealist, the index into their list
-p.top                 -- query and arealist: the index of the first row on screen (query shows three, arealist five)
+p.top                 -- query and arealist: the index of the first row on screen; query shows three rows, arealist five
 p.focused             -- has the keyboard
+p.category            -- ability only, while open: 1 job abilities, 2 pet commands, 3 weapon skills, 4 job traits; p.category_name says which in words
+p.blocked_categories  -- ability only: the lists any addon has blocked
+p.mine                -- {hidden, blocked, blocked_categories}: what your own addon holds on it
 p.elements            -- while open: a list of {type = 'item', x = 44, y = 836, w = 132, h = 16, text = 'Yes'};
                       --   type is 'frame', 'item', 'cursor' or 'other'; the other fields only where the part has them
 p.hidden_by, p.blocked_by   -- names of the addons holding a hide or a block on it
-p.blockable           -- false only for query
-p.resize              -- {holds = 'reopen'|'trigger'|'frame'|'none', min_rows, max_rows}: how long a size lasts, and the row range if it has one
+p.blockable           -- whether block is allowed on it
+p.resize              -- {holds, min_rows, max_rows}: how long a size lasts, and the row range if it has one
+                      --   holds is 'reopen': the size is put back every time the window opens;
+                      --   'trigger': the window re-sizes itself on a change, and the size is then the game's until the next open;
+                      --   'frame': the game sizes the frame every frame, so a size does not last;
+                      --   'none': nothing to size
 p.memory              -- the remembered position and size, as remembered() lists them
 p.covered             -- open but under another window
 p.docked              -- the game keeps it against another window
-p.detail              -- internals; present only while hideui.debug(true) is on (see When it cannot work)
+p.detail              -- internals; present only while hideui.debug(true) is on, see Status and debugging
 
 ui:opened()           -- { 'logwindo', 'partywin', ... }: every window open now
 ui:focused()          -- the name of the window with the keyboard, or false
-ui:list()             -- every window's open/hidden/blocked/moved/resized state, keyed by name
+ui:list()             -- a table keyed by window name, each with its open, hidden, blocked, moved and resized state
 ui:groups()           -- { chat_log = {anchor, anchor_open, origin, members, waiting}, ... }
+                      --   anchor: the group's anchor window name; anchor_open: whether it is open; origin: the anchor's current top-left;
+                      --   members: the window names in the group; waiting: a group move waiting for the anchor to open, with x, y, owner and mine
 ui:remembered()       -- { targetwi = {position = {x, y, owner, mine}, size = {rows | w, h, owner, mine}}, ... }
 ui:rects()            -- { logwindo = {x = 16, y = 898, w = 1774, h = 166}, ... }: every open window's frame
 ```
+
+Three calls look alike: `list()` flags each window as moved or resized by
+any addon, `remembered()` gives the positions and sizes the library has put
+on windows and who put them there, and `layout()`, under
+[Save a layout](#save-a-layout), is what your own addon asked for.
 
 ## Prompts
 
@@ -320,16 +376,30 @@ ui:answer(q, value)           -- the player's choice
 ui:cancel(q)                  -- the player's cancel
 ```
 
-`q` names the exact prompt you read, so a reply that arrives after the game
-has replaced it is refused instead of landing on the next one.
-`ui:answer(name, value)` and `ui:cancel(name)` also work when you don't
-care which.
+`q` carries the prompt's name and an `id` naming this particular open of it,
+so a reply meant for a prompt the game has since replaced is refused instead
+of landing on the next one. `ui:answer(name, value)` and `ui:cancel(name)`
+also work when you don't care which open it is. To name one without the
+table, pass its id as the last argument: `ui:answer(name, value, id)` and
+`ui:cancel(name, id)`.
+
+Every string the library hands you, in a field named `text`, is UTF-8, the
+form Windower's text objects draw, and the game's own bytes sit beside it in
+the same table as `raw`. `raw` is the form the game's chat wants, so pass
+`raw`, not `text`, to `windower.add_to_chat`. The title and each option of
+`query` also carry `segments`: the same text as a
+list of runs, each `{text, raw, color}`, where `color` is `'default'`,
+`'green'`, or `'color<n>'` for a color the library has no name for. They
+also carry `undecoded`, the number of characters the library could not
+decode; each one shows as `?` in `text`.
 
 ### The NPC choice list
 
-Every list of choices an NPC offers is the window `query`: yes/no, the home
-point menus, a treasure chest's items. Hide it, draw the options your own
-way, and answer with the one the player picks:
+Every list of choices an NPC's dialogue offers is the window `query`: a
+yes or no, the home point menus, a treasure chest's items. The game's own
+confirmations outside dialogue are a different window, `rem4line`. Hide
+`query`, draw the options your own way, and answer with the one the player
+picks:
 
 ```lua
 ui:hide('query')                                 -- the game's list is never drawn
@@ -367,16 +437,17 @@ end)
 
 The hidden list ignores every key and click, so the layout and the keys are
 entirely yours; this one runs left to right. The keys still reach the game,
-which does nothing with them while a hidden list is up. `ui:options('query')`
-returns:
+which does nothing with them while a hidden list is up.
+
+`ui:options('query')` returns:
 
 ```lua
 {
     name = 'query',
     id = 12,                        -- this particular open of the prompt
-    title = { text = 'Teleport where?', raw = '...' },
+    title = { text = 'Teleport where?', raw = '...' },   -- segments and undecoded left out
     cancellable = true,             -- whether backing out is allowed here
-    options = {                     -- in the game's order
+    options = {                     -- in the game's order; raw, segments and undecoded left out of each
         { text = 'Nowhere.',            value = 1 },
         { text = 'Home Point #1 (E).',  value = 2 },
         { text = 'Home Point #4.',      value = 5 },   -- values skip where the game left options out
@@ -387,29 +458,41 @@ returns:
 Answer with an option's `value`, never its position: "Yes" is not always
 1.
 
-Every string the library hands you is UTF-8: option and title text, element
-captions, linkshell names, the inviter of a party invite. That is the form
-Windower's text objects draw. The game's own bytes sit beside each as `raw`
-(`label_raw` for an area list label); that is the form the game's chat
-wants, so print `raw` with `windower.add_to_chat`, never `text`. A
-character the library cannot decode comes back as `?`, and `undecoded` on
-the title and on each option counts them. Where the game colors part of a
-title or option, it also carries `segments`, a list of `{text, color}` runs
-with `color` one of `'default'`, `'green'`, or `'color<n>'` for a color
-without a name.
-
 ### The other prompts
 
 | window | `ui:options(name)` | `ui:answer(name, ...)` | `ui:cancel(name)` |
 |---|---|---|---|
-| `passinpu` text entry | `{max_length = 16}` | the text, up to `max_length` bytes (plain ASCII, or `windower.to_shift_jis` for anything else; longer is refused) | no text |
+| `passinpu` text entry | `{max_length = 16}` | the text, up to `max_length` bytes; longer is refused | no text |
 | `prtyjoin` party invite | `{inviter = 'Somebody', alliance = false}` | `true` accept, `false` decline | decline |
 | `link5` linkshell list | `{slots = {{slot = 1, name = 'MyShell'}, ...}}` | a `slot` from the list | close, no choice |
-| `arealist` area list | `{name, id, pending, mode, level, rows = {{text = 'Bastok Mines', id = 234, kind = 'zone'}, ...}}`: every row the game shows, in order. `kind` is `zone` (an `id` from Windower's `res.zones`), `region` (a heading the player can open; `level` is 0 at the top and that region's `id`, negated, inside one), `current_area`, `current_region`, `all`, or `other`. A zone row carries `label`, a region row `count`. `mode` says who opened it: 1 or 2 an NPC, otherwise a menu of the player's own, which is read-only here | a zone `id` from the rows, when an NPC is waiting (`mode` 1 or 2). A blocked list has no rows and `pending = true`; then any zone id is accepted | closes the list with no zone |
+| `arealist` area list | `{name, id, pending, mode, level, rows = {{text = 'Bastok Mines', id = 234, kind = 'zone'}, ...}}`, every row the game shows, in order | a zone `id` from the rows | closes the list with no zone |
 | `delivery` outgoing box | refused | refused | end the session |
-| `post1`, `post2` incoming box | refused | refused | end the session |
+| `post1`, `post2` incoming box and its second screen | refused | refused | end the session |
 
-With a box open, `cancel` does what the box's own closing control does and
+The text for `passinpu` is bytes as the game's text entry takes them: plain
+ASCII goes in as it is; anything else your addon converts with
+`windower.to_shift_jis` before calling `answer`, and the library passes the
+bytes through unchanged.
+
+`ui:options('arealist')` adds `mode` and `level` of its own. `mode` says who
+opened the list: 1 or 2 means an NPC opened it and is waiting, so `answer`
+and `cancel` work; any other value is a menu the player opened, which the
+library can only read. `level` is 0 at the top of the list; inside a region
+it equals that region row's `id`.
+
+Each row is `{text, id, kind}`, and `kind` is one of:
+
+- `zone`: an area; `id` is its number in Windower's `res.zones`
+- `region`: a heading the player can open; `id` is the region's number, negated
+- `current_area`, `current_region` and `all`: the list's rows for the current area, the current region and all areas
+- `other`: any row that is none of the above
+
+A row may also carry `label`, the text beside it, with its bytes in
+`label_raw`, or `count`, a region's number of zones.
+
+A blocked list has no rows, and `answer` then accepts any zone id, 0 to 511.
+
+With a box open, `cancel` does what the box's own close control does, and
 the windows close when the server answers, a moment later.
 
 A party invite shows no window until the player opens the party menu, and
@@ -421,13 +504,13 @@ waiting; its `invite` and `post` tables go straight into `answer` and
 ```lua
 local w = ui:pending()
 if w.invite then ui:answer(w.invite, true) end     -- w.invite.inviter, w.invite.alliance
-if w.post then ui:cancel(w.post) end               -- w.post.box is 'delivery' or 'post1' (post2 is post1's second screen)
+if w.post then ui:cancel(w.post) end               -- w.post.box is 'delivery' or 'post1'
 ```
 
 ## Save a layout
 
-Positions and sizes last only while your addon is loaded. To bring them
-back next time, ask for them, save them, and apply them on load:
+To bring positions and sizes back after a reload, ask for them, save them,
+and apply them on load:
 
 ```lua
 -- on load
@@ -442,55 +525,80 @@ settings.layout = ui:layout()       -- every position and size your addon set, g
 config.save(settings, 'all')
 ```
 
-`ui:layout()` returns a plain table of what your addon placed, plus the entries
-an `apply` could not place, which the config library can save as is. It is
-yours alone: another addon moving the same window later does not change it. It
-records the UI size, and `ui:apply()` refuses a layout saved at a different
-size. The config library writes `data/settings.xml`, so your addon needs a
-`data/` folder. If some entries cannot be applied, `ui:apply()` returns `nil`,
-a reason and the list of those entries, and applies the rest.
+`ui:layout()` is a plain table of what your addon asked for, which the config
+library can save as it is. It is yours alone: another addon moving the same
+window later does not change it.
+
+`ui:apply()` refuses a layout saved at a different UI size, which the table
+records. When some entries cannot be placed, it places the rest and returns
+`nil`, a reason and the list of those entries; `layout()` keeps them, so they
+are saved and tried again next time, until the window is reset or a later
+`apply` places them.
+
+
+The config library writes `data/settings.xml`, and the game client cannot
+create folders: a write into a folder that is missing freezes the client. Ship
+an empty `data/` with your addon.
 
 ## More than one addon
 
-Several addons can use the library at once. Hides and blocks add up: a
-window hidden or blocked by two addons stays that way until both let go,
-and the same goes for macro blocks. Moves do not: the library
+Several addons can use the library at once. The engine in charge is the
+`_HideUI.dll` of whichever addon loaded first; every later addon's copy talks
+to it, and once all of them have unloaded the next addon to load starts
+afresh with its own. Hides and blocks add up: a window hidden or blocked by
+two addons stays that way until both let go,
+and the same goes for the macro keys. Moves do not add up: the library
 keeps one position per window, so a window moved by two addons sits where
 the later move put it, and when that addon unloads the window goes back to
-where the game puts it, not to the earlier addon's spot. A `blocked` event
-says whose block it was: `e.mine` is true when it is yours, and `e.by` lists
-every addon holding one.
+where the game puts it, not to the earlier addon's spot.
+
+## Status and debugging
 
 ```lua
-local p = ui:info('targetwi')
-p.hidden_by     -- { 'myaddon', 'otheraddon' }: who is hiding it
+hideui.version()      -- 'hideui 0.10.0'; goes in a bug report
+hideui.debug(true)    -- print your addon's library failures to chat; off, it prints nothing
+hideui.status()       -- the fields below
+ui:status()           -- the same, with .dropped for this handle only
 ```
+
+`hideui.status()` describes the engine for the whole game:
+
+| field | meaning |
+|---|---|
+| `ok` | whether the engine installed |
+| `ui` | the game's UI size, `{w, h}` |
+| `dropped` | events lost across every addon's handles |
+| `macros_blocked` | whether any addon blocks the macro keys |
+| `hidden`, `blocked`, `moved`, `resized` | the window names any addon holds that way |
+
+`hideui.debug(true)` prints why `new` failed, calls the game refused,
+callbacks that raised and events that were lost. While it is on, `status()`,
+`info()`, `list()` and `pending()` also carry the engine's internals under
+`detail`, the count of callback raises among them.
 
 ## When it cannot work
 
 `require('libs.hideui')` raises when `_HideUI.dll` is missing or will not
 load; wrap it in `pcall` if your addon should survive that. `hideui.new`
-returns `nil` and a reason when the library cannot install: the daemon file
-is missing, another addon loaded an older copy first, or a game patch
-changed the code it relies on. Show the reason and carry on without the
-handle.
+returns `nil` and a reason when the library cannot install. Print the
+reason; the install example above returns at that point. The reasons:
 
-```lua
-hideui.version()      -- 'hideui 0.9.0'
-hideui.debug(true)    -- print this addon's library failures to chat while you develop; otherwise it prints nothing
-hideui.status()       -- .ok (installed), .ui.w, .ui.h, .dropped (every addon's), .macros_blocked, and .hidden, .blocked, .moved, .resized: names
-ui:status()           -- the same, with .dropped for this handle only
-```
+- `hideui_daemon.dll` is missing beside `_HideUI.dll`
+- the daemon another addon loaded first is older than yours
+- the engine in charge is older than your addon's copy and lacks a call
+  yours needs, see [Updating](#updating-the-library-in-your-addon)
+- a game patch changed the code the library relies on
 
 ## Try it first
 
 [`examples/hideuidemo`](examples/hideuidemo) turns the library's calls into
-commands, so you can find a window's name and try things before writing code.
-Copy the folder, `data/` included, into Windower's `addons/`, then:
+commands, so you can try things before writing code. Copy the folder,
+`data/` included, into Windower's `addons/`. Some of its commands, with
+`//hideuidemo help` listing them all:
 
 ```
 //lua load hideuidemo
-//hideuidemo events on          print every event; open any window in game to see its name
+//hideuidemo events on          print every event as it happens
 //hideuidemo hide logwindo
 //hideuidemo unhide logwindo
 //hideuidemo block equip
@@ -506,51 +614,55 @@ Copy the folder, `data/` included, into Windower's `addons/`, then:
 //hideuidemo options query      with an NPC's list open
 //hideuidemo answer query 2
 //hideuidemo cancel query
-//hideuidemo layout          save this addon's layout to data/settings.xml
+//hideuidemo layout          save the demo's layout to data/settings.xml
 //hideuidemo apply           put a saved layout back
 //hideuidemo status
 //hideuidemo debug on        print the library's own failures
 //hideuidemo help
 ```
 
-`//hideuidemo list` prints every name; `//hideuidemo list item` those containing
-"item".
+`//hideuidemo list` prints every window name, and `//hideuidemo list item`
+the names containing "item", each with its state.
 
 ## Updating the library in your addon
 
-Whichever addon loads first puts its copy of the library in charge, and
-every addon loaded after it uses that copy, until all of them have unloaded.
-That is fine when your copy is older than the one in charge. When yours is
-newer and needs a call the older copy does not have, `new` returns `nil`
-and names the addon that should be updated. A field the older copy does
-not know is missing from what you read.
+When your addon's copy of the engine is older than the engine in charge, it
+works as it is. When yours is newer and needs a call the older engine does
+not have, `new` returns `nil` and names the engine in charge by its path, so
+you know which addon to update. A field the older engine does not know is
+missing from what you read.
 
 To replace `_HideUI.dll`, unload every addon that uses the library, wait a
-few seconds, then copy the new file in. Never write over it while it is
-loaded. `hideui_daemon.dll` stays loaded until the game closes, so replace
-that one with the game closed.
+few seconds, then copy the new file in; never write over it while it is
+loaded. Replace `hideui_daemon.dll` with the game closed.
 
 ## Under the hood
 
-The library finds the client's window table and the routines it needs in
-the running game, and hooks eight of them: the ones that open, show and
+The library finds the game's list of its windows and the routines it needs
+in the running game, and hooks nine of them: the ones that open, show and
 close a window, run the UI each frame, decide whether the mouse is in a
-menu, pass a key to a window, draw the compass and let macro keys run. It
-makes every change from inside the game's own thread. If a game patch changes any of that, nothing installs
-and `new` returns the reason.
+menu, pass a key to a window, open one of the ability window's lists, draw
+the compass and let macro keys run. It makes every change from inside the
+game's own thread on the game's next frame, which is why a call only queues
+the change and returns at once.
+
+The patches on the game's routines belong to `hideui_daemon.dll` rather
+than to the engine, so that the engine can be unloaded and replaced while
+the game runs. The daemon stays until the game closes, which is also why an
+older daemon another addon loaded cannot be swapped for yours.
 
 Building it: [`engine/README.md`](engine/README.md) and
 [`daemon/README.md`](daemon/README.md).
 
 ## All window names
 
-Every name the library accepts, with what it is where known. The
-descriptions come from the window's own captions or the menu it opens from.
-A blank means it has not been identified yet; the name is still valid.
+Every name the library accepts, with a description where one is known,
+taken from the window's own captions or the menu it opens from. A blank
+means it has not been identified yet; the name is still valid.
 
 | name | window |
 |---|---|
-| `ability` | job ability list |
+| `ability` | job abilities, weapon skills, pet commands and job traits: one window, `info` says which |
 | `abimenu` | abilities menu (traits, abilities, weapon skills) |
 | `abiselec` | ability category list |
 | `abisortw` | ability sort menu |
@@ -584,12 +696,12 @@ A blank means it has not been identified yet; the name is still valid.
 | `bluehelp` | blue magic help |
 | `bluepoin` | blue magic points |
 | `bluequip` | blue magic equip list |
-| `bluesibo` | linkshell item selector |
+| `bluesibo` |  |
 | `bluinven` | blue magic set list |
 | `blusortw` | blue magic sort menu |
 | `btlskill` | combat skills (status menu) |
 | `buff` | status effect icons |
-| `camparea` | linkshell item selector (second form) |
+| `camparea` |  |
 | `campresu` |  |
 | `campsan` |  |
 | `casttime` | cast bar |
