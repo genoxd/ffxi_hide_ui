@@ -4,7 +4,7 @@
         local hideui = require('libs.hideui')
         local ui = assert(hideui.new())      -- named after _addon.name
 
-        ui:hide('logwindo')                  -- invisible, still open, takes no input
+        ui:hide('logwindo')                  -- invisible, still open, takes no clicks
         ui:move('equip', 300, 200)
         ui:on('opened', 'equip', function(event) end)
 
@@ -27,9 +27,10 @@
     under `detail`.
 
     Events, each a table with .event:
-        opened     the game opened the window, an open of a
-                   window already open included
-        closed     the window left the screen and is gone
+        opened     the game opened the window; none for an open of a window
+                   already open, but for ability on another list
+        closed     the window left the screen and is gone; opened and closed
+                   alternate for each window
         covered    another window went over it
         uncovered  it came back from under that window
         blocked    an open was refused because of a block; every handle gets
@@ -40,33 +41,210 @@
                    index in options('query').options or
                    options('arealist').rows, which moves when the list
                    scrolls though the row on screen does not
+        page       an NPC dialogue box, rem4line or rem4li2, shows a new
+                   page: options(name) reads it; when the dialogue ends the
+                   box's closed event follows
         error      the game thread refused a call this handle queued:
                    .verb, .name and .reason. A group move waiting for its
                    anchor that another handle's move_group replaced is one,
                    .verb 'move_group'. A callback of this handle that fails
                    is posted once as an error too, .verb 'callback'.
-        pending    a party invite or a post-box session appeared or cleared:
-                   .what 'invite' or 'post', .pending true or false
+        pending    a party invite, a post-box session or a question a
+                   block kept from its window appeared or cleared: .what
+                   'invite', 'post', or the window's name ('moneyctr',
+                   'itemctrl', 'sortyn', 'evitem01', 'bankmenu', 'maplist',
+                   'ok', 'mogdoor' or 'msgline'), .pending true or false
         resync     events were lost, .dropped of them, and the rest of this
                    frame's came before it: read the state again
     All but pending and resync name their window in .name; on(event, name,
     fn) takes a window name for those alone. On ability, opened, closed,
     covered, uncovered and blocked carry .category, the list the window
-    shows or was asked for (1 job_abilities, 2 pet_commands, 3
-    weapon_skills, 4 job_traits), and .category_name for the ones the
-    engine names; on(event, 'ability', category, fn) takes one of those
+    shows or was asked for, and .category_name, its name (1 job_abilities,
+    2 pet_commands, 3 weapon_skills, 4 job_traits, 6 blood_pact_rage, 8
+    phantom_roll, 9 quick_draw, 10 blood_pact_ward, 11 sambas, 12 waltzes,
+    13 steps, 14 flourishes_i, 15 stratagems, 16 jigs, 17 flourishes_ii, 18
+    ready, 19 flourishes_iii, 20 monstrosity, 21 rune_enchantment, 22 ward,
+    23 effusion); on(event, 'ability', category, fn) takes one of those
     names or a number, and off(event, 'ability', category[, fn]) the same.
     Events start at new(): sync with ui:opened(), ui:info() and ui:pending()
     after it.
 
-    A hidden window takes no input of any kind: no click lands on it, and
-    none of the player's keys or gamepad buttons reach it. The addon owns
-    whatever it draws in its place: it reads keys through Windower and
-    replies with answer and cancel. Escape does not close a hidden prompt
-    either, so an addon that hides one must answer or cancel it. Typed
-    text goes to the game's text entry rather than to a window, so a hidden
-    passinpu's field may still take typed characters; Enter and Escape do
-    not reach it.
+    open(name[, argument]) opens exactly the window named, through the
+    game's own open, and refuses, saying what to use instead, a window that
+    cannot work alone: one whose open alone can crash the client, that opens
+    only for the server or an NPC, or that sends a request made of what only
+    the game's own route sets (inventor, bank and some fifty more, and any
+    window whose controller does not exist yet); a set's main window
+    (equip, map0, mapframe, automato, mp_mncst, tskill1, mcr1edit, mcr2edit,
+    cnqframe), pointing at its set; and one that opens empty or with what
+    the game left in it (evitem, emote). A window that acts on another's
+    selection or state opens only while one of the windows it opens from is
+    open, and is refused with "<name> needs <window> open" otherwise (gift
+    with trade, the auction lists with auc1, quest01 with quest00, itemxinf
+    with iteminfo, the comment sub-lists with comgenre or scresult, and the
+    rest the README lists). mcr1edlo, mcr2edlo and jobcsel are other names
+    of mcr1edit, mcr2edit and jobcselu: either name works, and events and
+    lists report the first. The open hands the game's open routine what the
+    game's own openers hand it: gaugewin, targetwi, playermo and mp_pmode
+    open underneath a window they may not show over, as the game opens them,
+    every other window at once.
+
+    The argument is a string, a number (also as its digits in a string), or
+    a table of named fields, each a string or a number; it
+    reaches the engine as one string, so a string argument may hold neither
+    '=' nor ';'. open('ability', list) opens one list of ability alone, by
+    the names above or the number; open('magic', list) one list of magic
+    alone (1 white_magic, 2 black_magic, 3 summoning, 4 ninjutsu, 5 songs, 6
+    blue_magic, 7 geomancy, 8 trust), without the detail pane subwindo.
+    Neither opens without a list. The windows below run the game's own route
+    to them, the one its menu row, command or list runs, with what that
+    route takes; a window that route opens along with the one named is held
+    off. A default is the value of a plain open(name); "required" means a
+    plain open is refused, whichever version of the library asks. Names the
+    game gives are its own text, matched in any case.
+        storage             none: the Mog House's storage list; only in the
+                            Mog House
+        storage2            none: the Nomad Moogle's storage list; only where
+                            a Nomad Moogle serves
+        mogpost             'mog_house' (default; only in the Mog House) or
+                            'nomad' (in the Mog House or where a Nomad Moogle
+                            serves)
+        friend, msglist     none: the friend list, PlayOnline's mail (the
+                            game can refuse it while busy); titlehan held off
+        blklist             none: the blacklist
+        mount               none: the mount list as the ability list opens
+                            it; subwindo held off
+        jobcselu            'main' or 'support', required: the job list for
+                            that job; only in the Mog House or where a Nomad
+                            Moogle serves. A pick in it changes the job
+        conf11l             1 (default) or 2: the configuration menu's
+                            message row of that number
+        jbpcat              a job, 'war' to 'run' or 1 to 22, required:
+                            refused for a job under level 99, as the game's
+                            list does
+        fp_cat2             1 to 7, required: one category of fp_cat
+        quest00             a mode: 1 (default), 2 or 'Unity Information', 3
+                            or 'Ranking Information'
+        quest01             1 to 7 (default 1): the list of quest00's row of
+                            that number, 1 to 5 from its mode 1, 6 and 7 from
+                            its mode 3; needs quest00 open
+        miss00              none (default): your nation's log; or a log:
+                            "San d'Oria", 'Bastok', 'Windurst', 'Rise of the
+                            Zilart', 'Chains of Promathia', 'Assault',
+                            'Treasures of Aht Urhgan', 'Campaign', 'Wings of
+                            the Goddess', 'Seekers of Adoulin', "Rhapsodies
+                            of Vana'diel", 'The Voracious Resurgence', 'A
+                            Crystalline Prophecy', "A Moogle Kupo d'Etat", 'A
+                            Shantotto Ascension' (or 1 to 15); refused when
+                            its expansion is not on
+        searchjo, searchna, searchra, searchle, scchar
+                            'new' (default: the search reset first) or
+                            'refine' (refused before a search has run)
+        comgenre            'comment', 'search' or 'refine', required
+        sccompar            {purpose = 'comment' or 'refine', category = 1
+                            to 3}, required; needs comgenre or scresult open
+        sccomite, sccomls   'comment' or 'refine', required; needs comgenre
+                            or scresult open
+        scsibori            none: refused before a search has run; needs
+                            scresult open
+        iteminfo            {bag = name or Windower's bag id 0 to 17,
+                            slot = 1 to 80} or {item = id 1 to 65534},
+                            required. An empty slot, or one past the bag's
+                            size now, is refused, and so is an item of types
+                            20 to 23 by id alone, which the panel reads the
+                            bag's copy of
+        itemxinf            as iteminfo, the compare option's panel;
+                            itemyinf held off; needs iteminfo open
+        casttime            seconds, or {seconds =, style = 'bar' (default)
+                            or 'countdown'}, required: 1/60 to 35791394.11,
+                            in sixtieths of a second as the game counts
+        eventtim            seconds as for casttime, required
+        persona             none: the equipment screen's layout, alone
+        macro               {palette = 'ctrl' or 'alt', row = 1 to 10},
+                            required: on the other palette the game's palette
+                            switch first; mcrledit held off
+        scanlist            none: while the map tracks someone, the Wide
+                            Scan row's question on comyn first, a yes
+                            opening the list; needs map0 open
+        coloresu            2 to 9, required; needs cnqframe open on its
+                            Colonization map
+
+    open_set(set[, argument]) runs the game's own opener of a set of
+    windows, as the player's menu row, command or item use runs it:
+    'equipment' (equip, inventor, persona, money and iteminfo, as the game's
+    equipment menu opens them; refused in Monstrosity); 'ability' or 'magic'
+    with a list, opening the list with its sort window and detail pane;
+    'map' (mapframe and map0); 'set_spells' (the blue magic set: persona,
+    bluehelp, bluinven, bluepoin, bluequip); 'attachments' (the automaton's:
+    bluehelp, bluinven, statpup, automato); 'linkshell' (link5 and link6);
+    'instincts' (mp_stat, level, mp_cstm, mp_mncst; only in Monstrosity);
+    'synthesis' with the inventory index of a crystal (the main menu's
+    Items row first, then inventor, iteminfo, tskill1); 'tabula' with the
+    inventory index of a Maze Tabula (prvdungp, bluehelp, bluinven);
+    'macros' (the macro editor on the current macro set: mcrbedit,
+    mcr1edit, mcr2edit); 'friend' (friend and titlehan); 'mail' (msglist
+    and titlehan); 'mount' (mount, abisortw and subwindo); 'compare' with an
+    item as iteminfo takes one (itemxinf and itemyinf; needs iteminfo open);
+    'status' (the Status row: persona with level and statcom2, or mp_stat's
+    in Monstrosity); 'region' with 'Conquest', 'Besieged', 'Campaign' or
+    'Colonization', in any case (cnqframe and that kind's points window,
+    for the area you are in); 'text_colors' with a category 1 to 4
+    (textcol2 and textcol1). A block on any window of the set, or on the list, refuses it
+    up front; a set the game does not open, or a list it closes again at
+    once (a pet's list with no pet out), comes back as an error event, "the
+    game refused it". Each window posts its own events, and hide stays one
+    window's. close of a set's window does what the game's Escape on it
+    does: of mcr1edit or mcr2edit it closes the macro editor; of persona or
+    mp_stat with statcom2 open, the Status screen; of textcol1, textcol2
+    with it; of mp_mncst, mp_stat and mp_cstm with it; of cnqframe, its
+    points windows and Colonization panes, the map fading out and closing
+    a moment later. mp_stat alone is refused: use open_set('status'). A
+    close, or a block's close, of a window another opens from (quest00
+    under quest01, comgenre under sccompar, iteminfo under itemxinf, and
+    the rest the README lists) closes each such child no other parent of it
+    keeps open: first, through its own close with its own closed event,
+    unless the game's own close of the parent closes it.
+
+    A hidden window is not painted, but the game runs it exactly as if
+    shown: it opens, closes and is cleaned up on the game's own schedule,
+    keeps its timers and does its own work. A hidden window the game closes
+    really goes away: it leaves opened(), and its closed event comes when it
+    would for a shown window. unhide() shows a window as it stands then.
+    Keys that reach a hidden window that is not asking are treated as for a
+    shown one, down to the game ignoring them during the brief delay after
+    it opens. A hidden window costs as much each frame as a shown one.
+
+    No click lands on a hidden window. A hidden window keeps its place among
+    the game's windows and gets or loses the focus as it would shown. A
+    hidden prompt -- a window that asks the player something: query,
+    passinpu, prtyjoin, delivery, post1, post2, link5, arealist, the yes/no
+    windows comyn, merityn, resyn, resynus, resynde, resynfr, shopbuy and
+    shopsell, the KO window dead, the number boxes moneyctr and itemctrl,
+    sortyn, evitem01, confyn, bankmenu, maplist, gmtell, mp_dead, ok, the
+    Mog House's exit mogdoor, the NPC dialogue boxes rem4line and rem4li2,
+    the text-entry windows stringdl, comment, msgline, scname and link11,
+    and the trade windows trade and handover -- takes none of the player's
+    keys or gamepad buttons either while it asks, and the pointer stays in
+    world mode over it; a click anywhere does not advance a hidden dialogue
+    box. The addon owns whatever it draws in its place: it reads keys
+    through Windower and replies with answer and cancel. Escape does not
+    close a hidden prompt that asks, so an addon that hides one must answer
+    or cancel it. A prompt asks unless options() says nothing is pending in
+    it or that it is not open; arealist asks only while an NPC waits on it
+    (mode 1 or 2), and delivery, post1 and post2 whenever they are up. A
+    hidden prompt that asks nothing takes the player's keys as it would
+    shown, and the game can leave one up, or focus it again, with nothing
+    to answer: once the player sends a delivery it focuses stringdl again,
+    and the player's Escape leaves it. An addon's own interface should
+    expect those keys. Any other hidden window still takes the keys the game
+    sends it: the party list, which <stpt> and <stal> drive through its
+    keys, keeps working hidden. Typed text goes to the game's text entry
+    rather than to a window, so a text-entry window or passinpu that edits
+    when it is hidden, opens hidden already editing, or has its field
+    started by a key while hidden has its field ended, as the window's own
+    end does, dropping what was typed there; passinpu's, comment's and
+    msgline's fields start again when it is shown, as their opens start
+    them, comment's on the line it was on.
 
     info(name).cursor is the open window's cursor row; info('query').cursor
     is the option under the cursor, as the cursor event's .row, and .top the
@@ -75,17 +253,36 @@
     is the same, 1-based in options('arealist').rows.
 
     block(name) refuses the window's opens and hides it, and closes it
-    through the game's own close when it is open (not the prompt windows
-    close() refuses). block('ability', category) refuses one list of the
-    ability window alone, the others opening as before, and closes the
-    window when it shows that list; unblock('ability', category) drops
-    that hold, and unblock('ability') the whole-window one alone.
-    info('ability').blocked_categories lists the lists any handle blocks,
-    .mine.blocked_categories this handle's. move and move_group take the
-    frame's top-left,
-    info(name).rect's x and y, for every window. reset(name[, 'position' |
-    'size']) and reset_group(group) reset only what this handle placed, and
-    refuse, naming who placed it, when another handle did.
+    through the game's own close when it is open (an open prompt is left to
+    its reply). query, gmtell, comyn, the resyn windows, dead, mp_dead,
+    rem4line, rem4li2 and stringdl are never blocked or closed, whichever
+    copy of the library asks: block() and close() refuse them and say why;
+    hide them instead. close('ok') is refused too: the game waits until ok
+    is acknowledged, so answer it instead. Any other prompt cancel() ends is
+    refused only while it asks, by an error event once the game thread
+    looks; one asking nothing closes as any window, link5 showing the
+    linkshell list among them. gift is never blocked, and not
+    closed while trade is open: the trade's keys read gift's window. block('ability', category)
+    refuses one list of the ability window alone, the others opening as
+    before, and closes the window when it shows that list;
+    unblock('ability', category) drops that hold, and unblock('ability') the
+    whole-window one alone. info('ability').blocked_categories lists the
+    lists any handle blocks, .mine.blocked_categories this handle's. move
+    and move_group take the frame's top-left, info(name).rect's x and y, for
+    every window. reset(name[, 'position' | 'size']) and reset_group(group)
+    reset only what this handle placed, and refuse, naming who placed it,
+    when another handle did.
+
+    targetarrow names the arrows the target window draws over the target,
+    the second of them while the player picks a command's target. Like the
+    compass it is no window, and takes hide, block, open and close as holds:
+    hide, block and close keep the arrows off the screen, unhide, unblock
+    and open bring them back, and no event follows a hold. Its opened and
+    closed events say when the game starts and stops drawing an arrow.
+    Hiding targetwi leaves its arrows on the screen; blocked, targetwi never
+    opens and no arrow is drawn. move and resize are accepted and change
+    nothing, the arrows following the target, and info('targetarrow') and
+    rects() give no box for them.
 
     block_macros() stops the game's macro keys, Ctrl+number and
     Alt+number, and closes a macro bar that is up; unblock_macros() drops
@@ -97,9 +294,12 @@
 
     answer and cancel take the table options() or pending() returned (its
     name and id) in place of the window's name. Text the game shows comes
-    back as UTF-8 in .text (or .name, .inviter), its Shift-JIS bytes in
-    .raw beside it (an arealist row's .label has its own in .label_raw); a
-    segment's .color is 'default', 'green' or 'color<n>'.
+    back as UTF-8 in .text (or .name, .inviter, .gm), its Shift-JIS bytes in
+    .raw beside it (an arealist or maplist row's .label has its own in
+    .label_raw, and stringdl's .prompt, msgline's .recipient, trade's
+    .partner and handover's .npc theirs in .prompt_raw, .recipient_raw,
+    .partner_raw and .npc_raw); a segment's .color is 'default', 'green' or
+    'color<n>'.
 
     options('arealist') is {name, id, mode, level, pending, rows}: every
     row of the list in order, each {text, id, kind} with .label, the text
@@ -116,6 +316,209 @@
     (mode 0), and modes 3 and 4, are read-only through the library: the
     player's keys drive them, and only while they are not hidden.
 
+    options() on a yes/no window is {name, id, text, segments, undecoded,
+    default, cancellable, hold} while it asks: the question, default true
+    when the game offers yes first, hold true for a question the player
+    confirms by holding the key. answer(name, true) says yes and
+    answer(name, false) no, as the game's own confirm on that row does, a
+    held confirm included; cancel(name) is the game's own cancel and is
+    refused for a question that cannot be canceled. When the reply asks
+    another question, that one is a new prompt with a new id. The resyn
+    windows are one prompt under the client's language: only the one the
+    game opens answers. block() on merityn, shopbuy or shopsell refuses the
+    questions the game asks in it: no reply ever reaches the asker, and
+    whatever it set up before asking stays as it was.
+
+    options() on a number box -- moneyctr, which asks for gil, or
+    itemctrl, which asks how many of an item -- is {name, id, value, min,
+    max, blocked} while it asks: value the number it shows, min..max the
+    numbers it takes, blocked true when a block kept its window from
+    opening. An item count asked for an item the player picked from the
+    inventory, to hand over, trade, send or use in a synthesis, carries
+    that item's id in .item. answer(name, number) gives the window that
+    asked that number, as the box's own confirm does, and is refused for
+    anything but a whole number from min to max; cancel(name) is the box's
+    own cancel. A block keeps the question waiting with no window: it
+    starts with its blocked event and a pending event, .what the box's name
+    and .pending true; pending() lists it under that name until it ends;
+    and its end is a pending event with .pending false, which every handle
+    gets but the one whose reply ended it: another addon answered it, or
+    the game dropped it as the window that asked closed or moved on.
+    Blocked, that window stays the player's to use, so an answer is refused
+    while its cursor is off the row the question was asked from or it is
+    busy with another step; a cancel is not. An auction bid takes no answer
+    while blocked, only a cancel: a new search can replace the item it asks
+    about. A blocked question from a window the library does not know takes
+    neither answer nor cancel. A box with its window up has no pending
+    event: opened and closed describe it.
+
+    options('dead') is {name, id, seconds, askable} while the KO window is
+    up: seconds is the time its countdown shows, and askable whether
+    answer('dead') can ask now (not while comyn has a question pending).
+    answer('dead'), with no value or true, is the window's own confirm: the
+    game asks its question through comyn, which answer('comyn', true) or
+    answer('comyn', false) then answers. cancel('dead') is refused: the
+    window has no way out.
+
+    sortyn asks the player to confirm dropping an item or sorting a bag or
+    a spell list, and evitem01 to confirm using a key item. options() on
+    either is {name, id, text, segments, undecoded, default, cancellable,
+    blocked}, the question in .text and, for sortyn, its heading in
+    .title; default is true when the window opens on yes. answer(name,
+    true) and answer(name, false) reply as the window's own confirm on that
+    row does, and cancel(name) as its cancel does. confyn asks whether to
+    restore a config page's defaults: options('confyn') is {name, id,
+    default}, answer('confyn', true) restores them and answer('confyn',
+    false) leaves them; nothing in the game waits on it, and it has no
+    cancel.
+
+    bankmenu asks which Mog Safe to use. options('bankmenu') is {name, id,
+    containers, blocked}, each container {id, available}: 1 the Mog Safe,
+    9 the Mog Safe 2, which is not available until the player has one.
+    answer('bankmenu', id) picks a container and cancel('bankmenu') backs
+    out. maplist lists the maps the map window can show. options('maplist')
+    is {name, id, rows, top, level, blocked}, each row {text, value, kind}
+    with .label or .count beside it as the window draws them: kind 'map'
+    for a map, with its .zone and .map, 'list' for a row that opens a list
+    of its own and 'close' for the row that closes the list; level is 'top'
+    at its first level (top true), 'region' in a region's list and 'zone'
+    in one zone's maps. answer('maplist', value) confirms that row as the
+    player's key does: a 'list' row opens its list. cancel('maplist')
+    closes the list at its first level and goes back up a level below it.
+    Each level is a prompt of its own, with its own id, so a reply made
+    with the id of the level before is refused.
+
+    gmtell carries a GM's question. options('gmtell') is {name, id, gm,
+    title, options, cancellable}: the GM's name, the question, and each
+    answer the GM offers as {text, segments, undecoded, value}.
+    answer('gmtell', value) sends that answer and cancel('gmtell') declines.
+    mp_dead waits for the player's choice after a Monstrosity KO.
+    options('mp_dead') is {name, id, options, seconds}: its two rows as
+    {text, segments, undecoded, value}, values 1 and 2, and the time its
+    countdown shows; when that runs out the game chooses 2 itself.
+    answer('mp_dead', value) chooses; it has no cancel. ok is the game's
+    notice that waits for the player, the one it shows when the connection
+    to the server is lost. options('ok') is {name, id, text, segments,
+    undecoded, blocked}, and answer('ok'), with no value or true,
+    acknowledges it; it has no cancel.
+
+    rem4line and rem4li2 show an NPC's dialogue, each the same message
+    from its own copy: rem4line over the chat log, rem4li2 over the second
+    one. The two names are one dialogue: hiding or unhiding either hides
+    or unhides both, a block of either is refused for both, and answer and
+    cancel through either reach both. Each name still reports its own box
+    in options(), info() and its events, and each box moves with its own
+    chat log, a move or a resize placing it alone. options(name) is nil
+    while the box shows none; else {name, id, text, segments, undecoded,
+    waits, seconds, auto, more, queued, cancellable}: the page the box
+    shows last, its lines joined by '\n' and the NPC's name on the first
+    page of a message; waits 'key', 'timer' or 'key_or_timer', what moves
+    the page on, and seconds the time a timed page has left; auto true
+    while the NPC's script confirms each page itself; more true while a
+    page of this message follows; queued the messages waiting behind it;
+    cancellable whether the event allows a cancel. answer(name), with no
+    value or true, shows the next page, one page as the player sees it
+    (both boxes move on, as with the player's key), and is refused on a
+    page that goes on by itself; cancel(name) is each box's own cancel,
+    made on both, refused while the event allows none, and ends the NPC's
+    event. Both names report the same id. The player's keys and clicks
+    reach the box the game makes active (usually rem4li2), and are kept off
+    it while the two are hidden, though they move both boxes on.
+
+    mogdoor asks where to go from the Mog House's door. options('mogdoor')
+    is {name, id, title, level, options, areas, blocked}: level 'top' or
+    'areas', the rows the window shows; options, that level's rows, each
+    {text, kind, value, enabled}: kind 'stay' (cancel('mogdoor') closes the
+    window, whichever level it shows, as the game's Escape does at the top),
+    'back' (value 0, the area the player came from), 'floor' (value 125 or
+    126, the Mog House's other floor) and 'areas' (the row that opens the
+    list of areas); areas, the list, each {text, kind, value, zone,
+    enabled}, kind 'area' or 'garden' (value 127, the Mog Garden).
+    answer('mogdoor', value) takes any enabled value at either level, as
+    the game's confirm on that row does; the game may still refuse, saying
+    why itself. A block keeps the door's question waiting with no window
+    (a blocked event, then a pending event, as for the windows above)
+    until the player leaves the Mog House or uses the door again.
+
+    The text-entry windows take what the player would type, the game's own
+    Shift-JIS bytes (convert from UTF-8 with windower.to_shift_jis), each
+    refused with the game's own limit and why. stringdl is the outgoing
+    box's recipient: options('stringdl') is {name, id, mode, prompt} with
+    mode 'name' (and min_length, max_length) while it asks the name, and
+    'confirm' while it asks yes or no about a delivery slot; .prompt is the
+    line over the field. answer('stringdl', name) takes 3 to 15 letters
+    (the game sets their case), answer('stringdl', true or false) the
+    confirm, and cancel('stringdl') backs out as the window's own cancel
+    does. comment holds the bazaar, search and linkshell messages:
+    options('comment') is {name, id, mode, lines}, mode 'bazaar', 'view'
+    (another player's, which takes no answer), 'search' (with .category)
+    or 'linkshell', lines the message's three, each {text, raw}.
+    answer('comment', {line1, line2, line3}) takes up to three strings of
+    at most 40 bytes, the lines left out empty, and sends the message as
+    the window's close does; comment has no cancel: its Escape sends too.
+    msgline writes a PlayOnline friend message: options('msgline') is
+    {name, id, mode, max_length, recipient, blocked}; answer('msgline',
+    text) sends it (299 bytes at most, 15 in modes 2 and 7; empty sends
+    nothing, so cancel instead), refused while the last one is still on its
+    way, and cancel('msgline') closes it. scname is the player search's
+    name: options('scname') is {name, id, max_length, text}; answer('scname',
+    name) takes at most 15 letters and starts the search, cancel('scname')
+    closes it. link11 makes a new linkshell for the row link5 has selected:
+    options('link11') is {name, id, max_length, text, color}, the name it
+    holds in .text, color {r, g, b}; answer('link11', {name = name, color = {r, g, b}}) takes 1 to 19
+    letters and colors 0 to 15 (color left out keeps the window's), and
+    cancel('link11') backs out to link6. A block keeps msgline's message
+    waiting with no window, as it does a number box's question: pending()
+    lists it under 'msgline' until another message is set up, it is
+    answered or canceled, or msgline opens. The others ask nothing with
+    their window blocked; stringdl is never blocked.
+
+    trade is a trade with another player, handover one with an NPC.
+    offer(name, item, count) puts count of the inventory item at index item
+    (as windower.ffxi.get_items(0) numbers the inventory) into the first of
+    the window's eight item slots that is free, offer(name, 'gil', amount)
+    sets the gil offered (0 takes it out), and withdraw(name, item) takes
+    that item back out. answer(name), with no value or true, is the window's
+    OK; cancel(name) cancels the trade and closes it. Each is refused up
+    front with the reason: a ninth item, an item already offered (another
+    stack of the same item is another item), a count below 1 or above what
+    the inventory slot holds, more gil than the player has, an item not
+    offered, any change once the player's own OK is in, for trade more than
+    one change a second and for handover more than one OK a second, the most
+    the game sends: the reason says how long to wait, as
+    options('trade').next_change and options('handover').next_ok do, 0 when
+    it would go now. An item the game grays out in its own list for that
+    window is refused up front too, 'that item cannot be traded' (for
+    handover 'that item cannot be handed to an NPC'): while either window is
+    open the engine runs the game's own test of every inventory item each
+    frame, and options(name).gray lists the inventory indexes it grays out,
+    to draw them as the game does. Should the item change between the call
+    and the change, the game's test, run again as the change is made,
+    refuses it by an error event. options('trade') is {name, id, partner,
+    mine = {gil, items}, theirs = {gil, items}, ok_mine, ok_theirs,
+    next_change, gray}, each item {slot, item, id, count}, item the
+    inventory index (the partner's have none). The trade shows a change once
+    the server has taken it; until then mine.items lists the item with
+    pending true, and it counts as offered, but takes no withdraw.
+    options('handover') is {name, id, npc, items, gil, next_ok, gray}:
+    handover sends the whole offer at its OK and closes. next_change and
+    next_ok are nil while the game's clock cannot be read, gray until the
+    engine has run the test on this open of the window. Blocked, trade's
+    opening cancels the trade, and handover never opens: the NPC trade does
+    not start, and its replies are refused.
+
+    A block keeps a question of sortyn, evitem01, maplist, ok or bankmenu
+    waiting with no window, as it does a number box's: a blocked event and
+    a pending event start it, pending() lists it under the window's name,
+    answer() and cancel() take it as they take one in the window, and its
+    end is a pending event every handle gets but the one whose reply ended
+    it. sortyn's, evitem01's and maplist's end when the window that asked
+    closes, evitem01's too when the key item list moves to another item,
+    and maplist's when the game builds the list again; a reply that takes
+    maplist to another level ends its question and starts that level's,
+    with a pending event of its own. bankmenu's waits until it is answered
+    or canceled, and until then the game opens no other Mog Safe picker.
+
     cancel('query') writes the choice's cancel answer, as the game's own
     cancel does, while the event allows one; the NPC's script then closes query
     itself. cancel('post1') or cancel('post2') with the incoming box up is
@@ -130,6 +533,28 @@
     ends. The incoming box refuses a cancel while it is closing, under
     another window or not yet taking input; the outgoing box while it is
     closing, under another window or busy.
+
+    settings() lists every setting of the game's Config menu, each control
+    the player finds on one of its pages, in the menu's order: {name, page,
+    kind, value, default, min, max, choices, label}. page is the Config
+    window that shows it; kind 'number', 'bool', 'choice', 'color' or 'key';
+    value and default are as set_setting takes them: a whole number, true or
+    false, a choice's name, a color's {r, g, b} (each 0 to 255), a
+    DirectInput key code (0 to 255). min and max are the numbers a number
+    or a key takes, or a color's channel; choices a choice's names in its
+    page's row order; default nil where the game keeps none; label the
+    game's text for it as UTF-8 (its bytes in .label_raw), nil where the
+    game has none. setting(name) is one setting's value. set_setting(name,
+    value) sets one as its page does, and the game applies it at once; a
+    value of another type than its kind takes raises, and a value outside
+    its range, an unknown name, or a set while the player is not in the game
+    is refused. A page that edits a copy of its settings and writes the copy
+    back as it closes (cfilter, fxfilter, conf11s, k1assign and k2assign, and
+    conf3win for character_information) would put that copy over a set made
+    while it is open: such a set is refused by an error event. The two key
+    pages share one copy of the keys, so a key set is refused while either
+    is open. The game saves the values as the player leaves the game, as with
+    its own pages.
 
     layout() is what this handle asked for -- each move, move_group,
     resize and reset of it, and the entries apply() could not apply -- with
@@ -155,8 +580,8 @@ do
 end
 
 local event_names = {opened = true, closed = true, covered = true, uncovered = true, blocked = true, cursor = true,
-                     error = true, pending = true, resync = true}
-local event_list = 'opened, closed, covered, uncovered, blocked, cursor, error, pending or resync'
+                     page = true, error = true, pending = true, resync = true}
+local event_list = 'opened, closed, covered, uncovered, blocked, cursor, page, error, pending or resync'
 
 -- The events that name no window.
 local unnamed = {pending = true, resync = true}
@@ -268,9 +693,15 @@ end
 
 local function convert_prompt(o)
     if type(o) == 'table' then
+        if type(o.text) == 'string' then
+            convert_glyph_text(o)
+        end
         convert_glyph_text(o.title)
         for _, option in ipairs(type(o.options) == 'table' and o.options or {}) do
             convert_glyph_text(option)
+        end
+        for _, area in ipairs(type(o.areas) == 'table' and o.areas or {}) do
+            convert_glyph_text(area)
         end
         for _, slot in ipairs(type(o.slots) == 'table' and o.slots or {}) do
             convert_field(slot, 'name')
@@ -282,14 +713,26 @@ local function convert_prompt(o)
                 row.label = utf8(row.label)
             end
         end
+        for _, line in ipairs(type(o.lines) == 'table' and o.lines or {}) do
+            convert_field(line, 'text')
+        end
+        for _, key in ipairs({'prompt', 'recipient', 'partner', 'npc'}) do
+            if type(o[key]) == 'string' then
+                o[key .. '_raw'] = o[key]
+                o[key] = utf8(o[key])
+            end
+        end
         convert_field(o, 'inviter')
+        convert_field(o, 'gm')
     end
     return o
 end
 
 local function convert_pending(p)
     if type(p) == 'table' then
-        convert_field(p.invite, 'inviter')
+        for _, entry in pairs(p) do
+            convert_prompt(entry)
+        end
     end
     return p
 end
@@ -303,7 +746,20 @@ local function convert_info(i)
     return i
 end
 
-local converters = {options = convert_prompt, pending = convert_pending, info = convert_info}
+-- Each setting's label, the game's text, as UTF-8 to draw, its bytes as
+-- .label_raw.
+local function convert_settings(list)
+    for _, setting in ipairs(type(list) == 'table' and list or {}) do
+        if type(setting.label) == 'string' then
+            setting.label_raw = setting.label
+            setting.label = utf8(setting.label)
+        end
+    end
+    return list
+end
+
+local converters = {options = convert_prompt, pending = convert_pending, info = convert_info,
+                    settings = convert_settings}
 
 -- A read's result through public() and, for a read of the game's text, its
 -- converter; the reason after it untouched.
@@ -419,9 +875,83 @@ local function window_call(verb, usage, reads)
     end
 end
 
-for _, verb in ipairs({'hide', 'unhide', 'open', 'close'}) do
+for _, verb in ipairs({'hide', 'unhide', 'close'}) do
     Handle[verb] = window_call(verb, verb .. '(name)')
 end
+
+-- open(name[, argument]) and open_set(set[, argument]): an argument is a
+-- string, a number, or a table of named fields, each a string or a number.
+-- It reaches the engine as one string: a whole number as its digits, any
+-- other in decimal to 17 places, a table as key=value pairs joined by ';' in
+-- key order, which is why a string may hold neither '=' nor ';'. The engine
+-- says which windows take a fraction.
+local function argument_word(value, where)
+    if type(value) == 'number' then
+        if value ~= value or value == math.huge or value == -math.huge then
+            return nil, where .. ' must be a finite number'
+        end
+        if value == math.floor(value) and math.abs(value) < 2^31 then
+            return string.format('%d', value)
+        end
+        return string.format('%.17g', value)
+    end
+    if type(value) ~= 'string' then
+        return nil, where .. ' must be a string or a number'
+    end
+    if value == '' or value:find('[=;]') then
+        return nil, where .. ' must be a non-empty string without = or ;'
+    end
+    return value
+end
+
+local function argument_text(argument)
+    if type(argument) ~= 'table' then
+        return argument_word(argument, 'the argument')
+    end
+    local keys = {}
+    for key in pairs(argument) do
+        if type(key) ~= 'string' or not key:find('^[%a_][%w_]*$') then
+            return nil, 'a table argument takes named fields only'
+        end
+        keys[#keys + 1] = key
+    end
+    if #keys == 0 then
+        return nil, 'a table argument needs a field'
+    end
+    table.sort(keys)
+    local fields = {}
+    for _, key in ipairs(keys) do
+        local word, why = argument_word(argument[key], 'field ' .. key)
+        if not word then
+            return nil, why
+        end
+        fields[#fields + 1] = key .. '=' .. word
+    end
+    return table.concat(fields, ';')
+end
+
+local function argument_call(verb, what)
+    local usage = verb .. '(' .. what .. '[, argument])'
+    return function(self, name, argument)
+        check_self(self, verb)
+        need(type(name) == 'string', usage .. ': ' .. what .. ' must be a string')
+        local text, why
+        if argument ~= nil then
+            text, why = argument_text(argument)
+            need(text ~= nil, usage .. ': ' .. tostring(why))
+        end
+        if not self.native then
+            return nil, released
+        end
+        if text == nil then
+            return call(self, verb, name)
+        end
+        return call(self, verb, name, text)
+    end
+end
+
+Handle.open = argument_call('open', 'name')
+Handle.open_set = argument_call('open_set', 'set')
 
 -- block(name[, category]) and unblock(name[, category]): a category names
 -- one list of ability, by name or number, and reaches the engine only when
@@ -461,8 +991,30 @@ local function read_call(verb)
     end
 end
 
-for _, verb in ipairs({'list', 'opened', 'focused', 'remembered', 'groups', 'pending', 'rects', 'macros'}) do
+for _, verb in ipairs({'list', 'opened', 'focused', 'remembered', 'groups', 'pending', 'rects', 'macros',
+                       'settings'}) do
     Handle[verb] = read_call(verb)
+end
+
+-- handle:setting(name): the setting's value.
+function Handle:setting(name)
+    check_self(self, 'setting')
+    need(type(name) == 'string', 'setting(name): name must be a string')
+    if not self.native then
+        return nil, released
+    end
+    return call(self, 'setting', name)
+end
+
+-- handle:set_setting(name, value): the type of value each setting takes is
+-- the engine's to say, by its kind.
+function Handle:set_setting(name, value)
+    check_self(self, 'set_setting')
+    need(type(name) == 'string', 'set_setting(name, value): name must be a string')
+    if not self.native then
+        return nil, released
+    end
+    return call(self, 'set_setting', name, value)
 end
 
 -- A verb of no window.
@@ -623,6 +1175,29 @@ function Handle:cancel(prompt, id)
         return nil, released
     end
     return call(self, 'cancel', name, id)
+end
+
+-- handle:offer(name, item, count) or handle:offer(name, 'gil', amount).
+function Handle:offer(name, item, count)
+    check_self(self, 'offer')
+    need(type(name) == 'string', 'offer(name, item, count): name must be a string')
+    need(type(item) == 'number' or item == 'gil', "offer(name, item, count): item must be an inventory index or 'gil'")
+    need(type(count) == 'number', 'offer(name, item, count): count must be a number')
+    if not self.native then
+        return nil, released
+    end
+    return call(self, 'offer', name, item, count)
+end
+
+-- handle:withdraw(name, item).
+function Handle:withdraw(name, item)
+    check_self(self, 'withdraw')
+    need(type(name) == 'string', 'withdraw(name, item): name must be a string')
+    need(type(item) == 'number', 'withdraw(name, item): item must be an inventory index')
+    if not self.native then
+        return nil, released
+    end
+    return call(self, 'withdraw', name, item)
 end
 
 -- What this handle asked for and the entries apply() could not apply, a

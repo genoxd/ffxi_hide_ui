@@ -4,7 +4,7 @@
 // 0x54 bytes each, in a heap array every rebuild reallocates, each pointing
 // at its {int32 id; u8 flag} entry; modes 0 (the search, whose top level
 // opens on three rows of its own), 1 and 2 (an event's; mode 2 flat) and 4
-// (another list, its Enter not modelled); the event's opener, which arms the
+// (another list, its Enter not modeled); the event's opener, which arms the
 // latch and the mode before the open; close+reset (0x1020EA00), whose close
 // by name (vtable +0x74) reaches the begin-close (vtable +0x08, 0x1020F020:
 // latch and mode cleared) only through an open instance, then frees the

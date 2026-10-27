@@ -91,11 +91,26 @@ local function copy(t)
     return out
 end
 
--- The engine's names, as many as these tests use: windows, and the compass,
--- which is no window but is listed, hidden and blocked like one.
+-- The engine's names, as many as these tests use: windows, and the compass
+-- and the target arrows, which are no windows but are listed, hidden and
+-- blocked like one.
 local windows = {'logwindo', 'logwin2', 'equip', 'menuwind', 'buff', 'ability', 'query', 'partywin', 'targetwi',
                  'subwindo', 'passinpu', 'prtyjoin', 'link5', 'arealist', 'delivery', 'post1', 'post2',
-                 'playermo', 'persona', 'compass'}
+                 'playermo', 'persona', 'compass', 'targetarrow', 'rem4line', 'rem4li2', 'mogdoor', 'trade',
+                 'handover'}
+
+-- The settings as the engine lists them, one of each kind; color_say's
+-- label in Shift-JIS.
+local settings_list = {
+    {name = 'music_volume', page = 'conf2win', kind = 'number', value = 100, default = 100, min = 0, max = 100},
+    {name = 'footstep_effects', page = 'conf6win', kind = 'bool', value = true, default = true},
+    {name = 'shadows', page = 'conf3win', kind = 'choice', value = 'normal', default = 'normal',
+     choices = {'high', 'normal', 'off'}},
+    {name = 'color_say', page = 'conftxtc', kind = 'color', value = {r = 128, g = 128, b = 128},
+     default = {r = 128, g = 128, b = 128}, min = 0, max = 255, label = 'Say ' .. SJIS_A},
+    {name = 'key1_move_up', page = 'k1assign', kind = 'key', value = 0x11, default = 0x11, min = 0, max = 255,
+     label = 'Move Up'},
+}
 
 local native_state
 local function make_native()
@@ -105,8 +120,8 @@ local function make_native()
     local Handle = {}
     Handle.__index = Handle
     for _, verb in ipairs({'hide', 'unhide', 'block', 'unblock', 'move', 'move_group', 'reset', 'reset_group',
-                           'reset_all', 'open', 'close', 'resize', 'answer', 'cancel', 'block_macros',
-                           'unblock_macros'}) do
+                           'reset_all', 'open', 'open_set', 'close', 'resize', 'answer', 'cancel', 'block_macros',
+                           'unblock_macros', 'offer', 'withdraw', 'set_setting'}) do
         Handle[verb] = function(self, ...)
             table.insert(native_state.calls, {verb = verb, handle = self.name, args = {...}, n = select('#', ...)})
             if native_state.raises[verb] then
@@ -161,6 +176,7 @@ local function make_native()
         all.logwindo.open, all.logwindo.hidden, all.logwindo.detail.dock = true, true, 'chat_log'
         all.equip.moved = true
         all.compass.open, all.compass.layer = true, nil
+        all.targetarrow.layer = nil
         return all
     end
     function Handle:opened()
@@ -189,6 +205,19 @@ local function make_native()
     end
     function Handle:macros()
         return copy(native_state.macros or {blocked = false, blocked_by = {}, mine = false})
+    end
+    function Handle:settings()
+        if native_state.settings_fail then
+            return nil, native_state.settings_fail
+        end
+        return copy(settings_list)
+    end
+    function Handle:setting(name)
+        table.insert(native_state.calls, {verb = 'setting', handle = self.name, args = {name}, n = 1})
+        for _, s in ipairs(settings_list) do
+            if s.name == name then return copy(s.value) end
+        end
+        return nil, 'no such setting: ' .. tostring(name) .. ' (settings() lists them)'
     end
     -- The engine's own layout(), which hideui.lua no longer reads.
     function Handle:layout()
@@ -311,6 +340,14 @@ local misuse = {
     {'a prompt table carries its own id', function() here(); ui:cancel(read_choice, 7) end},
     {'name must be a string, or the table options() or pending() returned',
      function() here(); ui:cancel(false) end},
+    {'open(name[, argument]): field row must be a finite number',
+     function() here(); ui:open('macro', {palette = 'alt', row = 1 / 0}) end},
+    {'open_set(set[, argument]): the argument must be a non-empty string without = or ;',
+     function() here(); ui:open_set('region', 'a=b') end},
+    {'setting(name): name must be a string', function() here(); ui:setting(42) end},
+    {'set_setting(name, value): name must be a string', function() here(); ui:set_setting(nil, 1) end},
+    {'use ui:set_setting(...)', function() here(); ui.set_setting('music_volume', 1) end},
+    {'use ui:settings(...)', function() here(); ui.settings() end},
     {'use ui:hide(...)', function() here(); ui.hide('logwindo') end},
     {'use ui:layout(...)', function() here(); ui.layout() end},
     {'use ui:on(...)', function() here(); ui.on('opened', function() end) end},
@@ -329,6 +366,33 @@ native_state.raises.answer = nil
 check(at_line and engine_text:find("takes the option's value", 1, true),
     'misuse only the engine sees (an answer of the wrong type for its window) is raised again at the addon\'s'
         .. ' line: ' .. engine_text)
+
+-- settings(), setting() and set_setting() through the client: each label
+-- as UTF-8 with its bytes beside it, the rest as the engine gives it; the
+-- name and the value handed on as they are, a color's table among them.
+local listed = ui:settings()
+local say = listed and listed[4] or {}
+check(#listed == 5 and say.name == 'color_say' and say.label == 'Say ' .. UTF8_A and say.label_raw == 'Say ' .. SJIS_A
+        and listed[1].label == nil and listed[1].label_raw == nil and listed[5].label == 'Move Up'
+        and listed[5].label_raw == 'Move Up' and say.value.r == 128 and listed[3].choices[1] == 'high',
+    'settings(): the engine\'s list, each label as UTF-8 and its bytes as label_raw')
+check(ui:setting('shadows') == 'normal' and last_call('setting').args[1] == 'shadows',
+    'setting(name): the engine\'s value for the name')
+local color = {r = 1, g = 2, b = 3}
+local set_ok = ui:set_setting('color_say', color)
+call = last_call('set_setting')
+check(set_ok == true and call.args[1] == 'color_say' and call.args[2] == color and call.n == 2,
+    'set_setting(name, value): the name and the value to the engine as given, a table as it is')
+native_state.results.set_setting = {nil, 'music_volume takes a whole number from 0 to 100'}
+local set_r, set_why = ui:set_setting('music_volume', 101)
+native_state.results.set_setting = nil
+check(set_r == nil and set_why == 'music_volume takes a whole number from 0 to 100',
+    'set_setting: a refusal comes back as nil and the reason')
+native_state.raises.set_setting = "set_setting('shadows', value): shadows takes one of its choices' names, a string"
+local set_line, set_text = raised_here(function() here(); ui:set_setting('shadows', 2) end)
+native_state.raises.set_setting = nil
+check(set_line and set_text:find("shadows takes one of its choices' names", 1, true),
+    'a set_setting of the wrong type, which only the engine sees, is raised again at the addon\'s line: ' .. set_text)
 
 ok, err = pcall(ui.on, ui, 'show', function() end)
 check(not ok and tostring(err):find('no such event: show', 1, true), 'on: an unknown event raises: ' .. tostring(err))
@@ -359,6 +423,13 @@ do
     check(on_ok and ui:hide('compass') == true and last_call('hide').args[1] == 'compass'
             and #native_state.calls == calls_before + 1,
         'the compass is a name the engine lists: on(event, \'compass\', fn) passes, hide(\'compass\') reaches the engine')
+    calls_before = #native_state.calls
+    on_ok = pcall(ui.on, ui, 'closed', 'targetarrow', function() end)
+    ui:off('closed', 'targetarrow')
+    check(on_ok and ui:hide('targetarrow') == true and last_call('hide').args[1] == 'targetarrow'
+            and #native_state.calls == calls_before + 1,
+        'the target arrows are a name the engine lists: on(event, \'targetarrow\', fn) passes, hide(\'targetarrow\')'
+            .. ' reaches the engine')
 end
 
 local seen = {}
@@ -509,6 +580,66 @@ do
     native_state.macros, native_state.status.macros_blocked = nil, false
 end
 
+-- open and open_set with an argument: it reaches the engine only when
+-- given, a string as it is, a whole number as its digits, a table as its
+-- fields key=value joined by ';' in key order; misuse raises at the addon's
+-- line
+do
+    native_state.calls = {}
+    local c1 = ui:open('ability', 'pet_commands')
+    local c2 = ui:open('equip')
+    local c3 = ui:open_set('equipment')
+    local c4 = ui:open_set('magic', '6')
+    local c5 = ui:open_set('synthesis', 12)
+    local c6 = ui:open('ability', 2)
+    local c7 = ui:open('iteminfo', {slot = 5, bag = 'inventory'})
+    local c8 = ui:open('casttime', {style = 'countdown', seconds = 3})
+    local c9 = ui:open_set('region', 'colonization')
+    local c10 = ui:open('casttime', 2.5)
+    local c11 = ui:open('eventtim', {seconds = 1 / 60})
+    local calls = native_state.calls
+    check(c1 == true and c2 == true and c3 == true and c4 == true and c5 == true and c6 == true and c7 == true
+            and c8 == true and c9 == true and c10 == true and c11 == true and #calls == 11
+            and calls[10].args[2] == '2.5' and calls[11].args[2] == 'seconds=0.016666666666666666'
+            and calls[1].verb == 'open' and calls[1].n == 2 and calls[1].args[1] == 'ability'
+            and calls[1].args[2] == 'pet_commands' and calls[2].verb == 'open' and calls[2].n == 1
+            and calls[3].verb == 'open_set' and calls[3].n == 1 and calls[3].args[1] == 'equipment'
+            and calls[4].verb == 'open_set' and calls[4].n == 2 and calls[4].args[2] == '6'
+            and calls[5].verb == 'open_set' and calls[5].n == 2 and calls[5].args[2] == '12'
+            and calls[6].args[2] == '2' and calls[7].args[2] == 'bag=inventory;slot=5'
+            and calls[8].args[2] == 'seconds=3;style=countdown' and calls[9].args[2] == 'colonization',
+        'open and open_set pass an argument to the engine only when given: a string as it is, a whole number as'
+            .. ' its digits, any other number in decimal to 17 places, a table as key=value pairs in key order: '
+            .. tostring(calls[11] and calls[11].args[2]))
+    local ok, err = pcall(ui.open, ui, 'ability', true)
+    local ok2, err2 = pcall(ui.open_set, ui, 7)
+    local ok3, err3 = pcall(ui.open_set, 'equipment')
+    local ok4, err4 = pcall(ui.open_set, ui, 'synthesis', 0 / 0)
+    local ok5, err5 = pcall(ui.open, ui, 'macro', {palette = 'alt', row = math.huge})
+    local ok6, err6 = pcall(ui.open, ui, 'macro', {'alt', 3})
+    local ok7, err7 = pcall(ui.open, ui, 'macro', {})
+    local ok8, err8 = pcall(ui.open, ui, 'mogpost', 'mode=nomad')
+    local ok9, err9 = pcall(ui.open, ui, 'iteminfo', {bag = {}, slot = 1})
+    check(not ok and tostring(err):find('open(name[, argument]): the argument must be a string or a number', 1,
+                true)
+            and not ok2 and tostring(err2):find('open_set(set[, argument]): set must be a string', 1, true)
+            and not ok3 and tostring(err3):find('use ui:open_set(...)', 1, true)
+            and not ok4 and tostring(err4):find('open_set(set[, argument]): the argument must be a finite number', 1,
+                true)
+            and not ok5 and tostring(err5):find('field row must be a finite number', 1, true)
+            and not ok6 and tostring(err6):find('a table argument takes named fields only', 1, true)
+            and not ok7 and tostring(err7):find('a table argument needs a field', 1, true)
+            and not ok8 and tostring(err8):find('must be a non-empty string without = or ;', 1, true)
+            and not ok9 and tostring(err9):find('field bag must be a string or a number', 1, true),
+        'an argument that is no string, finite number or table of named fields, a string with = or ;, a set that'
+            .. ' is no string, or a dot for a colon, raises at the addon\'s line: ' .. tostring(err))
+    native_state.results.open_set = {nil, 'persona is blocked; the equipment set opens it'}
+    local r, why = ui:open_set('equipment')
+    native_state.results.open_set = nil
+    check(r == nil and why == 'persona is blocked; the equipment set opens it',
+        'the engine\'s refusal of open_set comes back as nil and the reason')
+end
+
 -- one list of ability: block and unblock with a category, on and off with a
 -- category filter, and the category fields on ability's events
 do
@@ -626,6 +757,26 @@ do
     native_state.item_text, native_state.pending, native_state.prompts = nil, nil, prompts
 end
 
+-- the page event: on('page', fn) for every dialogue box, on('page', name,
+-- fn) for one
+do
+    local pages, named = {}, {}
+    local function on_page(event) pages[#pages + 1] = event.event .. ':' .. event.name end
+    local function on_named(event) named[#named + 1] = event.name end
+    ui:on('page', on_page)
+    ui:on('page', 'rem4line', on_named)
+    native_state.handles[1].queue = {{event = 'page', name = 'rem4line'}, {event = 'page', name = 'rem4li2'},
+                                     {event = 'opened', name = 'rem4line'}}
+    fire('prerender')
+    ui:off('page', on_page)
+    ui:off('page', 'rem4line', on_named)
+    native_state.handles[1].queue = {{event = 'page', name = 'rem4line'}}
+    fire('prerender')
+    check(table.concat(pages, ' ') == 'page:rem4line page:rem4li2' and table.concat(named, ' ') == 'rem4line',
+        'page events reach on(\'page\', fn), and on(\'page\', name, fn) for that box alone, until off: '
+            .. table.concat(pages, ' ') .. '; ' .. table.concat(named, ' '))
+end
+
 -- replies take the prompt table options() or pending() gave
 do
     native_state.calls = {}
@@ -644,6 +795,275 @@ do
             .. ' cancel(delivery,3) answer(query,1,7) cancel(link5,nil)',
         'answer(prompt, value) and cancel(prompt) send the prompt\'s name and id; the old forms still work: '
             .. table.concat(args, ' '))
+    native_state.pending = nil
+end
+
+-- a yes/no window's question: its text as UTF-8 with its bytes beside it as
+-- raw and its segments' colors named; answer and cancel take its prompt
+do
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.comyn = {name = 'comyn', id = 11, text = 'Log out ' .. SJIS_A .. '?',
+        segments = {run('Log out ', 1), run(SJIS_A, 2), run('?', 1)}, undecoded = 0, default = false,
+        cancellable = true, hold = true}
+    local o = ui:options('comyn')
+    local seg = o.segments
+    check(o.name == 'comyn' and o.id == 11 and o.text == 'Log out ' .. UTF8_A .. '?'
+            and o.raw == 'Log out ' .. SJIS_A .. '?' and seg[2].text == UTF8_A and seg[2].raw == SJIS_A
+            and seg[1].color == 'default' and seg[2].color == 'green' and seg[1].escape == nil
+            and o.default == false and o.cancellable == true and o.hold == true and o.undecoded == 0,
+        'options(comyn): the question as UTF-8, raw beside it and each segment, colors named, the rest as the engine'
+            .. ' gave it')
+    local done = ui:answer(o, true) == true and ui:answer(o, false) == true and ui:cancel(o) == true
+        and ui:answer('resynus', true) == true
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do a[i] = tostring(c.args[i]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(done and table.concat(args, ' ') == 'answer(comyn,true,11) answer(comyn,false,11) cancel(comyn,11)'
+            .. ' answer(resynus,true,nil)',
+        'answer(prompt, true or false) and cancel(prompt) on a yes/no window send its name and id: '
+            .. table.concat(args, ' '))
+    native_state.prompts = prompts
+end
+
+-- mogdoor's question and a dialogue box's page: their texts as UTF-8 with
+-- their bytes beside them as raw, mogdoor's rows and areas each; answer
+-- takes mogdoor's exit and a dialogue box's prompt with no value
+do
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.mogdoor = {name = 'mogdoor', id = 41, level = 'top', blocked = false,
+        title = {text = 'Leave ' .. SJIS_A .. '?', segments = {run('Leave ' .. SJIS_A .. '?', 1)}, undecoded = 0},
+        options = {{text = 'Stay', kind = 'stay', enabled = true},
+                   {text = 'Go out', kind = 'back', value = 0, enabled = true}},
+        areas = {{text = 'Area ' .. SJIS_A, kind = 'area', value = 1, zone = 230, enabled = true}}}
+    native_state.prompts.rem4line = {name = 'rem4line', id = 42, text = 'Moogle : ' .. SJIS_A .. '\nkupo!',
+        segments = {run('Moogle : ' .. SJIS_A .. '\nkupo!', 1)}, undecoded = 0, waits = 'key', auto = false,
+        more = true, queued = 0, cancellable = true}
+    local door, talk = ui:options('mogdoor'), ui:options('rem4line')
+    check(door.title.text == 'Leave ' .. UTF8_A .. '?' and door.title.raw == 'Leave ' .. SJIS_A .. '?'
+            and door.areas[1].text == 'Area ' .. UTF8_A and door.areas[1].raw == 'Area ' .. SJIS_A
+            and door.areas[1].value == 1 and door.options[2].text == 'Go out' and door.options[2].raw == 'Go out'
+            and talk.text == 'Moogle : ' .. UTF8_A .. '\nkupo!' and talk.raw == 'Moogle : ' .. SJIS_A .. '\nkupo!'
+            and talk.segments[1].text == 'Moogle : ' .. UTF8_A .. '\nkupo!' and talk.waits == 'key',
+        'options(mogdoor): its title, rows and areas as UTF-8, raw beside each; options(rem4line): the page as'
+            .. ' UTF-8, raw beside it')
+    local done = ui:answer(door, 1) == true and ui:cancel(door) == true and ui:answer(talk) == true
+        and ui:answer('rem4li2') == true and ui:cancel(talk) == true
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do a[i] = tostring(c.args[i]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(done and table.concat(args, ' ') == 'answer(mogdoor,1,41) cancel(mogdoor,41) answer(rem4line,nil,42)'
+            .. ' answer(rem4li2,nil,nil) cancel(rem4line,42)',
+        'answer(mogdoor, exit) and cancel send its name and id; answer(dialogue box) sends no value: '
+            .. table.concat(args, ' '))
+    native_state.prompts = prompts
+end
+
+-- the text windows: comment's lines, stringdl's prompt and msgline's
+-- recipient as UTF-8 with their bytes beside them; answer passes a table
+-- through as it is, with the prompt's name and id
+do
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.comment = {name = 'comment', id = 51, mode = 'bazaar',
+        lines = {{text = 'Cheap ' .. SJIS_A}, {text = ''}, {text = 'kupo'}}}
+    native_state.prompts.stringdl = {name = 'stringdl', id = 52, mode = 'name', min_length = 3, max_length = 15,
+        prompt = 'To ' .. SJIS_A}
+    native_state.prompts.msgline = {name = 'msgline', id = 53, mode = 0, max_length = 300,
+        recipient = 'Friend' .. SJIS_A, blocked = false}
+    local c, d, m = ui:options('comment'), ui:options('stringdl'), ui:options('msgline')
+    check(c.lines[1].text == 'Cheap ' .. UTF8_A and c.lines[1].raw == 'Cheap ' .. SJIS_A and c.lines[2].raw == ''
+            and d.prompt == 'To ' .. UTF8_A and d.prompt_raw == 'To ' .. SJIS_A
+            and m.recipient == 'Friend' .. UTF8_A and m.recipient_raw == 'Friend' .. SJIS_A,
+        'options(comment): each line as UTF-8, raw beside it; stringdl\'s prompt and msgline\'s recipient as'
+            .. ' UTF-8, their bytes in prompt_raw and recipient_raw')
+    local lines = {'Hello', 'World'}
+    local done = ui:answer(c, lines) == true and ui:answer('link11', {name = 'Kupo', color = {1, 2, 3}}) == true
+    local first, second = native_state.calls[1], native_state.calls[2]
+    check(done and first.verb == 'answer' and first.args[1] == 'comment' and first.args[2] == lines
+            and first.args[3] == 51 and second.args[1] == 'link11' and second.args[2].name == 'Kupo'
+            and second.args[2].color[3] == 3,
+        'answer(comment, lines) passes the table and the prompt\'s id through; answer(link11, {name, color}) its'
+            .. ' table')
+    native_state.prompts = prompts
+end
+
+-- the trade windows: offer and withdraw pass the item, 'gil' and the count
+-- through; misuse raises at the addon's line; a released handle answers nil;
+-- options' partner and npc as UTF-8 with their bytes beside them
+do
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.trade = {name = 'trade', id = 61, partner = 'Zald' .. SJIS_A,
+        mine = {gil = 100, items = {{slot = 1, item = 3, id = 4096, count = 2},
+                                   {slot = 2, item = 5, id = 4097, count = 1, pending = true}}},
+        theirs = {gil = 0, items = {{slot = 1, id = 640, count = 12}}}, ok_mine = false, ok_theirs = true,
+        next_change = 0.4, gray = {4, 9}}
+    native_state.prompts.handover = {name = 'handover', id = 62, npc = 'Moogle' .. SJIS_A, gil = 0,
+        items = {{slot = 1, item = 7, id = 1234, count = 1}}, next_ok = 0.7, gray = {}}
+    local t, h = ui:options('trade'), ui:options('handover')
+    check(t.partner == 'Zald' .. UTF8_A and t.partner_raw == 'Zald' .. SJIS_A and t.mine.items[2].pending == true
+            and t.theirs.items[1].count == 12 and t.next_change == 0.4 and h.npc == 'Moogle' .. UTF8_A
+            and h.npc_raw == 'Moogle' .. SJIS_A and h.items[1].item == 7 and #t.gray == 2 and t.gray[1] == 4
+            and t.gray[2] == 9 and h.next_ok == 0.7 and #h.gray == 0,
+        'options(trade) and options(handover): the partner and the NPC as UTF-8, their bytes in partner_raw and'
+            .. ' npc_raw, the rest as the engine gave it, gray and next_ok among it')
+    local done = ui:offer('trade', 3, 2) == true and ui:offer('Handover', 'gil', 500) == true
+        and ui:withdraw('trade', 3) == true and ui:answer(t) == true and ui:cancel(h) == true
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do a[i] = tostring(c.args[i]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(done and table.concat(args, ' ') == 'offer(trade,3,2) offer(Handover,gil,500) withdraw(trade,3)'
+            .. ' answer(trade,nil,61) cancel(handover,62)',
+        'offer, withdraw, answer (the OK) and cancel reach the engine as given: ' .. table.concat(args, ' '))
+    local raised = {}
+    for _, attempt in ipairs({
+            {function() here(); ui:offer('trade', 'silver', 1) end, "item must be an inventory index or 'gil'"},
+            {function() here(); ui:offer('trade', 3) end, 'count must be a number'},
+            {function() here(); ui:offer(3, 3, 1) end, 'name must be a string'},
+            {function() here(); ui:withdraw('trade', 'gil') end, 'item must be an inventory index'},
+            {function() here(); ui.offer('trade', 3, 1) end, 'use ui:offer'}}) do
+        local at_line, text = raised_here(attempt[1])
+        if at_line and text:find(attempt[2], 1, true) then
+            raised[#raised + 1] = attempt[2]
+        end
+    end
+    check(#raised == 5, 'offer and withdraw raise misuse at the addon\'s line: ' .. table.concat(raised, '; '))
+    native_state.results.offer = {nil, 'all 8 item slots are full; withdraw one first'}
+    local refused, why = ui:offer('trade', 9, 1)
+    native_state.results.offer = {nil, 'that item cannot be traded'}
+    local grayed, gray_why = ui:offer('trade', 4, 1)
+    native_state.results.offer = nil
+    check(refused == nil and why == 'all 8 item slots are full; withdraw one first' and grayed == nil
+            and gray_why == 'that item cannot be traded',
+        'a refused offer, a grayed item\'s too: nil and the engine\'s reason')
+    native_state.prompts = prompts
+end
+
+-- the KO window: options() as the engine gave it; answer takes its prompt
+-- and no value, and nil reaches the engine as no value
+do
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.dead = {name = 'dead', id = 5, seconds = 125, askable = true}
+    local o = ui:options('dead')
+    check(o.name == 'dead' and o.id == 5 and o.seconds == 125 and o.askable == true and o.text == nil
+            and o.raw == nil,
+        'options(dead): the countdown and askable as the engine gave them, nothing converted')
+    local done = ui:answer(o) == true and ui:answer('dead') == true and ui:answer(o, true) == true
+        and ui:cancel(o) == true
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do a[i] = tostring(c.args[i]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(done and table.concat(args, ' ') == 'answer(dead,nil,5) answer(dead,nil,nil) answer(dead,true,5)'
+            .. ' cancel(dead,5)',
+        'answer(prompt) and answer(name) with no value send nil for it, with the prompt\'s id or none: '
+            .. table.concat(args, ' '))
+    native_state.prompts = prompts
+end
+
+-- the number boxes: options() and pending() as the engine gave them, the
+-- detail kept back with debug off; answer takes a number with the prompt
+do
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.moneyctr = {name = 'moneyctr', id = 21, value = 100, min = 0, max = 7000, blocked = false,
+        detail = {asker = 'handover', callback = '0x1', context = '0x0'}}
+    native_state.pending = {itemctrl = {name = 'itemctrl', id = 22, value = 1, min = 1, max = 12, blocked = true,
+        item = 4660, detail = {asker = 'trade'}}}
+    local o, p = ui:options('moneyctr'), ui:pending()
+    check(o.name == 'moneyctr' and o.id == 21 and o.value == 100 and o.min == 0 and o.max == 7000
+            and o.blocked == false and o.detail == nil and o.text == nil and o.raw == nil,
+        'options(moneyctr): the number, its range and blocked as the engine gave them, no detail with debug off')
+    local i = p.itemctrl
+    check(i and i.name == 'itemctrl' and i.id == 22 and i.blocked == true and i.item == 4660 and i.detail == nil,
+        'pending() lists a blocked itemctrl under its name, its item\'s id beside it')
+    local done = ui:answer(o, 2500) == true and ui:cancel(o) == true and ui:answer(i, 5) == true
+        and ui:cancel(i) == true and ui:answer('itemctrl', 3) == true
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for k = 1, c.n do a[k] = tostring(c.args[k]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(done and table.concat(args, ' ') == 'answer(moneyctr,2500,21) cancel(moneyctr,21) answer(itemctrl,5,22)'
+            .. ' cancel(itemctrl,22) answer(itemctrl,3,nil)',
+        'answer(prompt, number) and cancel(prompt) on a number box send its name and id, from options() or'
+            .. ' pending(): ' .. table.concat(args, ' '))
+    native_state.prompts = prompts
+    native_state.pending = nil
+end
+
+-- the Asked windows: their text as UTF-8 with the bytes beside it, the GM's
+-- name, maplist's rows and labels, in options() and in pending(); answer and
+-- cancel take each prompt, ok's with no value
+do
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.sortyn = {name = 'sortyn', id = 31, text = 'Drop ' .. SJIS_A .. '?',
+        segments = {run('Drop ', 1), run(SJIS_A, 2), run('?', 1)}, undecoded = 0,
+        title = {text = SJIS_A, segments = {run(SJIS_A, 1)}, undecoded = 0}, default = false, cancellable = true,
+        blocked = false, detail = {callback = '0x1'}}
+    native_state.prompts.gmtell = {name = 'gmtell', id = 36, gm = 'GM' .. SJIS_A, cancellable = true,
+        title = {text = 'Are you there?', segments = {run('Are you there?', 1)}, undecoded = 0},
+        options = {{text = SJIS_A, segments = {run(SJIS_A, 1)}, undecoded = 0, value = 1}}}
+    native_state.prompts.maplist = {name = 'maplist', id = 35, top = true, blocked = false,
+        rows = {{text = 'Area ' .. SJIS_A, value = 1, kind = 'map', zone = 100, map = 0, label = SJIS_A}}}
+    native_state.prompts.mp_dead = {name = 'mp_dead', id = 37, seconds = 30,
+        options = {{text = SJIS_A, segments = {run(SJIS_A, 1)}, undecoded = 0, value = 1}}}
+    native_state.prompts.ok = {name = 'ok', id = 38, text = 'Lost ' .. SJIS_A, segments = {run('Lost ' .. SJIS_A, 1)},
+        undecoded = 0, blocked = false}
+    native_state.pending = {evitem01 = {name = 'evitem01', id = 32, text = 'Use ' .. SJIS_A .. '?',
+        segments = {run('Use ' .. SJIS_A .. '?', 1)}, undecoded = 0, cancellable = true, blocked = true},
+        bankmenu = {name = 'bankmenu', id = 34, blocked = true,
+            containers = {{id = 1, available = true}, {id = 9, available = false}}}}
+    local sortyn, gm, map = ui:options('sortyn'), ui:options('gmtell'), ui:options('maplist')
+    local mp, ok, p = ui:options('mp_dead'), ui:options('ok'), ui:pending()
+    check(sortyn.text == 'Drop ' .. UTF8_A .. '?' and sortyn.raw == 'Drop ' .. SJIS_A .. '?'
+            and sortyn.segments[2].color == 'green' and sortyn.title.text == UTF8_A and sortyn.title.raw == SJIS_A
+            and sortyn.detail == nil and sortyn.default == false,
+        'options(sortyn): the question and its title as UTF-8, raw beside each, colors named, no detail with debug'
+            .. ' off')
+    check(gm.gm == 'GM' .. UTF8_A and gm.raw == 'GM' .. SJIS_A and gm.title.text == 'Are you there?'
+            and gm.options[1].text == UTF8_A and gm.options[1].raw == SJIS_A,
+        'options(gmtell): the GM\'s name as UTF-8, its bytes as raw; the title and options converted')
+    local row = map.rows[1]
+    check(row.text == 'Area ' .. UTF8_A and row.raw == 'Area ' .. SJIS_A and row.label == UTF8_A
+            and row.label_raw == SJIS_A and row.zone == 100 and row.kind == 'map',
+        'options(maplist): each row\'s text and label as UTF-8, their bytes beside them')
+    check(mp.options[1].text == UTF8_A and mp.options[1].raw == SJIS_A and mp.seconds == 30
+            and ok.text == 'Lost ' .. UTF8_A and ok.raw == 'Lost ' .. SJIS_A,
+        'options(mp_dead) and options(ok): their texts as UTF-8')
+    check(p.evitem01 and p.evitem01.text == 'Use ' .. UTF8_A .. '?' and p.evitem01.raw == 'Use ' .. SJIS_A .. '?'
+            and p.bankmenu and p.bankmenu.containers[2].available == false,
+        'pending(): each blocked question converted as options() converts it')
+    local done = ui:answer(sortyn, true) == true and ui:cancel(p.evitem01) == true
+        and ui:answer(p.bankmenu, 1) == true and ui:answer(map, 1) == true and ui:cancel(map) == true
+        and ui:answer(gm, 1) == true and ui:answer(mp, 2) == true and ui:answer(ok) == true
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for k = 1, c.n do a[k] = tostring(c.args[k]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(done and table.concat(args, ' ') == 'answer(sortyn,true,31) cancel(evitem01,32) answer(bankmenu,1,34)'
+            .. ' answer(maplist,1,35) cancel(maplist,35) answer(gmtell,1,36) answer(mp_dead,2,37) answer(ok,nil,38)',
+        'answer and cancel on the Asked windows send each prompt\'s name and id; ok\'s answer no value: '
+            .. table.concat(args, ' '))
+    native_state.prompts = prompts
     native_state.pending = nil
 end
 
@@ -791,7 +1211,7 @@ native_state.new_error = nil
 native_state.status = status_table(true)
 
 chat = {}
-native_state.shutdown = {false, 'the game thread did not drain in time; the engine stays installed', 'drain'}
+native_state.shutdown = {false, 'the command queue is full; the engine stays installed', 'drain'}
 local at_unload
 windower.register_event('unload', function() at_unload = ui:layout() end)
 ui:move('equip', 300, 200)
@@ -808,9 +1228,9 @@ hideui.debug(true)
 native_state.shutdown = {false, '1 hideui handle(s) still open', 'handles'}
 fire('unload')
 local quiet = #chat == 0
-native_state.shutdown = {false, 'the game thread did not drain in time; the engine stays installed', 'drain'}
+native_state.shutdown = {false, 'the command queue is full; the engine stays installed', 'drain'}
 fire('unload')
-check(quiet and chat_has('did not drain'),
+check(quiet and chat_has('queue is full'),
     'with debug on, a shutdown the engine could not finish is printed; another addon still holding handles is not')
 
 -- the reference addon -------------------------------------------------------------
@@ -843,7 +1263,10 @@ local commands = {
     {'move', 'equip', '300', '200'}, {'group', 'chat_log', '16', '830'}, {'reset', 'equip'},
     {'reset', 'equip', 'position'}, {'reset', 'equip', 'size'}, {'reset', 'equip', 'all'}, {'reset'},
     {'resetgroup', 'chat_log'}, {'resetgroup'}, {'rects'},
-    {'resetall'}, {'open', 'equip'}, {'close', 'equip'}, {'info', 'equip'}, {'info', 'query'}, {'info', 'ability'},
+    {'resetall'}, {'open', 'equip'}, {'open', 'Ability', 'Pet_Commands'}, {'openset', 'equipment'},
+    {'openset', 'magic', 'white_magic'}, {'openset'}, {'open', 'iteminfo', 'Bag=inventory', 'slot=5'},
+    {'openset', 'region', 'colonization'}, {'close', 'equip'}, {'info', 'equip'}, {'info', 'query'},
+    {'info', 'ability'},
     {'list'},
     {'list', 'log'},
     {'opened'}, {'focused'}, {'remembered'}, {'groups'}, {'info', 'arealist'}, {'resize', 'partywin', '3'},
@@ -857,6 +1280,10 @@ local commands = {
     {'move', 'equip', '300', '200'}, {'group', 'chat_log', '16', '830'},
     {'layout'}, {'apply'}, {'events', 'on'}, {'debug', 'on'}, {'debug', 'off'}, {'status'}, {'help'},
     {'move', 'equip'},
+    {'settings'}, {'settings', 'color'}, {'settings', 'nothing_matches'}, {'setting', 'color_say'},
+    {'setting', 'nosuch'}, {'setting'}, {'set', 'color_say', '160', '64', '160'}, {'set', 'footstep_effects', 'off'},
+    {'set', 'shadows', 'high'}, {'set', 'music_volume', '40'}, {'set', 'key1_move_up', '30'}, {'set', 'color_say', '1'},
+    {'set'},
 }
 local errors_seen = {}
 for _, c in ipairs(commands) do
@@ -867,6 +1294,45 @@ check(#errors_seen == 0, 'every hideuidemo command runs without a Lua error'
     .. (#errors_seen > 0 and (' -- ' .. errors_seen[1]) or ''))
 check(chat_has('move equip to 300,200') and chat_has('usage: //hideuidemo move') and chat_has('move_group chat_log to 16,830'),
     'hideuidemo reports outcomes and usage')
+do
+    local sets = {}
+    for _, c in ipairs(native_state.calls) do
+        if c.verb == 'set_setting' then
+            local v = c.args[2]
+            if type(v) == 'table' then v = ('%d %d %d'):format(v.r, v.g, v.b) end
+            sets[#sets + 1] = c.args[1] .. '=' .. tostring(v)
+        end
+    end
+    check(table.concat(sets, ' ', #sets - 4) == 'color_say=160 64 160 footstep_effects=false shadows=high'
+            .. ' music_volume=40 key1_move_up=30'
+            and chat_has('color_say [conftxtc color] 128 128 128 (r g b 0..255, default 128 128 128): Say ' .. SJIS_A)
+            and chat_has('music_volume [conf2win number] 100 (0..100, default 100)')
+            and chat_has('shadows [conf3win choice] normal (high|normal|off, default normal)')
+            and chat_has('footstep_effects [conf6win bool] on (on|off, default on)')
+            and chat_has('color_say = 128 128 128') and chat_has('no setting matches nothing_matches')
+            and chat_has('setting nosuch failed: no such setting: nosuch') and chat_has('usage: //hideuidemo set <name>')
+            and chat_has('usage: //hideuidemo setting <name>') and chat_has('set shadows high'),
+        'hideuidemo settings prints names, kinds, values, ranges and labels (the game\'s bytes, as every chat line),'
+            .. ' with a filter; setting prints one; set gives a color as r g b, a bool as on|off, a choice by name, a'
+            .. ' number and a key as numbers: ' .. table.concat(sets, ' '))
+end
+do
+    local before = #native_state.calls
+    native_state.settings_fail = "the game's settings are not loaded: the player is not in the game"
+    local done = pcall(command, 'set', 'footstep_effects', 'on')
+    native_state.settings_fail = nil
+    local sent = false
+    for k = before + 1, #native_state.calls do
+        sent = sent or native_state.calls[k].verb == 'set_setting'
+    end
+    check(done and not sent
+            and chat_has("set failed: the game's settings are not loaded: the player is not in the game"),
+        'hideuidemo set while settings() fails: its reason reported, nothing sent')
+    pcall(command, 'set', 'no_such_name', '5')
+    local last = native_state.calls[#native_state.calls]
+    check(last.verb == 'set_setting' and last.args[1] == 'no_such_name' and last.args[2] == 5,
+        'hideuidemo set of a name settings() does not list: sent as typed, for set_setting to answer')
+end
 check(chat_has('resizes by rows 1..6') and chat_has('until its owner re-sizes it') and chat_has('"Party"')
         and chat_has(' focused') and chat_has('hidden by hideuidemo, other'),
     'hideuidemo info shows the rows it resizes by, how long a size holds, focus, element text and who hides it')
@@ -882,6 +1348,19 @@ do
             lists[#lists + 1] = c.verb .. ':' .. tostring(c.args[2]) .. ':' .. c.n
         end
     end
+    local opens = {}
+    for _, c in ipairs(native_state.calls) do
+        if c.verb == 'open' or c.verb == 'open_set' then
+            opens[#opens + 1] = c.verb .. ':' .. tostring(c.args[1]) .. ':' .. tostring(c.args[2]) .. ':' .. c.n
+        end
+    end
+    check(table.concat(opens, ' ') == 'open:equip:nil:1 open:ability:pet_commands:2 open_set:equipment:nil:1'
+            .. ' open_set:magic:white_magic:2 open:iteminfo:bag=inventory;slot=5:2'
+            .. ' open_set:region:colonization:2' and chat_has('open_set equipment')
+            and chat_has('usage: //hideuidemo openset <set> [argument]'),
+        'hideuidemo open takes an argument after the name, key=value words as a table, openset a set and an'
+            .. ' argument, all lower-cased: '
+            .. table.concat(opens, ' '))
     check(table.concat(lists, ' ') == 'block:pet_commands:2 unblock:pet_commands:2' and chat_has('block ability pet_commands')
             and chat_has('unblock ability pet_commands') and chat_has('usage: //hideuidemo block <name> [category]')
             and chat_has('events on: ability pet_commands'),
@@ -1006,6 +1485,393 @@ check(chat_has("arealist blocked, an NPC's prompt waiting (mode 1), prompt 6: an
     'hideuidemo options prints a blocked arealist prompt, no rows and pending, as the answer it waits on; cancel of'
         .. ' a post box says the box closes when the server answers')
 
+chat = {}
+native_state.calls = {}
+native_state.prompts = copy(prompts)
+native_state.prompts.comyn = {name = 'comyn', id = 11, text = 'Log out?', segments = {run('Log out?', 1)},
+    undecoded = 0, default = false, cancellable = true, hold = false}
+command('options', 'comyn')
+command('answer', 'comyn', 'yes')
+command('answer', 'comyn', 'maybe')
+native_state.prompts = prompts
+do
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do a[i] = tostring(c.args[i]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(chat_has('comyn "Log out?": no first, cancellable, prompt 11') and chat_has('answer comyn yes|no or cancel comyn')
+            and table.concat(args, ' ') == 'answer(comyn,true,11)' and chat_has('usage: //hideuidemo answer'),
+        'hideuidemo options prints a yes/no question, answer takes yes or no for it and the prompt the options'
+            .. ' read, and anything else is a usage: ' .. table.concat(args, ' '))
+end
+
+chat = {}
+native_state.calls = {}
+native_state.prompts = copy(prompts)
+native_state.prompts.dead = {name = 'dead', id = 5, seconds = 125, askable = true}
+command('options', 'dead')
+command('answer', 'dead')
+command('answer', 'dead', 'yes')
+command('cancel', 'dead')
+native_state.prompts.dead = {name = 'dead', id = 6, seconds = 59, askable = false}
+command('options', 'dead')
+native_state.prompts = prompts
+do
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do a[i] = tostring(c.args[i]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(chat_has('dead: 2:05 on the countdown, prompt 5') and chat_has('answer dead asks its question through comyn')
+            and chat_has('dead: 0:59 on the countdown, prompt 6') and chat_has('its question cannot be asked now')
+            and chat_has('answer dead (prompt 5)') and table.concat(args, ' ') == 'answer(dead,nil,5) cancel(dead,5)'
+            and chat_has('usage: //hideuidemo answer'),
+        'hideuidemo options prints the KO window\'s countdown and whether its question can be asked; answer dead takes'
+            .. ' no value and the prompt the options read, and anything after it is a usage: ' .. table.concat(args, ' '))
+end
+do
+    local lines = {}
+    for _, line in ipairs({'options <name>', 'answer <name> <value>', 'cancel <name>'}) do
+        chat = {}
+        command('help')
+        for _, l in ipairs(chat) do
+            if l.text:find('//hideuidemo ' .. line, 1, true) and l.text:find('dead', 1, true) then
+                lines[#lines + 1] = line
+            end
+        end
+    end
+    check(#lines == 3, 'hideuidemo help names dead under options, answer and cancel: ' .. table.concat(lines, ', '))
+end
+
+chat = {}
+native_state.calls = {}
+native_state.prompts = copy(prompts)
+native_state.prompts.moneyctr = {name = 'moneyctr', id = 21, value = 100, min = 0, max = 7000, blocked = false}
+native_state.pending = {itemctrl = {name = 'itemctrl', id = 22, value = 1, min = 1, max = 12, blocked = true,
+    item = 4660}}
+command('options', 'moneyctr')
+command('answer', 'moneyctr', '2500')
+command('answer', 'moneyctr', 'lots')
+command('pending')
+command('cancel', 'itemctrl')
+command('block', 'itemctrl')
+native_state.prompts = prompts
+native_state.pending = nil
+do
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        if c.verb ~= 'block' then
+            local a = {}
+            for i = 1, c.n do a[i] = tostring(c.args[i]) end
+            args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+        end
+    end
+    check(chat_has('moneyctr: 100 (0..7000), prompt 21') and chat_has('answer moneyctr <0..7000> or cancel moneyctr')
+            and chat_has('itemctrl: 1 (1..12) of item 4660, blocked: no window, prompt 22')
+            and chat_has('usage: //hideuidemo answer') and chat_has('cancel itemctrl (prompt 22)')
+            and chat_has('each question waits with no window until you answer or cancel it')
+            and table.concat(args, ' ') == 'answer(moneyctr,2500,21) cancel(itemctrl,22)',
+        'hideuidemo options and pending print a number box\'s question, answer takes a number for it and the prompt'
+            .. ' read, cancel the prompt pending read, and block says what it does: ' .. table.concat(args, ' '))
+end
+do
+    local lines = {}
+    for _, line in ipairs({'options <name>', 'answer <name> <value>', 'cancel <name>', 'pending'}) do
+        chat = {}
+        command('help')
+        for _, l in ipairs(chat) do
+            if l.text:find('//hideuidemo ' .. line, 1, true)
+                    and (l.text:find('moneyctr', 1, true) or l.text:find('number box', 1, true)) then
+                lines[#lines + 1] = line
+            end
+        end
+    end
+    check(#lines == 4, 'hideuidemo help names the number boxes under options, answer, cancel and pending: '
+        .. table.concat(lines, ', '))
+end
+
+chat = {}
+native_state.calls = {}
+native_state.prompts = copy(prompts)
+native_state.prompts.sortyn = {name = 'sortyn', id = 31, text = 'Drop the Rusty Key?',
+    segments = {run('Drop the ', 1), run('Rusty Key', 2), run('?', 1)}, undecoded = 0,
+    title = {text = 'Drop', segments = {run('Drop', 1)}, undecoded = 0}, default = false, cancellable = true,
+    blocked = false}
+native_state.prompts.confyn = {name = 'confyn', id = 33, default = true}
+native_state.prompts.maplist = {name = 'maplist', id = 35, top = true, blocked = false,
+    rows = {{text = 'Current Area', value = 1, kind = 'map', zone = 100, map = 0, label = 'East'},
+            {text = 'Ronfaure', value = 2, kind = 'list', count = 6},
+            {text = 'Close', value = 3, kind = 'close'}}}
+native_state.prompts.gmtell = {name = 'gmtell', id = 36, gm = 'GM_Test', cancellable = true,
+    title = {text = 'Are you there?', segments = {run('Are you there?', 1)}, undecoded = 0},
+    options = {{text = 'Yes', segments = {run('Yes', 1)}, undecoded = 0, value = 1},
+               {text = 'No', segments = {run('No', 1)}, undecoded = 0, value = 2}}}
+native_state.prompts.mp_dead = {name = 'mp_dead', id = 37, seconds = 30,
+    options = {{text = 'Retry', segments = {run('Retry', 1)}, undecoded = 0, value = 1},
+               {text = 'Return', segments = {run('Return', 1)}, undecoded = 0, value = 2}}}
+native_state.prompts.ok = {name = 'ok', id = 38, text = 'Lost connection.', segments = {run('Lost connection.', 1)},
+    undecoded = 0, blocked = false}
+native_state.pending = {evitem01 = {name = 'evitem01', id = 32, text = 'Use the Rusty Key?',
+    segments = {run('Use the Rusty Key?', 1)}, undecoded = 0, cancellable = true, blocked = true},
+    bankmenu = {name = 'bankmenu', id = 34, blocked = true,
+        containers = {{id = 1, available = true}, {id = 9, available = false}}}}
+command('options', 'sortyn')
+command('answer', 'sortyn', 'yes')
+command('options', 'confyn')
+command('answer', 'confyn', 'no')
+command('options', 'maplist')
+command('answer', 'maplist', '1')
+command('options', 'gmtell')
+command('answer', 'gmtell', '2')
+command('cancel', 'gmtell')
+command('options', 'mp_dead')
+command('answer', 'mp_dead', '2')
+command('options', 'ok')
+command('answer', 'ok', 'now')
+command('answer', 'ok')
+command('pending')
+command('cancel', 'evitem01')
+command('answer', 'bankmenu', '1')
+command('block', 'bankmenu')
+native_state.prompts = prompts
+native_state.pending = nil
+do
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        if c.verb ~= 'block' then
+            local a = {}
+            for i = 1, c.n do a[i] = tostring(c.args[i]) end
+            args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+        end
+    end
+    check(chat_has('sortyn "Drop the Rusty Key?", no first, prompt 31, "Rusty Key" in green')
+            and chat_has('  title "Drop"') and chat_has('answer sortyn yes|no or cancel sortyn')
+            and chat_has('confyn: restore the defaults? yes first, prompt 33') and chat_has('answer confyn yes|no')
+            and chat_has('maplist: 3 rows, the first level, prompt 35')
+            and chat_has('1: "Current Area" [East] -- answer 1 (zone 100 map 0)')
+            and chat_has('2: "Ronfaure" [6] -- a list of its own')
+            and chat_has('3: "Close" -- answer 3 (close)')
+            and chat_has('gmtell from GM_Test: "Are you there?", 2 options, prompt 36')
+            and chat_has('2: "No" -- answer 2') and chat_has('mp_dead: 0:30 on the countdown, prompt 37')
+            and chat_has('2: "Return"') and chat_has('answer mp_dead 1|2')
+            and chat_has('ok "Lost connection.", prompt 38')
+            and chat_has('evitem01 "Use the Rusty Key?", blocked: no window, prompt 32')
+            and chat_has('bankmenu: containers 1, 9 (not available), blocked: no window, prompt 34')
+            and chat_has('no other Mog Safe picker opens until you answer or cancel the one waiting')
+            and chat_has('usage: //hideuidemo answer')
+            and table.concat(args, ' ') == 'answer(sortyn,true,31) answer(confyn,false,33) answer(maplist,1,35)'
+                .. ' answer(gmtell,2,36) cancel(gmtell,36) answer(mp_dead,2,37) answer(ok,nil,38)'
+                .. ' cancel(evitem01,32) answer(bankmenu,1,34)',
+        'hideuidemo options and pending print each Asked window\'s question in its shape, answer takes yes|no, a'
+            .. ' number or no value as each takes it with the prompt read, a value after ok is a usage, and block'
+            .. ' says what it does: ' .. table.concat(args, ' '))
+end
+do
+    local lines = {}
+    for _, line in ipairs({'options <name>', 'answer <name> <value>', 'cancel <name>', 'pending'}) do
+        chat = {}
+        command('help')
+        for _, l in ipairs(chat) do
+            if l.text:find('//hideuidemo ' .. line, 1, true) and l.text:find('maplist', 1, true)
+                    and l.text:find('bankmenu', 1, true) then
+                lines[#lines + 1] = line
+            end
+        end
+    end
+    local all = {}
+    chat = {}
+    command('help')
+    for _, w in ipairs({'sortyn', 'evitem01', 'confyn', 'bankmenu', 'maplist', 'gmtell', 'mp_dead', 'ok'}) do
+        for _, l in ipairs(chat) do
+            if l.text:find('//hideuidemo options', 1, true) and l.text:find(w, 1, true) then
+                all[#all + 1] = w
+                break
+            end
+        end
+    end
+    check(#lines == 4 and #all == 8, 'hideuidemo help names the Asked windows under options, answer, cancel and'
+        .. ' pending, every one under options: ' .. table.concat(lines, ', ') .. '; ' .. table.concat(all, ' '))
+end
+
+-- hideuidemo's maplist below its first level: the level named, a list row
+-- answered to open it, the cancel back up a level
+do
+    chat = {}
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.maplist = {name = 'maplist', id = 39, top = false, level = 'region', blocked = false,
+        rows = {{text = 'West Ronfaure', value = 1, kind = 'map', zone = 100, map = 1},
+                {text = 'King Ranperre\'s Tomb', value = 2, kind = 'list'}}}
+    command('options', 'maplist')
+    command('answer', 'maplist', '2')
+    command('cancel', 'maplist')
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do a[i] = tostring(c.args[i]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(chat_has('maplist: 2 rows, a region\'s list, prompt 39')
+            and chat_has('1: "West Ronfaure" -- answer 1 (zone 100 map 1)')
+            and chat_has('2: "King Ranperre\'s Tomb" -- a list of its own, answer 2 opens it')
+            and chat_has('answer maplist <row value> or cancel maplist (back up a level)')
+            and chat_has('each level is a prompt of its own')
+            and table.concat(args, ' ') == 'answer(maplist,2,39) cancel(maplist,39)',
+        'hideuidemo options maplist below its first level: the level named, a list row answered to open it, the'
+            .. ' cancel back up a level: ' .. table.concat(args, ' '))
+    native_state.prompts = prompts
+end
+
+chat = {}
+native_state.calls = {}
+native_state.prompts = copy(prompts)
+native_state.prompts.mogdoor = {name = 'mogdoor', id = 41, level = 'top', blocked = false,
+    title = {text = 'Leave the Mog House?'},
+    options = {{text = 'Stay', kind = 'stay', enabled = true}, {text = 'Go out', kind = 'back', value = 0,
+               enabled = true}, {text = 'Second floor', kind = 'floor', value = 125, enabled = false},
+               {text = 'Other areas', kind = 'areas', enabled = true}},
+    areas = {{text = 'Port Town', kind = 'area', value = 1, zone = 232, enabled = true},
+             {text = 'Mog Garden', kind = 'garden', value = 127, zone = 280, enabled = true}}}
+native_state.prompts.rem4line = {name = 'rem4line', id = 42, text = 'Moogle : Welcome home,\nkupo!',
+    segments = {run('Moogle : Welcome home,\nkupo!', 1)}, undecoded = 0, waits = 'key', auto = false, more = true,
+    queued = 0, cancellable = true}
+native_state.prompts.rem4li2 = {name = 'rem4li2', id = 43, text = 'Rest well.', segments = {run('Rest well.', 1)},
+    undecoded = 0, waits = 'timer', seconds = 2.5, auto = false, more = false, queued = 1, cancellable = false}
+command('options', 'mogdoor')
+command('answer', 'mogdoor', '127')
+command('cancel', 'mogdoor')
+command('options', 'rem4line')
+command('answer', 'rem4line')
+command('answer', 'rem4line', 'now')
+command('options', 'rem4li2')
+command('cancel', 'rem4line')
+do
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do a[i] = tostring(c.args[i]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(chat_has('mogdoor "Leave the Mog House?": top level, prompt 41') and chat_has('1: "Stay" -- cancel mogdoor')
+            and chat_has('2: "Go out" -- answer 0 (back)') and chat_has('3: "Second floor" -- turned off now')
+            and chat_has('area 2: "Mog Garden" -- answer 127 (garden zone 280)')
+            and chat_has('answer mogdoor <value> or cancel mogdoor (stays)')
+            and chat_has('rem4line: the page waits on key, more pages follow, 0 queued, cancellable, prompt 42')
+            and chat_has('  "Moogle : Welcome home,"') and chat_has('  "kupo!"')
+            and chat_has('answer rem4line shows the next page, cancel rem4line ends the event')
+            and chat_has('rem4li2: the page waits on timer (2.5 s left), the last page, 1 queued, no cancel, prompt 43')
+            and chat_has('usage: //hideuidemo answer')
+            and table.concat(args, ' ') == 'answer(mogdoor,127,41) cancel(mogdoor,41) answer(rem4line,nil,42)'
+                .. ' cancel(rem4line,42)',
+        'hideuidemo options prints mogdoor\'s rows and areas with the value each answers, and a dialogue box\'s'
+            .. ' page, what moves it on and what follows; answer mogdoor takes an exit, answer rem4line no value: '
+            .. table.concat(args, ' '))
+    local all = {}
+    chat = {}
+    command('help')
+    for _, w in ipairs({'mogdoor', 'rem4line', 'rem4li2'}) do
+        local under = 0
+        for _, line in ipairs({'options <name>', 'answer <name> <value>', 'cancel <name>'}) do
+            for _, l in ipairs(chat) do
+                if l.text:find('//hideuidemo ' .. line, 1, true) and (l.text:find(w, 1, true)
+                        or (line == 'cancel <name>' and w ~= 'mogdoor' and l.text:find('dialogue boxes', 1, true)))
+                        then
+                    under = under + 1
+                    break
+                end
+            end
+        end
+        if under == 3 then all[#all + 1] = w end
+    end
+    check(#all == 3, 'hideuidemo help names mogdoor and the dialogue boxes under options, answer and cancel: '
+        .. table.concat(all, ' '))
+end
+-- the trade windows in the demo: options prints both sides; offer, offer
+-- gil and withdraw reach the library, bad arguments print the usage; answer
+-- takes no value; help names them
+chat = {}
+native_state.calls = {}
+native_state.prompts = copy(prompts)
+native_state.prompts.trade = {name = 'trade', id = 61, partner = 'Zaldon',
+    mine = {gil = 100, items = {{slot = 1, item = 3, id = 4096, count = 2},
+                               {slot = 2, item = 5, id = 4097, count = 1, pending = true}}},
+    theirs = {gil = 0, items = {{slot = 1, id = 640, count = 12}}}, ok_mine = false, ok_theirs = true,
+    next_change = 0.4, gray = {4, 9}}
+native_state.prompts.handover = {name = 'handover', id = 62, npc = 'Moogle', gil = 300,
+    items = {{slot = 1, item = 7, id = 1234, count = 1}}, next_ok = 0.7, gray = {12}}
+command('options', 'trade')
+command('options', 'handover')
+command('offer', 'trade', '3', '2')
+command('offer', 'TRADE', 'Gil', '500')
+command('withdraw', 'handover', '7')
+command('offer', 'trade', 'silver', '1')
+command('withdraw', 'trade')
+command('answer', 'trade')
+command('cancel', 'handover')
+do
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do a[i] = tostring(c.args[i]) end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(chat_has('trade with Zaldon, prompt 61, their OK is in') and chat_has('yours: 100 gil, 2 items')
+            and chat_has('slot 1: 2 of id 4096, inventory 3')
+            and chat_has('slot 2: 1 of id 4097, inventory 5 (on its way to the server)')
+            and chat_has('theirs: 0 gil, 1 items') and chat_has('slot 1: 12 of id 640')
+            and chat_has('the next change can go in 0.4 s') and chat_has('handover to Moogle, prompt 62: 300 gil, 1 items')
+            and chat_has('grayed out by the game, cannot be offered: inventory 4, 9')
+            and chat_has('the OK can go in 0.7 s')
+            and chat_has('grayed out by the game, cannot be offered: inventory 12')
+            and chat_has('offer trade <item> <count> | offer trade gil <amount> | withdraw trade <item>')
+            and chat_has('usage: //hideuidemo offer') and chat_has('usage: //hideuidemo withdraw')
+            and table.concat(args, ' ') == 'offer(trade,3,2) offer(trade,gil,500) withdraw(handover,7)'
+                .. ' answer(trade,nil,61) cancel(handover,62)',
+        'hideuidemo options prints the trade\'s both sides and the NPC trade\'s offer, the items the game grays out'
+            .. ' and the NPC trade\'s wait; offer, offer gil, withdraw,'
+            .. ' answer and cancel reach the library: ' .. table.concat(args, ' '))
+    local under = {}
+    chat = {}
+    command('help')
+    for _, line in ipairs({'options <name>', 'answer <name> <value>', 'cancel <name>', 'offer <name> <item> <count>',
+                           'offer <name> gil <amount>', 'withdraw <name> <item>'}) do
+        for _, l in ipairs(chat) do
+            if l.text:find('//hideuidemo ' .. line, 1, true) and l.text:find('trade', 1, true)
+                    and l.text:find('handover', 1, true) then
+                under[#under + 1] = line
+                break
+            end
+        end
+    end
+    check(#under == 6, 'hideuidemo help names trade and handover under options, answer, cancel, offer and withdraw: '
+        .. table.concat(under, ', '))
+    local grays = {}
+    for _, l in ipairs(chat) do
+        for _, line in ipairs({'options <name>', 'offer <name> <item> <count>'}) do
+            if l.text:find('//hideuidemo ' .. line, 1, true) and l.text:find('grays out', 1, true) then
+                grays[#grays + 1] = line
+            end
+        end
+    end
+    check(#grays == 2, 'hideuidemo help says options reads the items the game grays out and offer refuses them: '
+        .. table.concat(grays, ', '))
+end
+native_state.prompts = prompts
+native_state.prompts = prompts
+chat = {}
+native_state.prompts = copy(prompts)
+native_state.prompts.rem4line = {name = 'rem4line', id = 44, text = 'Moogle : Welcome home,\nkupo!',
+    segments = {run('Moogle : Welcome home,\nkupo!', 1)}, undecoded = 0, waits = 'key', auto = false, more = true,
+    queued = 0, cancellable = true}
+native_state.handles[#native_state.handles].queue = {{event = 'page', name = 'rem4line'}}
+fire('prerender')
+check(chat_has('page rem4line: "Moogle : Welcome home, / kupo!"'),
+    'events on: hideuidemo prints a dialogue box\'s new page with its lines')
+native_state.prompts = prompts
+
 native_state.status = status_table(false, 'claim: another hideui engine holds the hooks')
 chat = {}
 local failed_ok, failed_err = pcall(command, 'status')
@@ -1059,6 +1925,104 @@ fire('prerender')
 check(not chat_has('opened equip') and not chat_has('pending post') and chat_has('error: move equip: nope')
         and chat_has('3 events lost'),
     'events off: only errors and lost events are printed')
+
+-- hideuidemo's text windows: options prints what each asks, answer takes
+-- each window's text as typed (comment's lines split at |, link11's name
+-- and colors), cancel backs out, pending lists msgline's blocked message
+do
+    chat = {}
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.stringdl = {name = 'stringdl', id = 61, mode = 'name', min_length = 3, max_length = 15,
+        prompt = 'Send to whom?'}
+    native_state.prompts.comment = {name = 'comment', id = 62, mode = 'search', category = 3,
+        lines = {{text = 'LFG'}, {text = ''}, {text = ''}}}
+    native_state.prompts.msgline = {name = 'msgline', id = 63, mode = 0, max_length = 300, recipient = 'Friend',
+        blocked = false}
+    native_state.prompts.scname = {name = 'scname', id = 64, max_length = 15, text = 'Rolan'}
+    native_state.prompts.link11 = {name = 'link11', id = 65, max_length = 19, text = '', color = {7, 7, 7}}
+    for _, w in ipairs({'stringdl', 'comment', 'msgline', 'scname', 'link11'}) do
+        command('options', w)
+    end
+    command('answer', 'stringdl', 'Rolanberry')
+    command('answer', 'comment', 'Looking', 'for', 'party|level', '75|')
+    command('answer', 'msgline', 'see', 'you')
+    command('answer', 'scname', 'Rolan')
+    command('answer', 'link11', 'Kupo', '1', '2', '3')
+    command('answer', 'link11', 'Mog')
+    command('cancel', 'stringdl')
+    native_state.prompts.stringdl = {name = 'stringdl', id = 66, mode = 'confirm', prompt = 'Send it?'}
+    command('options', 'stringdl')
+    command('answer', 'stringdl', 'yes')
+    local args = {}
+    for _, c in ipairs(native_state.calls) do
+        local a = {}
+        for i = 1, c.n do
+            local v = c.args[i]
+            if type(v) == 'table' then
+                v = v.name and (v.name .. (v.color and ('/' .. table.concat(v.color, ',')) or ''))
+                    or ('[' .. table.concat(v, '|') .. ']')
+            end
+            a[i] = tostring(v)
+        end
+        args[#args + 1] = c.verb .. '(' .. table.concat(a, ',') .. ')'
+    end
+    check(chat_has('stringdl asks the recipient\'s name, 3 to 15 letters ("Send to whom?"), prompt 61')
+            and chat_has('comment: the search message, category 3, prompt 62') and chat_has('line 1: "LFG"')
+            and chat_has('msgline mode 0: at most 300 bytes to Friend, prompt 63')
+            and chat_has('scname: a name of at most 15 letters, now "Rolan", prompt 64')
+            and chat_has('link11: a name of at most 19 letters, now "", colors 7 7 7, prompt 65')
+            and chat_has('stringdl asks yes or no about a delivery slot ("Send it?"), prompt 66')
+            and table.concat(args, ' ') == 'answer(stringdl,Rolanberry,61) answer(comment,[Looking for party|level'
+                .. ' 75|],62) answer(msgline,see you,63) answer(scname,Rolan,64) answer(link11,Kupo/1,2,3,65)'
+                .. ' answer(link11,Mog,65) cancel(stringdl,61) answer(stringdl,true,66)',
+        'hideuidemo options prints what each text window asks; answer takes the text as typed, comment\'s lines'
+            .. ' split at |, link11\'s name and colors, stringdl yes on a slot; cancel backs out: '
+            .. table.concat(args, ' '))
+    chat = {}
+    native_state.pending = {msgline = {name = 'msgline', id = 67, mode = 7, max_length = 15, recipient = 'Pal',
+        blocked = true}}
+    command('pending')
+    check(chat_has('msgline mode 7: at most 15 bytes to Pal, blocked: no window, prompt 67'),
+        'hideuidemo pending prints msgline\'s blocked message')
+    native_state.pending = nil
+    local all = {}
+    chat = {}
+    command('help')
+    for _, w in ipairs({'stringdl', 'comment', 'msgline', 'scname', 'link11'}) do
+        local under = 0
+        for _, line in ipairs({'options <name>', 'answer <name> <value>', 'cancel <name>'}) do
+            for _, l in ipairs(chat) do
+                if l.text:find('//hideuidemo ' .. line, 1, true) and l.text:find(w, 1, true) then
+                    under = under + 1
+                    break
+                end
+            end
+        end
+        if under == 3 then all[#all + 1] = w end
+    end
+    check(#all == 5, 'hideuidemo help names each text window under options, answer and cancel: '
+        .. table.concat(all, ' '))
+    native_state.prompts = prompts
+end
+
+-- hideuidemo's hide and unhide take the target arrows by name, and its help
+-- names them beside the compass
+do
+    command('hide', 'TargetArrow')
+    local hidden = last_call('hide').args[1] == 'targetarrow'
+    command('unhide', 'targetarrow')
+    local shown = last_call('unhide').args[1] == 'targetarrow'
+    chat = {}
+    command('help')
+    local named = false
+    for _, l in ipairs(chat) do
+        named = named or (l.text:find('//hideuidemo hide|unhide <name>', 1, true) ~= nil
+            and l.text:find('compass and targetarrow', 1, true) ~= nil)
+    end
+    check(hidden and shown and named, 'hideuidemo hide and unhide targetarrow reach the engine; help names it with'
+        .. ' the compass under hide|unhide')
+end
 
 -- hideuidemo with the engine down
 reset_windower()

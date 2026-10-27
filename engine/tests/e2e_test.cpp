@@ -94,16 +94,177 @@
 // hideui.lua's on() with a category filter, the site resolved again over
 // the daemon's jump, the site, its manager imm32 and its key push failing
 // closed, and a 0.9.0 resident (copy g) making no handle for this copy.
+// 0.11.0's own: a hidden window that asks nothing keeps the routing
+// routine's codes and the menu mouse mode, and only a hidden prompt loses
+// them; the yes/no windows on the stand-in's class, asked on the game thread
+// as the game's askers ask: options() decoding the question from the game's
+// text, its default from the cursor the ask left, cancellable and hold;
+// answer and cancel ending it as the class's confirm and cancel do (the
+// callback, the question cleared, holdtime and the window closed in each
+// one's order), refused for a class built not cancellable; the resyn family
+// answered under the one key its controller holds; a question asked again
+// from inside the callback opened anew as a new prompt with its own id; a
+// held confirm; open and close refused, a block leaving an open question to
+// its reply and refusing the next; the earlier slots treating them as any
+// window; select-row and the class's constructor failing closed; and a
+// 0.10.0 resident (copy h) making no handle for this copy. gmtell, comyn,
+// dead and mp_dead refused by every block and close slot of every engine
+// abi, each with its reason. The KO window on a stand-in controller:
+// options() reading its countdown and whether its question can be asked;
+// answer() its own confirm, asking through comyn with the arguments its
+// input handler's bytes hold (the decider, the message getter and the
+// class's ask the stand-in's, the callback the game's own bytes, run by
+// comyn's yes), refused while comyn asks; cancel() refused; hidden, no key
+// reaching it; and the class's confirm, the KO window's confirm site, its
+// callback and its tick failing closed. The resyn family refused by every
+// block and close slot too. The number boxes: their setups and confirms the
+// game's bytes, asked on the game thread as the game's askers ask:
+// options() reading the number, its range and whether a block kept the
+// window from opening, the picked item's id; answer and cancel through the
+// confirm, a number that is no whole number or out of range refused; a
+// hidden box taking no routed key; a callback a close from outside leaves
+// set asking nothing; the earlier slots treating the boxes as any window
+// and block8 leaving an open one to its reply; a blocked count announced by
+// a blocked and a pending event, listed by pending(), refused while
+// trade's cursor is off its row, answered through trade's own callback (the
+// game's bytes) with no window, its end a pending event every handle but
+// the replying one reads; trade's window closing ending it; an unknown
+// asker's question refused both replies; a later open ending a blocked
+// question; pending5 and poll5 leaving the boxes out; and the boxes'
+// confirms, setups, three askers and the yes/no class's cancel test failing
+// closed. The Asked windows (sortyn, evitem01, confyn, bankmenu, maplist,
+// gmtell, mp_dead, ok) asked through the stand-in's askers on the game
+// thread: options() in plain fields with nothing asked, with the window up
+// and blocked; open, close and the wrong kind of value refused, and cancel
+// where the window has none; answer and cancel doing what each window's own
+// confirm and cancel do, through the game's bytes where the stand-in has
+// them (sortyn's setup and select-row, evitem01's setup and callback,
+// bankmenu's begin-close and clear, maplist's close+reset), the GM tell
+// poller and the error screen acting on what the replies wrote; a hidden
+// sortyn taking no routed key; sortyn, evitem01, bankmenu, maplist and ok
+// blocked: announced, listed by pending() and pending8 (not pending5 or
+// poll5), answered with no window by the prompt's id, the end read by
+// every other handle; resolution to the stand-in's sites; and each Asked
+// signature, and every key, global, routine and byte the engine checks in
+// them, failing closed. mogdoor, opened by the stand-in's door handler:
+// options() with its rows, areas and texts, answer() through its confirm's
+// gate and exit, the floor row and the Mog Garden refused while off or for
+// the other floor, the gate's refusal as an error event, cancel() its top
+// level's Escape at either level, no gate run; blocked, recorded, listed by
+// pending8 and pending(), answered with no window. The dialogue boxes: options() reading the page from the box's
+// lines, answer() one page through the text dispatch, the message's end
+// closing the box, a timed page and a cancel the event allows not refused,
+// the cancel releasing the box's lines and clearing its own text object;
+// page events through poll8 and not poll5; the key test hooked, the boxes'
+// tick told no about the left button while a hidden box is active, its other
+// callers untouched. The two boxes one dialogue: a hide or unhide through
+// either name holding both, two handles' holds on the pair as on one window,
+// a block refused on both alike, a move or a resize each box's own, an
+// answer through either moving both on and a cancel through either ending
+// both, under the one id both report, a stale one refused, and a reply
+// through one refused while one through the other is queued. rem4line and
+// rem4li2 refused by every block and close slot, ok by every close slot;
+// and mogdoor's, the boxes' (the text dispatch's hand-off to the other box
+// among them) and the key test's signatures and checks failing closed. The
+// text-entry windows (stringdl,
+// comment, msgline, scname, link11), their routines the game's bytes where
+// the engine reads and runs them: open, close and block refused as their
+// rules give, stringdl by every block and close slot; options() in plain
+// fields; answer and cancel doing what each window's own commit and cancel
+// do, comment's lines and link11's name and colors as tables through the
+// binding; the refusals of the game's limits, msgline's 300 bytes among
+// them; a hide ending a field, a hidden open ending the one its hook starts,
+// passinpu's, comment's (on the line it edited) and msgline's started again
+// at the show through each one's own start; msgline blocked, announced,
+// listed by pending(), answered with no window, its end read by the other
+// handle; each input routine's signature and a shape in each failing closed,
+// comment's start among them. The target arrows on the stand-in's per-menu
+// draw, sprite draw and quad routine, hooked under the stand-in's draw walk
+// each frame: listed and read as a name on no row, opened and closed as the
+// target window's draw starts and stops painting an arrow, its arrows'
+// points under detail; hidden targetwi keeping its layer with only its
+// arrows drawn, targetarrow's hide, close and block taking only the arrows,
+// no other window's frame dropped; move, resize and reset accepted; the
+// three draws, the template swap and the two arrow draws resolved, again
+// over the daemon's jumps, and failing closed. The template swap: the
+// owners' swaps through the stand-in's hooked entry putting partywin back
+// on the bottom edge its move gave it, the swap's size standing, and
+// leaving playermo's rows to its owner. A zone change: partywin moved by its
+// frame while one member tall, closed, opened again at its template's
+// height and swapped to its roster, on the bottom edge the move gave it at
+// each step. The trade windows, their routines
+// the game's bytes over the stand-in's player data, packet queue and clock:
+// options() reading both offers and the names through the actor table;
+// offer, withdraw, the gil, the OK and the cancel through the game's own
+// stage, OK, cancel and close; the trade's offer on its way until the
+// acknowledgment writes it; one change a second; the gray test refusing on
+// the game thread; the NPC trade's offer sent at its OK, then closed; a
+// blocked NPC trade refusing its replies; each signature and a shape in
+// what it leads to failing closed. A shutdown while no frame runs: accepted
+// at once and closing, a second one starting no second thread, the restore
+// run by the next frame and the hooks taken out by the engine's own thread,
+// which gives the image back; a new() before that frame, as a reload makes
+// it, taking the closing engine back; a hooked call still running as the
+// handlers come out leaving the engine pinned until the next shutdown. The
+// path of the 2026-10-21 freeze: the demo itself through hideui.lua with
+// debug and events on, the dialogue pair hidden by one name before either
+// box exists, map0 open and closed, the target window drawing its arrow
+// closing as both boxes open hidden on one message under a held left
+// button, prerender between frames and inside the game thread's frame, and
+// a watchdog failing any step that does not come back. With an engine built
+// with -DHU_HEAPCHECK (ENGINE_DLL), the heap check against the stand-in's
+// overrun of a heap block of its own: the check after map0's callback on a
+// hidden maplist's leaf failing, the one before it the last good, reported
+// once to the handle; the background check catching an overrun outside
+// every command within its second; the shutdown checking to its unhook, and
+// the next two images naming an overrun between images; and a check's cost.
+// 0.11.0's own: open of exactly the window named, through hideui.lua's
+// binding: a window that cannot work alone refused with what to use
+// instead, ability and magic without a list, a list past either table and a
+// window with no controller in its slot refused, every window whose open
+// alone crashes or strands the client refused by the open slots of engine
+// abi 1, 3, 8 and 9; a list of ability alone through the stand-in's opener
+// with no sort and no pane, and of magic alone through the magic opener's
+// game bytes with its rebuild's open of subwindo kept from opening, no event
+// about it, and magic's begin-close finding the sort window's controller the
+// setup wrote; the ability and magic sets with their sort windows (blusortw
+// for blue magic) and pane; the equipment set through the opener's game
+// bytes and layout, each window its own opened event, the 0x061 request;
+// the game's refusals as error events (Monstrosity by the check's game
+// bytes, by its word and by the mode byte, al alone read; the opener's
+// first test; its guard), the blocked members and lists refused up front;
+// a pet's list with no pet out closed by the game's per-frame and reported;
+// the map, blue magic, automaton, linkshell, instincts, synthesis, tabula
+// and macro sets through the stand-in's openers of the game's bytes, which
+// the engine's signatures and shapes resolve, the job tests, the linkshell
+// row's and the item use's checks, Monstrosity and the item at an index
+// each refusing as an error event; the open routine's last argument as the
+// game's openers pass it, titlehan over titlewin and targetwi parked under
+// ut_point; and an earlier 0.11.0 build of engine abi 8 (copy i) making no
+// handle for this copy. The settings: settings() in the Config menu's order,
+// each kind's fields read from the stand-in's store, the game's object and
+// entries, with the game's labels, through hideui.lua as UTF-8; setting();
+// set_setting() of each kind through the store's set, the game's bytes,
+// each id's subscriber run, a set to the stored value running none, bits and
+// chat filter rows composed with every other bit kept, the inverted bools
+// and a choice on a bit, the equipment lock, auto_disconnect and
+// character_information through their routines; misuse raising, the
+// refusals up front, a set while cfilter is open refused by an error event,
+// and every call refused while the store is not loaded.
 //
 // e2e_test.exe <LuaCore.dll> <a/_HideUI.dll> <FFXiMain.dll> <b/_HideUI.dll> <c/_HideUI.dll> <hideui.lua>
-//              <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll> <g/_HideUI.dll>
+//              <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll> <g/_HideUI.dll> <h/_HideUI.dll>
+//              <i/_HideUI.dll>
 //
 // Copy e publishes engine abi 4's table, standing for a 0.5.1 to 0.6.3
 // resident; copy f engine abi 5's, standing for a 0.7.0 to 0.8.0 one; copy
-// g engine abi 6's, standing for a 0.9.0 one.
+// g engine abi 6's, standing for a 0.9.0 one; copy h engine abi 7's,
+// standing for a 0.10.0 one; copy i engine abi 8's, standing for an
+// earlier 0.11.0 build.
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <tlhelp32.h>
 #include <stdint.h>
 #include <cstdio>
 #include <cstring>
@@ -176,7 +337,7 @@ const char kPrelude[] =
     "  return open()\n"
     "end\n"
     "function copy_of(path)\n"
-    "  return path and path:match('[/\\\\]([abcdefg])[/\\\\]_[Hh]ide[Uu][Ii]%.dll$')\n"
+    "  return path and path:match('[/\\\\]([abcdefghi])[/\\\\]_[Hh]ide[Uu][Ii]%.dll$')\n"
     "end\n"
     "function finish()\n"
     "  local text = table.concat(out, '\\n')\n"
@@ -246,6 +407,82 @@ lua_State* fresh_from(const char* dll, const char* const* globals) {
 
 bool mapped(const char* path) {
     return GetModuleHandleA(path) != NULL;
+}
+
+// A shutdown returns once the restore is queued; the engine's own thread
+// finishes it after the next frame. Waits, up to five seconds, for the engine
+// the global `module` names in L to leave "closing".
+void settle(lua_State* L, const char* module = "hu") {
+    char chunk[64];
+    snprintf(chunk, sizeof(chunk), "return %s.status().state", module);
+    const DWORD start = GetTickCount();
+    for (;;) {
+        bool closing = true;
+        if (lua.loadstring(L, chunk) == 0 && lua.pcall(L, 0, 1, 0) == 0) {
+            const char* state = lua.tolstring(L, -1, NULL);
+            closing = state && strcmp(state, "closing") == 0;
+        }
+        lua.settop(L, 0);
+        if (!closing || GetTickCount() - start > 5000) {
+            return;
+        }
+        Sleep(1);
+    }
+}
+
+// That thread gives back the image's last reference as it ends: whether
+// `module` unmaps within five seconds.
+bool unmaps(const char* module) {
+    const DWORD start = GetTickCount();
+    while (mapped(module) && GetTickCount() - start < 5000) {
+        Sleep(1);
+    }
+    return !mapped(module);
+}
+
+bool engine_unmaps() {
+    return unmaps("_HideUI.dll");
+}
+
+typedef LONG (WINAPI* QueryThreadFn)(HANDLE, int, void*, ULONG, ULONG*);
+const int kThreadStartAddress = 9;      // ThreadQuerySetWin32StartAddress
+
+// The threads of this process that started in the engine's image: the one a
+// shutdown starts to finish it.
+int engine_threads() {
+    const uint8_t* base = reinterpret_cast<const uint8_t*>(GetModuleHandleA("_HideUI.dll"));
+    QueryThreadFn query;
+    FARPROC p = GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtQueryInformationThread");
+    memcpy(&query, &p, sizeof(p));
+    if (!base || !query) {
+        return 0;
+    }
+    const IMAGE_DOS_HEADER* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
+    const IMAGE_NT_HEADERS32* nt = reinterpret_cast<const IMAGE_NT_HEADERS32*>(base + dos->e_lfanew);
+    const uint8_t* end = base + nt->OptionalHeader.SizeOfImage;
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    if (snapshot == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+    int n = 0;
+    THREADENTRY32 t;
+    t.dwSize = sizeof(t);
+    for (BOOL more = Thread32First(snapshot, &t); more; more = Thread32Next(snapshot, &t)) {
+        if (t.th32OwnerProcessID != GetCurrentProcessId()) {
+            continue;
+        }
+        HANDLE thread = OpenThread(THREAD_QUERY_INFORMATION, FALSE, t.th32ThreadID);
+        if (!thread) {
+            continue;
+        }
+        const uint8_t* entry = NULL;
+        if (query(thread, kThreadStartAddress, &entry, sizeof(entry), NULL) == 0 && entry >= base && entry < end) {
+            ++n;
+        }
+        CloseHandle(thread);
+    }
+    CloseHandle(snapshot);
+    return n;
 }
 
 // The engines name their own paths as the loader reports them.
@@ -320,6 +557,32 @@ bool sets_field(const HuEngineReply& r, const char* key) {
     return false;
 }
 
+// Whether a reply holds the string `text` as a value.
+bool has_string(const HuEngineReply& r, const char* text) {
+    const uint32_t n = static_cast<uint32_t>(strlen(text));
+    for (uint32_t i = 0; r.used <= r.capacity && i + 5 + n <= r.used; ++i) {
+        uint32_t length;
+        memcpy(&length, r.data + i + 1, 4);
+        if (r.data[i] == HU_REPLY_STRING && length == n && memcmp(r.data + i + 5, text, n) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Whether the first field named `key` a reply sets is true.
+bool field_true(const HuEngineReply& r, const char* key) {
+    const uint32_t n = static_cast<uint32_t>(strlen(key));
+    for (uint32_t i = 1; r.used <= r.capacity && i + 5 + n <= r.used; ++i) {
+        uint32_t length;
+        memcpy(&length, r.data + i + 1, 4);
+        if (r.data[i] == HU_REPLY_FIELD && length == n && memcmp(r.data + i + 5, key, n) == 0) {
+            return r.data[i - 1] == HU_REPLY_TRUE;
+        }
+    }
+    return false;
+}
+
 // How many fields named `key` a reply sets.
 int fields_named(const HuEngineReply& r, const char* key) {
     const uint32_t n = static_cast<uint32_t>(strlen(key));
@@ -348,6 +611,18 @@ uint32_t record_magic() {
     }
     CloseHandle(mapping);
     return magic;
+}
+
+// Whether an engine holds the claim on the hooks, which it gives up only once
+// its handlers are out.
+bool claim_held() {
+    char name[64];
+    snprintf(name, sizeof(name), "Local\\hideui_engine_v1_%08X", static_cast<unsigned>(GetCurrentProcessId()));
+    HANDLE mapping = OpenFileMappingA(FILE_MAP_READ, FALSE, name);
+    if (mapping) {
+        CloseHandle(mapping);
+    }
+    return mapping != NULL;
 }
 
 // ---------------------------------------------------------------------------
@@ -392,6 +667,174 @@ struct FakeLog {
     int main_menu_opens;
     int compass_x;
     int compass_y;
+    int yesno_calls;
+    int yesno_answer;
+    void* yesno_context;
+    int yesno_inputs;
+    int select_calls;
+    void* select_menu;
+    int select_row;
+    int decider_calls;
+    int decider_args[2];
+    int message_calls;
+    int message_args[2];
+    int ask_calls;
+    void* ask_ctl;
+    const void* ask_callback;
+    const char* ask_text;
+    int ask_args[5];
+    int box_answers;
+    int box_value;
+    void* box_context;
+    int box_who;
+    int focus_calls;
+    void* focus_menu;
+    int asked_calls;
+    int asked_who;
+    int asked_value;
+    int asked_extra;
+    void* asked_context;
+    int gm_result;
+    int ok_seen;
+    int door_gates;
+    int door_gate_args[2];
+    int door_opens;
+    void* door_open_actor;
+    int door_open_arg;
+    int door_exit_at_open;
+    int advances;
+    void* advance_text;
+    int releases;
+    void* release_log;
+    int release_line;
+    int clears;
+    void* clear_text;
+    int wait_at_clear;
+    int key_clicks;
+    int dialogue_clicks;
+    int attaches;
+    void* attached;
+    int deactivates;
+    int field_reads;
+    int field_deletes;
+    void* field_deleted;
+    int field_starts;
+    int sanitizes;
+    int trims;
+    int comment_sends;
+    int comment_mode;
+    char comment_lines[3][41];
+    int pol_numbers;
+    uint32_t pol_word;
+    int clocks;
+    int sends;
+    int send_mode;
+    uint32_t send_args[9];
+    char send_text[301];
+    int marks;
+    void* mark_obj;
+    uint32_t mark_flags;
+    int criteria_clears;
+    void* criteria;
+    int criteria_names;
+    char criteria_name[17];
+    int searches;
+    int search_args[6];
+    int encodes;
+    int creates;
+    uint32_t create_args[8];
+    char create_name[24];
+    int items;
+    char quads[128];
+    int walks;
+    int queue_allocs;
+    int queue_id;
+    int commits;
+    uint8_t packet[0x40];
+    int trade_sends[2];
+    int trade_unoks;
+    int grays;
+    int gray_lock;
+    void* gray_mode;
+    void* walked[64];
+    int walked_count;
+    void* drawn[64];
+    int drawn_count;
+    int map_builds;
+    int map_selects;
+    int map_select_row;
+    int map_select_flag;
+    void* painted[64];
+    int painted_count;
+    LONG pixels;
+    void* freed[16];
+    LONG freed_frame[16];
+    int freed_count;
+    void* ready[16];
+    LONG ready_frame[16];
+    int ready_count;
+    int map_closes;
+    void* map_frame;
+    int map_mode;
+    int map0_open_at_close;
+    int map_fades;
+};
+
+// fake_ffximain.cpp's FakeSets, field for field.
+enum { kSetsMap, kSetsSpells, kSetsAttachments, kSetsLinkshell, kSetsInstincts, kSetsSynthesis, kSetsTabula,
+       kSetsCount };
+struct FakeSets {
+    volatile LONG calls[kSetsCount];
+    const void* self;
+    int32_t args[3];
+    uint8_t refuse;
+    uint8_t linkshell_check;
+    uint8_t use_check;
+    volatile LONG checks;
+    int32_t check_args[2];
+};
+
+// fake_ffximain.cpp's FakeRoutes, field for field.
+struct FakeRoutes {
+    volatile LONG calls;
+    char order[256];
+    const void* self;
+    int32_t args[7];
+    uint32_t msglist;
+    uint8_t job_level[23];
+    uint32_t expansion;
+    int32_t tracking;
+    uint8_t untracked;
+    uint8_t bag_size[18];
+    volatile LONG switch_sounds;
+    int32_t scan_answer;
+};
+
+// fake_ffximain.cpp's FakeSettings, field for field.
+struct FakeSettings {
+    uint8_t* store;
+    uint8_t* entries;
+    volatile LONG notifies;
+    int32_t notified[64][2];
+    volatile LONG lock_requests;
+    int32_t lock_args[2];
+    uint8_t lock_ok;
+    uint8_t lock_busy;
+    volatile LONG lock_messages;
+    uint32_t lock_clock;
+    uint32_t* lock_stamp;
+    volatile LONG idle_ms_calls;
+    int32_t idle_ms;
+    volatile LONG idle_on_calls;
+    int32_t idle_on;
+    volatile LONG flag_sets;
+    int32_t flag_args[2];
+    uint8_t* player_flags;
+    uint8_t** store_ptr;
+    const void* set;
+    const void* lock;
+    const void* idle;
+    const void* flag;
 };
 
 struct FakeState {
@@ -407,7 +850,7 @@ struct FakeState {
     void* staged_close;
     void* show_path;
     uint8_t* spare_set_position;
-    void* calls[12];
+    void* calls[13];
     uint8_t* party_pending;
     volatile LONG* party_queues;
     volatile LONG* post_queues;
@@ -456,6 +899,126 @@ struct FakeState {
     volatile LONG* macros_fired;
     void* ability_open;
     int32_t* ability_last_kind;
+    uint8_t* yesno_site;
+    const void** yesno_vtable;
+    void* yesno_ask;
+    uint8_t* yesno_confirm;
+    uint8_t* dead_site;
+    uint8_t* dead_tick;
+    uint8_t* dead_callback;
+    void* dead_decider;
+    void* message;
+    void* yesno_ask_this;
+    uint8_t* dead_set;
+    uint8_t* yesno_input;
+    void* box_confirm[2];
+    void* box_setup[2];
+    uint8_t* askers[16];
+    void* callbacks[16];
+    uint8_t* gil_record;
+    void* asked_ask;
+    uint8_t* asked_sites[11];
+    uint8_t* player_data;
+    uint8_t* gm_queue;
+    int32_t* gm_slot;
+    volatile LONG* gm_polls;
+    volatile LONG* error_screen;
+    const void* const* door_vtable;
+    uint8_t* door_input;
+    uint8_t* door_handler;
+    uint8_t* door_opened;
+    uint8_t* door_open_hook;
+    uint8_t* door_tick;
+    uint8_t** house_ptr;
+    uint8_t* door_actor;
+    uint8_t* door_exiting;
+    uint32_t* door_gate_answer;
+    volatile LONG* door_garden_on;
+    volatile LONG* door_floor_on;
+    uint32_t* door_condition;
+    const void* const* dialogue_vtables;
+    uint8_t* dialogue_input;
+    uint8_t* dialogue_tick;
+    uint8_t* key_test;
+    uint8_t* dialogue_wait;
+    uint8_t* texts;
+    volatile LONG* left_click;
+    volatile LONG* dialogue_ticks;
+    uint8_t* edit;
+    char* field_typed;
+    uint8_t* field_boxes;
+    uint8_t* msgline_busy;
+    int32_t* send_result;
+    uint8_t* pol;
+    uint8_t* sending_owner;
+    uint8_t* search;
+    uint8_t* made;
+    uint32_t* item_word;
+    uint32_t* slot_taken_answer;
+    uint32_t* create_answer;
+    uint8_t* input_state;
+    uint8_t* text_inputs[6];
+    void* menu_draw;
+    void* sprite_draw;
+    void* quad_draw;
+    uint8_t* target_draw;
+    uint8_t* comment_start;
+    volatile LONG* draw_walk;
+    volatile LONG* party_swap;
+    volatile LONG* action_swap;
+    uint8_t* trade_input;
+    uint8_t* trade_open;
+    uint8_t* handover_input;
+    uint8_t* inventor_rows;
+    uint8_t* trade_stage;
+    uint8_t* player;
+    uint8_t* intervals;
+    uint8_t* clock;
+    uint8_t** actors;
+    uint8_t* item_data;
+    uint32_t* gray_answer;
+    uint32_t* send_answer;
+    uint8_t** status_mode;
+    int32_t* gray_index;
+    void* walk_now;
+    volatile LONG* active_pick;
+    void* primitive_draw;
+    volatile LONG* close_draws;
+    uint8_t** conq_data;
+    uint32_t* open_wait;
+    uint8_t* map0_input;
+    uint8_t* map_close;
+    uint8_t* equip_open;
+    uint8_t* equip_shortcut;
+    uint8_t* monstrosity;
+    uint8_t* magic_open;
+    uint8_t* mon_player;
+    uint8_t* game_mode;
+    uint8_t* set_refusal;
+    volatile LONG* no_pet;
+    volatile LONG* equipment_opens;
+    volatile LONG* stats_requests;
+    volatile LONG* magic_lists;
+    int32_t* magic_last;
+    int32_t* ability_last;
+    volatile LONG* magic_closes;
+    volatile LONG* magic_close_wild;
+    FakeSets* sets;
+    uint8_t* job_flags;
+    uint8_t* main_job;
+    uint8_t* sub_job;
+    uint8_t* macro_editor;
+    uint8_t** macro_editor_ptr;
+    int32_t* last_overlap;
+    FakeRoutes* routes;
+    uint8_t** mog_house_ptr;
+    uint8_t** nomad_ptr;
+    uint8_t* mog_house;
+    uint8_t* route_player;
+    uint8_t* items_object;
+    int8_t* nation;
+    uint8_t** policy_ptr;
+    FakeSettings* settings;
 };
 
 // fake_arealist.h's Log, field for field.
@@ -473,10 +1036,13 @@ struct AreaLog {
 };
 
 // query's confirm, then signatures.h's kCalls, in order.
-const char* const kCallNames[12] = {
+const int kFakeCalls = 13;
+// Where the stand-in's dialogue tick resumes after its call of the key test.
+const int kFakeClickReturn = 21;
+const char* const kCallNames[kFakeCalls] = {
     "query_confirm", "passinpu_reset", "prtyjoin_send", "prtyjoin_clear", "link5_clear",
     "arealist_close", "arealist_latch", "post_request", "post_request_close", "dock_reset", "template_swap",
-    "set_frame_rect",
+    "set_frame_rect", "select_row",
 };
 
 FakeState* g_fake;
@@ -484,6 +1050,7 @@ FakeState* g_fake;
 typedef void (__fastcall* UpdateFn)(void* mcb, void* edx);
 typedef void* (__fastcall* OpenFn)(void* mcb, void* edx, const char* key, int activate, int overlap);
 typedef void (__cdecl* AbilityOpenFn)(int kind, int flag, int extra);
+typedef int (__cdecl* YesNoAskFn)(const char* name, int default_yes, int cancellable, int mode, int chain);
 
 volatile LONG g_stop;
 volatile LONG g_pending;
@@ -494,6 +1061,39 @@ void* g_open_result;
 HANDLE g_open_done;
 volatile LONG g_ability_pending;
 int g_ability_args[3];
+volatile LONG g_ask_pending;
+const char* g_ask_name;
+int g_ask_args[4];
+int g_ask_result;
+volatile LONG g_box_pending;
+int g_box_args[6];                      // box, initial, max, callback, context, preview
+void* g_box_result;
+volatile LONG g_asked_pending;
+int g_asked_args[2];                    // core.h's kAsked*, then what the stand-in's asker takes
+int g_asked_result;
+typedef int (__cdecl* AskedAskFn)(int which, int arg);
+// A Lua chunk the game thread runs after a frame's update, as Windower's Lua
+// would run if it shared the game's thread.
+volatile LONG g_lua_pending;
+lua_State* g_lua_state;
+const char* g_lua_chunk;
+
+typedef void* (__fastcall* MoneySetupFn)(void* ctl, void* edx, int initial, int max, const void* cb, void* ctx);
+typedef void* (__fastcall* ItemSetupFn)(void* ctl, void* edx, int initial, int max, const void* cb, void* ctx,
+                                        int preview);
+
+// The open routine's last argument the game's own openers pass for the
+// window `key` names: 1 for the four they open parked, else 0.
+int game_overlap(const char* key) {
+    static const char* const parked[] = {"menu    gaugewin", "menu    targetwi", "menu    playermo",
+                                         "menu    mp_pmode"};
+    for (size_t i = 0; i < sizeof(parked) / sizeof(parked[0]); ++i) {
+        if (strncmp(key, parked[i], 16) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 // Plays the game's main thread: runs a frame every couple of milliseconds
 // and carries out the opens the harness asks for, on this thread.
@@ -511,7 +1111,7 @@ DWORD WINAPI game_thread(LPVOID) {
         }
         InterlockedExchange(&g_paused, 0);
         if (g_pending) {
-            g_open_result = open(g_fake->mcb, NULL, g_open_key, 1, 1);
+            g_open_result = open(g_fake->mcb, NULL, g_open_key, 1, game_overlap(g_open_key));
             g_pending = 0;
             SetEvent(g_open_done);
         }
@@ -522,7 +1122,45 @@ DWORD WINAPI game_thread(LPVOID) {
             g_ability_pending = 0;
             SetEvent(g_open_done);
         }
+        if (g_ask_pending) {
+            YesNoAskFn ask;
+            memcpy(&ask, &g_fake->yesno_ask, sizeof(ask));
+            g_ask_result = ask(g_ask_name, g_ask_args[0], g_ask_args[1], g_ask_args[2], g_ask_args[3]);
+            g_ask_pending = 0;
+            SetEvent(g_open_done);
+        }
+        if (g_box_pending) {
+            // The box's setup on its controller (rows 45 and 80), as an
+            // asker calls it.
+            const int b = g_box_args[0];
+            void* ctl = g_fake->ctl_global[b ? 80 : 45];
+            const void* cb = reinterpret_cast<const void*>(g_box_args[3]);
+            void* ctx = reinterpret_cast<void*>(g_box_args[4]);
+            if (b == 0) {
+                MoneySetupFn setup;
+                memcpy(&setup, &g_fake->box_setup[0], sizeof(setup));
+                g_box_result = setup(ctl, NULL, g_box_args[1], g_box_args[2], cb, ctx);
+            } else {
+                ItemSetupFn setup;
+                memcpy(&setup, &g_fake->box_setup[1], sizeof(setup));
+                g_box_result = setup(ctl, NULL, g_box_args[1], g_box_args[2], cb, ctx, g_box_args[5]);
+            }
+            g_box_pending = 0;
+            SetEvent(g_open_done);
+        }
+        if (g_asked_pending) {
+            AskedAskFn ask;
+            memcpy(&ask, &g_fake->asked_ask, sizeof(ask));
+            g_asked_result = ask(g_asked_args[0], g_asked_args[1]);
+            g_asked_pending = 0;
+            SetEvent(g_open_done);
+        }
         update(g_fake->mcb, NULL);
+        if (g_lua_pending) {
+            run(g_lua_state, g_lua_chunk);
+            g_lua_pending = 0;
+            SetEvent(g_open_done);
+        }
         Sleep(2);
     }
     return 0;
@@ -559,12 +1197,82 @@ void ability_open_on_game_thread(int kind, int flag, int extra) {
     WaitForSingleObject(g_open_done, 5000);
 }
 
+// The yes/no class's ask as the game's askers run it, on the game thread:
+// 1 when the question went up. `chain` 1 or 2: its callback asks again, the
+// new question's default no or yes.
+int ask_on_game_thread(const char* name, int default_yes, int cancellable, int mode, int chain) {
+    g_ask_name = name;
+    g_ask_args[0] = default_yes;
+    g_ask_args[1] = cancellable;
+    g_ask_args[2] = mode;
+    g_ask_args[3] = chain;
+    g_ask_pending = 1;
+    WaitForSingleObject(g_open_done, 5000);
+    return g_ask_result;
+}
+
+// A number box's setup as an asker runs it, on the game thread: box 0
+// moneyctr, 1 itemctrl; the window when it opened.
+void* box_ask_on_game_thread(int box, int initial, int max, const void* cb, const void* ctx, int preview = 0) {
+    g_box_args[0] = box;
+    g_box_args[1] = initial;
+    g_box_args[2] = max;
+    g_box_args[3] = static_cast<int>(reinterpret_cast<uintptr_t>(cb));
+    g_box_args[4] = static_cast<int>(reinterpret_cast<uintptr_t>(ctx));
+    g_box_args[5] = preview;
+    g_box_pending = 1;
+    WaitForSingleObject(g_open_done, 5000);
+    return g_box_result;
+}
+
+// An Asked window asked as the game's askers ask it, on the game thread:
+// `which` core.h's kAsked*, `arg` what fake_ffximain.cpp's fake_asked_ask
+// takes for it; what that answers.
+int asked_on_game_thread(int which, int arg) {
+    g_asked_args[0] = which;
+    g_asked_args[1] = arg;
+    g_asked_pending = 1;
+    WaitForSingleObject(g_open_done, 5000);
+    return g_asked_result;
+}
+
+// A phase run by the game thread after its next frame's update; false when
+// it has not come back within five seconds.
+bool phase_on_game_thread(lua_State* L, const char* chunk) {
+    g_checks += count_checks(chunk);
+    g_lua_state = L;
+    g_lua_chunk = chunk;
+    g_lua_pending = 1;
+    return WaitForSingleObject(g_open_done, 5000) == WAIT_OBJECT_0;
+}
+
+// The step the watchdog names: a run that has not reached the watchdog's end
+// within its time fails there, hung, and stops.
+const char* volatile g_step = "";
+HANDLE g_watch_done;
+
+DWORD WINAPI watchdog(LPVOID ms) {
+    if (WaitForSingleObject(g_watch_done, static_cast<DWORD>(reinterpret_cast<uintptr_t>(ms))) != WAIT_OBJECT_0) {
+        std::printf("FAIL  hung at: %s\n", g_step);
+        std::fflush(stdout);
+        TerminateProcess(GetCurrentProcess(), 3);
+    }
+    return 0;
+}
+
+// Where the call or jmp at `at` goes.
+uint8_t* call_target(uint8_t* at) {
+    int32_t rel;
+    memcpy(&rel, at + 1, 4);
+    return at + 5 + rel;
+}
+
 // The hooked open from this thread, for an open that must come while no
 // frame runs: only between pause_game() and resume_game().
 void* open_here(const char* key) {
     OpenFn open;
     memcpy(&open, &g_fake->open, sizeof(open));
-    return open(g_fake->mcb, NULL, key, 1, 1);
+    return open(g_fake->mcb, NULL, key, 1, game_overlap(key));
 }
 
 void wait_frames(int n) {
@@ -577,6 +1285,73 @@ void wait_frames(int n) {
 
 uint8_t* registry_row(int r) {
     return g_fake->registry + r * 0x2C;
+}
+
+// One walk of the drawn layers, made here while no frame runs: 'd' when it
+// calls the per-menu draw for `menu` and the device draws what it paints,
+// 'h' when the draw runs and the device draws nothing of it, 's' when the
+// call's pre skips the draw, '-' when the walk never calls it. Never between
+// pause_game() and resume_game().
+char walk_of(const uint8_t* menu) {
+    typedef void (__cdecl* WalkFn)();
+    WalkFn walk;
+    memcpy(&walk, &g_fake->walk_now, sizeof(walk));
+    pause_game();
+    walk();
+    const FakeLog* fl = g_fake->log;
+    bool walked = false;
+    bool drawn = false;
+    bool painted = false;
+    for (int i = 0; i < fl->walked_count; ++i) {
+        walked = walked || fl->walked[i] == menu;
+    }
+    for (int i = 0; i < fl->drawn_count; ++i) {
+        drawn = drawn || fl->drawn[i] == menu;
+    }
+    for (int i = 0; i < fl->painted_count; ++i) {
+        painted = painted || fl->painted[i] == menu;
+    }
+    resume_game();
+    return painted ? 'd' : drawn ? 'h' : walked ? 's' : '-';
+}
+
+// A call parked inside a hooked routine: the template swap called with its
+// menu on a page nothing may read, so the engine's pre faults there and the
+// handler holds the thread until the harness lets it go.
+uint8_t* g_trap;
+HANDLE g_trap_entered;
+HANDLE g_trap_release;
+
+LONG CALLBACK trap_handler(EXCEPTION_POINTERS* x) {
+    const EXCEPTION_RECORD* r = x->ExceptionRecord;
+    if (r->ExceptionCode != EXCEPTION_ACCESS_VIOLATION || r->NumberParameters < 2 || !g_trap) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    const uint8_t* at = reinterpret_cast<const uint8_t*>(r->ExceptionInformation[1]);
+    if (at < g_trap || at >= g_trap + 4096) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    SetEvent(g_trap_entered);
+    WaitForSingleObject(g_trap_release, INFINITE);
+    DWORD old;
+    VirtualProtect(g_trap, 4096, PAGE_READWRITE, &old);
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+DWORD WINAPI swap_into_trap(LPVOID) {
+    typedef void (__fastcall* SwapFn)(void* menu, void* edx, const char* key);
+    SwapFn swap;
+    memcpy(&swap, &g_fake->calls[10], sizeof(swap));
+    swap(g_trap, NULL, "menu    trapped ");
+    return 0;
+}
+
+// A window the engine hides, as the game holds it: the walk calls its draw,
+// which runs and paints nothing, its live menu and its registry row at the
+// row's own draw layer.
+bool hidden_in_place(int r, const uint8_t* menu) {
+    const uint8_t layer = g_fake->pristine[r * 0x2C + 0x29];
+    return menu && menu[0x60] == layer && registry_row(r)[0x29] == layer && walk_of(menu) == 'h';
 }
 
 uint8_t* live_menu(int r) {
@@ -725,6 +1500,314 @@ void give_typed_elements(uint8_t* menu) {
     put32(menu, 0x14, reinterpret_cast<uint32_t>(g_typed.nodes[0]));
 }
 
+// An engine built with -DHU_HEAPCHECK exports core.h's HeapCheck as
+// hideui_heapcheck, read here as far as its labels; core.h's HeapRecord is
+// the process's section, which outlives each image.
+struct HeapView {
+    char magic[16];
+    volatile LONG failed;
+    volatile LONG checks;
+    volatile LONG busy;
+    LONG heaps;
+    LONG last_us;
+    LONG max_us;
+    LONG total_us;
+    LONG image;
+    LONG good_image;
+    LONG good_tick;
+    LONG good_counter;
+    LONG fail_image;
+    LONG fail_tick;
+    LONG fail_counter;
+    LONG fail_thread;
+    LONG fail_heap;
+    void* fail_handle;
+    LONG command_tick;
+    const char* outside_step;
+    LONG outside_left;
+    LONG outside_tick;
+    LONG background_tick;
+    char good[128];
+    char fail[128];
+    char command[48];
+};
+
+struct HeapRecordView {
+    uint32_t magic;
+    volatile LONG images;
+    volatile LONG failed;
+    LONG fail_image;
+    LONG fail_tick;
+    LONG good_image;
+    LONG good_tick;
+    char fail[128];
+    char good[128];
+};
+
+HeapView* heap_view() {
+    HMODULE engine = GetModuleHandleA("_HideUI.dll");
+    return engine ? reinterpret_cast<HeapView*>(GetProcAddress(engine, "hideui_heapcheck")) : NULL;
+}
+
+template <typename T>
+T fake_export(const char* name) {
+    T fn = NULL;
+    FARPROC p = GetProcAddress(GetModuleHandleA("FFXiMain.dll"), name);
+    memcpy(&fn, &p, sizeof(fn));
+    return fn;
+}
+
+template <typename F>
+bool wait_for(F done, DWORD ms) {
+    const DWORD start = GetTickCount();
+    while (!done()) {
+        if (GetTickCount() - start > ms) {
+            return false;
+        }
+        Sleep(1);
+    }
+    return true;
+}
+
+// A new engine and handle, and heap_errors(): the reasons of the error
+// events the handle reads, as "verb name: reason", joined by " | ".
+const char kHeapStart[] =
+    "hu = load_engine()\n"
+    "h = hu.new('heapcheck')\n"
+    "check(h ~= nil and hu.status().ok, 'an engine built with -DHU_HEAPCHECK installs and makes a handle')\n"
+    "function heap_errors()\n"
+    "  local out = {}\n"
+    "  for _, e in ipairs((h:poll())) do\n"
+    "    if e.event == 'error' then out[#out + 1] = e.verb .. ' ' .. e.name .. ': ' .. e.reason end\n"
+    "  end\n"
+    "  return table.concat(out, ' | ')\n"
+    "end\n"
+    "return finish()\n";
+
+const char kHeapStop[] =
+    "check(h:release() == true and hu.shutdown() == true, 'the handle released and the engine shut down')\n"
+    "return finish()\n";
+
+// The heap check of an engine built with -DHU_HEAPCHECK, against the
+// stand-in's overrun of a block in a heap of its own (fake_ffximain.cpp's
+// fake_heap_overrun): no check failed in the run before it; a check's cost;
+// the overrun inside map0's callback, on the leaf of maplist's steps
+// answered hidden, failing the check after the callback with the one before
+// it the last good, reported once to the handle; the overrun outside every
+// command and hook caught by the background check within its second, named
+// by the last command; a shutdown checking to its unhook, and an overrun
+// between two images failing the next image's first check, the earlier
+// image's last check named; a third image reporting the second's failure.
+// Between the cases the overrun is put back and the latch and the section
+// cleared, as in a fresh process.
+void heap_checks(const char* const* globals) {
+    typedef void (*VoidFn)();
+    typedef int (*LoadFn)(int);
+    const VoidFn arm = fake_export<VoidFn>("fake_heap_arm");
+    const VoidFn overrun = fake_export<VoidFn>("fake_heap_overrun");
+    const VoidFn repair = fake_export<VoidFn>("fake_heap_repair");
+    const LoadFn load = fake_export<LoadFn>("fake_heap_load");
+    lua_State* L = fresh(globals);
+    phase(L, kHeapStart);
+    HeapView* hv = heap_view();
+    char name[64];
+    snprintf(name, sizeof(name), "Local\\hideui_heapcheck_v1_%08X", static_cast<unsigned>(GetCurrentProcessId()));
+    HANDLE mapping = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, name);
+    HeapRecordView* rec = mapping
+        ? static_cast<HeapRecordView*>(MapViewOfFile(mapping, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(HeapRecordView)))
+        : NULL;
+    if (!arm || !overrun || !repair || !load || !hv || !rec) {
+        check(false, "the stand-in's overrun, the engine's hideui_heapcheck and the process's section are there");
+        lua.close(L);
+        return;
+    }
+    char text[640];
+    snprintf(text, sizeof(text),
+        "no check failed in this run before this section: engine image %ld of the process, %ld checks so far,"
+        " the last good: %s", static_cast<long>(hv->image), static_cast<long>(hv->checks), hv->good);
+    check(strcmp(hv->magic, "hideui heap 1") == 0 && hv->failed == 0 && rec->failed == 0 && hv->checks >= 2
+            && rec->images == hv->image, text);
+
+    // a check's cost: the background check's, the process as it is, then
+    // with a heap of 100000 and of 1000000 blocks more
+    {
+        const int blocks[3] = {0, 100000, 1000000};
+        LONG cost[3];
+        LONG heaps = 0;
+        bool measured = true;
+        for (int i = 0; i < 3; ++i) {
+            const int made = load(blocks[i]);
+            const LONG from = hv->checks;
+            measured = wait_for([&] { return hv->checks >= from + 2; }, 5000) && made == blocks[i] && measured;
+            cost[i] = hv->last_us;
+            heaps = i == 0 ? hv->heaps : heaps;
+        }
+        load(0);
+        snprintf(text, sizeof(text),
+            "a check's cost: %ld heaps walked in %ld us; with a heap of 100000 blocks more %ld us, of 1000000"
+            " %ld us", static_cast<long>(heaps), static_cast<long>(cost[0]), static_cast<long>(cost[1]),
+            static_cast<long>(cost[2]));
+        check(measured && hv->failed == 0, text);
+    }
+
+    // the overrun inside map0's callback: maplist hidden, asked from map0,
+    // a region answered, canceled back, answered again, then a map, the
+    // leaf: the callback, then close+reset
+    FakeLog* al = g_fake->log;
+    phase(L,
+        "check(h:hide('maplist') == true, 'hide(maplist)')\n"
+        "return finish()\n");
+    wait_frames(3);
+    asked_on_game_thread(4, 100);
+    wait_frames(2);
+    phase(L,
+        "local o = h:options('maplist')\n"
+        "check(o and o.level == 'top' and #o.rows == 4 and h:info('maplist').hidden == true,"
+        "  'maplist up, hidden, at its top')\n"
+        "check(h:answer('maplist', 2) == true, 'answer(maplist, 2): a region')\n"
+        "return finish()\n");
+    wait_frames(3);
+    phase(L,
+        "check(h:options('maplist').level == 'region' and h:cancel('maplist') == true, 'cancel(maplist): back up')\n"
+        "return finish()\n");
+    wait_frames(3);
+    phase(L,
+        "check(h:options('maplist').level == 'top' and h:answer('maplist', 2) == true, 'the region again')\n"
+        "return finish()\n");
+    wait_frames(3);
+    snprintf(text, sizeof(text), "no check failed through the steps between levels; the last good: %s", hv->good);
+    check(hv->failed == 0 && hv->good[0], text);
+    const int calls = al->asked_calls;
+    arm();
+    phase(L,
+        "local o = h:options('maplist')\n"
+        "check(o.level == 'region' and o.rows[1].kind == 'map' and h:answer('maplist', 1) == true,"
+        "  'answer(maplist, 1): a map, the leaf, the overrun armed in map0\\'s callback')\n"
+        "return finish()\n");
+    wait_frames(3);
+    snprintf(text, sizeof(text),
+        "map0's callback ran once with the entry {100, 1} and overran: the check after it failed, \"%s\", the one"
+        " before it the last good, \"%s\"; heap %ld of the process's, crumb counter %ld", hv->fail, hv->good,
+        static_cast<long>(hv->fail_heap), static_cast<long>(hv->fail_counter));
+    check(al->asked_calls == calls + 1 && al->asked_who == 4 && al->asked_value == 100 && al->asked_extra == 1
+            && hv->failed == 1 && strcmp(hv->fail, "after map0 callback") == 0
+            && strcmp(hv->good, "before map0 callback") == 0 && hv->fail_heap > 0 && hv->fail_counter > 0
+            && rec->failed == 1 && strcmp(rec->fail, "after map0 callback") == 0, text);
+    wait_frames(2);
+    phase(L,
+        "local errors = heap_errors()\n"
+        "check(errors:find('debug heap: heap check failed: after map0 callback (last good: before map0 callback, ',"
+        "  1, true) == 1 and not errors:find(' | ', 1, true), 'reported once, to the handle: ' .. errors)\n"
+        "local d = hu.status().detail\n"
+        "check(tostring(d.drain_error):find('heap check failed: after map0 callback', 1, true) == 1,"
+        "  'and as status()\\'s drain error: ' .. tostring(d.drain_error))\n"
+        "check(h:unhide('maplist') == true, 'unhide(maplist)')\n"
+        "return finish()\n");
+    const LONG checks = hv->checks;
+    Sleep(1200);
+    wait_frames(2);
+    check(hv->checks == checks && hv->failed == 1 && !live_menu(row_named("maplist")),
+        "past the failure no check runs, the background's included; maplist closed by close+reset");
+    phase(L,
+        "local errors = heap_errors()\n"
+        "check(errors == '', 'and nothing more is reported: ' .. errors)\n"
+        "return finish()\n");
+    {
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        pause_game();
+        close_by_name(g_fake->mcb, NULL, "menu    map0    ");
+        resume_game();
+    }
+
+    // the overrun outside every command and hook, the game paused, caught by
+    // the background check within its second
+    repair();
+    rec->failed = 0;
+    hv->failed = 0;
+    LONG from = hv->checks;
+    const bool passed = wait_for([&] { return hv->checks > from && strcmp(hv->good, "background") == 0; }, 3000);
+    pause_game();
+    overrun();
+    const DWORD overran = GetTickCount();
+    resume_game();
+    const bool caught = wait_for([&] { return hv->failed != 0; }, 3000);
+    snprintf(text, sizeof(text), "the overrun outside every command and hook caught %lu ms later: \"%s\"",
+        static_cast<unsigned long>(static_cast<DWORD>(hv->fail_tick) - overran), hv->fail);
+    check(passed && caught && hv->failed == 1 && static_cast<DWORD>(hv->fail_tick) - overran <= 1500
+            && strstr(hv->fail, "background (last command asked_answer maplist, ") == hv->fail
+            && strstr(hv->fail, "; last step outside the drain ") && strcmp(hv->good, "background") == 0, text);
+    wait_frames(2);
+    phase(L,
+        "local errors = heap_errors()\n"
+        "check(errors:find('debug heap: heap check failed: background (last command asked_answer maplist, ', 1, true)"
+        "  == 1 and errors:find('(last good: background, ', 1, true), 'reported: ' .. errors)\n"
+        "return finish()\n");
+
+    // a shutdown checking to its unhook; the overrun between two images
+    repair();
+    rec->failed = 0;
+    hv->failed = 0;
+    const LONG image = hv->image;
+    from = hv->checks;
+    wait_for([&] { return hv->checks > from; }, 3000);
+    phase(L, kHeapStop);
+    settle(L);
+    lua.close(L);
+    check(engine_unmaps(), "the engine unmaps");
+    snprintf(text, sizeof(text), "the shutdown's checks ran to the end: the section's last good, image %ld's, \"%s\"",
+        static_cast<long>(rec->good_image), rec->good);
+    check(rec->failed == 0 && rec->good_image == image && strcmp(rec->good, "shutdown thread: after unhook") == 0,
+        text);
+    overrun();
+    L = fresh(globals);
+    phase(L, kHeapStart);
+    hv = heap_view();
+    snprintf(text, sizeof(text), "the next image's first check failed: \"%s\" (image %ld), the last good image %ld's"
+        " \"%s\"", hv ? hv->fail : "", hv ? static_cast<long>(hv->image) : 0L,
+        hv ? static_cast<long>(hv->good_image) : 0L, hv ? hv->good : "");
+    check(hv && hv->image == image + 1 && hv->failed == 1 && strcmp(hv->fail, "install: before the hooks") == 0
+            && hv->good_image == image && strcmp(hv->good, "shutdown thread: after unhook") == 0, text);
+    Sleep(1200);
+    wait_frames(2);
+    char chunk[768];
+    snprintf(chunk, sizeof(chunk),
+        "local errors = heap_errors()\n"
+        "check(errors:find('debug heap: heap check failed: install: before the hooks (last good: shutdown thread:"
+        " after unhook, engine image %ld, ', 1, true) == 1, 'reported to the new handle a second on: ' .. errors)\n"
+        "return finish()\n", static_cast<long>(image));
+    phase(L, chunk);
+
+    // a third image: the second's failure reported, no check run
+    phase(L, kHeapStop);
+    settle(L);
+    lua.close(L);
+    check(engine_unmaps(), "the engine unmaps");
+    L = fresh(globals);
+    phase(L, kHeapStart);
+    hv = heap_view();
+    check(hv && hv->image == image + 2 && hv->failed == 2 && hv->fail_image == image + 1 && hv->checks == 0
+            && strcmp(hv->fail, "install: before the hooks") == 0,
+        "the third image takes the second's failure as its own and runs no check");
+    Sleep(1200);
+    wait_frames(2);
+    snprintf(chunk, sizeof(chunk),
+        "local errors = heap_errors()\n"
+        "check(errors:find('debug heap: heap check failed in engine image %ld: install: before the hooks (last good:"
+        " shutdown thread: after unhook, engine image %ld, ', 1, true) == 1, 'and reports it: ' .. errors)\n"
+        "return finish()\n", static_cast<long>(image + 1), static_cast<long>(image));
+    phase(L, chunk);
+    phase(L, kHeapStop);
+    settle(L);
+    lua.close(L);
+    check(engine_unmaps(), "the engine unmaps");
+    repair();
+    rec->failed = 0;
+    UnmapViewOfFile(rec);
+    CloseHandle(mapping);
+}
+
 }  // namespace
 
 // A thread made suspended and terminated before it runs: its context is set
@@ -734,12 +1817,13 @@ DWORD WINAPI never_runs(LPVOID) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 11) {
+    if (argc < 13) {
         std::printf("usage: e2e_test.exe <LuaCore.dll> <a/_HideUI.dll> <FFXiMain.dll> <b/_HideUI.dll>"
-            " <c/_HideUI.dll> <hideui.lua> <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll> <g/_HideUI.dll>\n");
+            " <c/_HideUI.dll> <hideui.lua> <d/_HideUI.dll> <e/_HideUI.dll> <f/_HideUI.dll> <g/_HideUI.dll>"
+            " <h/_HideUI.dll> <i/_HideUI.dll>\n");
         return 2;
     }
-    for (int i = 2; i < 11; ++i) {
+    for (int i = 2; i < 13; ++i) {
         to_backslashes(argv[i]);
     }
     g_dll = argv[2];
@@ -761,13 +1845,13 @@ int main(int argc, char** argv) {
             "check(not s.ok and s.state == 'failed' and s.role == 'none' and s.error == nil"
             "  and tostring(d.error):find('FFXiMain', 1, true),"
             "  'no FFXiMain.dll: status().detail.error names the failure: ' .. tostring(d.error))\n"
-            "check(s.engine == '0.10.0' and s.handles == 0 and s.dropped == 0 and type(s.hidden) == 'table'"
-            "  and type(s.resized) == 'table' and d.image and d.image.abi == 7 and s.ui == nil,"
+            "check(s.engine == '0.11.0' and s.handles == 0 and s.dropped == 0 and type(s.hidden) == 'table'"
+            "  and type(s.resized) == 'table' and d.image and d.image.abi == 9 and s.ui == nil,"
             "  'status: the public fields at the top, the image under detail')\n"
             "local ok, err = pcall(hu.new, 42)\n"
             "check(not ok and tostring(err):find('string expected', 1, true), 'new(42) raises: ' .. tostring(err))\n"
             "check(hu.shutdown() == true, 'shutdown of an engine that never installed is a no-op')\n"
-            "check(hu.version() == 'hideui 0.10.0', 'version: ' .. hu.version())\n"
+            "check(hu.version() == 'hideui 0.11.0', 'version: ' .. hu.version())\n"
             "return finish()\n");
         lua.close(L);
         check(!engine_mapped(), "a failed engine holds no pin: closing Lua unmaps it");
@@ -791,8 +1875,9 @@ int main(int argc, char** argv) {
     const uint8_t open_first = static_cast<uint8_t*>(g_fake->open)[0];
     const uint8_t update_first = static_cast<uint8_t*>(g_fake->ui_update)[0];
 
-    char addresses[26][16];
-    char call_globals[12][24];
+    const int kData = 9 + kFakeCalls;   // the first of the five data addresses
+    char addresses[kData + 5][16];
+    char call_globals[kFakeCalls][24];
     void* const fns[] = {g_fake->open, g_fake->ui_update, g_fake->staged_close, g_fake->show_path,
                          g_fake->set_position, g_fake->close, g_fake->registry, g_fake->mcb,
                          g_fake->party_pending};
@@ -800,23 +1885,19 @@ int main(int argc, char** argv) {
         snprintf(addresses[i], sizeof(addresses[i]), "0x%08X",
             static_cast<unsigned>(reinterpret_cast<uintptr_t>(fns[i])));
     }
-    for (int i = 0; i < 12; ++i) {
+    for (int i = 0; i < kFakeCalls; ++i) {
         snprintf(addresses[9 + i], sizeof(addresses[9 + i]), "0x%08X",
             static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->calls[i])));
         // The stand-in still has query's confirm; the engine resolves it no
         // longer, so it is no F_ global.
         snprintf(call_globals[i], sizeof(call_globals[i]), "%s_%s", i == 0 ? "UNRESOLVED" : "F", kCallNames[i]);
     }
-    snprintf(addresses[21], sizeof(addresses[21]), "0x%08X",
-        static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->link5_cache)));
-    snprintf(addresses[22], sizeof(addresses[22]), "0x%08X",
-        static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->query_cancel_allowed)));
-    snprintf(addresses[23], sizeof(addresses[23]), "0x%08X",
-        static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->set_cursor)));
-    snprintf(addresses[24], sizeof(addresses[24]), "0x%08X",
-        static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->link5_latch)));
-    snprintf(addresses[25], sizeof(addresses[25]), "0x%08X",
-        static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->link5_callback)));
+    const void* const data[5] = {g_fake->link5_cache, g_fake->query_cancel_allowed, g_fake->set_cursor,
+                                 g_fake->link5_latch, g_fake->link5_callback};
+    for (int i = 0; i < 5; ++i) {
+        snprintf(addresses[kData + i], sizeof(addresses[kData + i]), "0x%08X",
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(data[i])));
+    }
     char convert_address[16];
     snprintf(convert_address, sizeof(convert_address), "0x%08X",
         static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->glyph_convert)));
@@ -847,6 +1928,95 @@ int main(int argc, char** argv) {
     char ability_address[16];
     snprintf(ability_address, sizeof(ability_address), "0x%08X",
         static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->ability_open)));
+    // The per-menu draw, the sprite draw, the quad routine, where the target
+    // window's draw of each arrow returns, past the call in each of its two
+    // arrow sequences, and the draw primitive.
+    char draw_addresses[6][16];
+    {
+        static const uint8_t arrow[] = {0x8b, 0x4c, 0x8e, 0x78, 0x68, 0x00, 0x00, 0x80, 0x3f};
+        static const uint8_t pick[] = {0x8b, 0x4c, 0x8e, 0x78, 0x52, 0x50, 0xe8};
+        const uint8_t* returns[2] = {NULL, NULL};
+        for (int i = 0; i < 0x100 && !returns[1]; ++i) {
+            const uint8_t* at = g_fake->target_draw + i;
+            if (!returns[0] && memcmp(at, arrow, sizeof(arrow)) == 0) {
+                returns[0] = at + 0x15;
+            } else if (memcmp(at, pick, sizeof(pick)) == 0) {
+                returns[1] = at + 0x0B;
+            }
+        }
+        const void* const draw_fns[6] = {g_fake->menu_draw, g_fake->sprite_draw, g_fake->quad_draw, returns[0],
+                                         returns[1], g_fake->primitive_draw};
+        for (int i = 0; i < 6; ++i) {
+            snprintf(draw_addresses[i], sizeof(draw_addresses[i]), "0x%08X",
+                static_cast<unsigned>(reinterpret_cast<uintptr_t>(draw_fns[i])));
+        }
+    }
+    // The number boxes' confirms and setups, the yes/no class's cancel test
+    // inside its input routine, and two askers' callbacks: trade's item count
+    // (its entry the signature) and handover's gil (a site's push).
+    char box_addresses[7][16];
+    {
+        const uint8_t* input = g_fake->yesno_input;
+        const uint8_t* test = NULL;
+        for (int i = 0; i < 16 && !test; ++i) {
+            if (input[i] == 0x8a && input[i + 1] == 0x4e && input[i + 2] == 0x39) {
+                test = input + i;
+            }
+        }
+        const void* const box_fns[7] = {g_fake->box_confirm[0], g_fake->box_confirm[1], g_fake->box_setup[0],
+                                        g_fake->box_setup[1], test, g_fake->callbacks[8], g_fake->callbacks[1]};
+        for (int i = 0; i < 7; ++i) {
+            snprintf(box_addresses[i], sizeof(box_addresses[i]), "0x%08X",
+                static_cast<unsigned>(reinterpret_cast<uintptr_t>(box_fns[i])));
+        }
+    }
+    char yesno_address[16];
+    snprintf(yesno_address, sizeof(yesno_address), "0x%08X",
+        static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_fake->yesno_vtable)));
+    char dead_addresses[6][16];
+    const void* const dead_fns[6] = {g_fake->yesno_confirm, g_fake->yesno_ask_this, g_fake->dead_tick,
+                                     g_fake->dead_decider, g_fake->message, g_fake->dead_callback};
+    for (int i = 0; i < 6; ++i) {
+        snprintf(dead_addresses[i], sizeof(dead_addresses[i]), "0x%08X",
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(dead_fns[i])));
+    }
+    // The Asked windows' sites, and close by instance, where the stand-in's
+    // close by name calls it.
+    char asked_addresses[7][16];
+    {
+        const void* const asked_fns[7] = {g_fake->asked_sites[0], g_fake->asked_sites[5], g_fake->asked_sites[7],
+                                          g_fake->asked_sites[10],
+                                          call_target(static_cast<uint8_t*>(g_fake->close) + 44),
+                                          g_fake->map0_input, g_fake->map_close};
+        for (int i = 0; i < 7; ++i) {
+            snprintf(asked_addresses[i], sizeof(asked_addresses[i]), "0x%08X",
+                static_cast<unsigned>(reinterpret_cast<uintptr_t>(asked_fns[i])));
+        }
+    }
+    // mogdoor's routines and vtable, the dialogue boxes' input routine and
+    // tick, the key test, and the return address of the tick's call of it.
+    char talk_addresses[10][16];
+    {
+        const void* const talk_fns[10] = {g_fake->door_input, g_fake->door_handler, g_fake->door_vtable,
+                                          g_fake->door_opened, g_fake->door_open_hook, g_fake->door_tick,
+                                          g_fake->dialogue_input, g_fake->dialogue_tick, g_fake->key_test,
+                                          g_fake->dialogue_tick + kFakeClickReturn};
+        for (int i = 0; i < 10; ++i) {
+            snprintf(talk_addresses[i], sizeof(talk_addresses[i]), "0x%08X",
+                static_cast<unsigned>(reinterpret_cast<uintptr_t>(talk_fns[i])));
+        }
+    }
+    // The trade windows' input routines, the trade's open and stage, and the
+    // inventory list's rows.
+    char offer_addresses[5][16];
+    {
+        const void* const offer_fns[5] = {g_fake->trade_input, g_fake->trade_open, g_fake->handover_input,
+                                          g_fake->inventor_rows, g_fake->trade_stage};
+        for (int i = 0; i < 5; ++i) {
+            snprintf(offer_addresses[i], sizeof(offer_addresses[i]), "0x%08X",
+                static_cast<unsigned>(reinterpret_cast<uintptr_t>(offer_fns[i])));
+        }
+    }
     const char* globals[] = {"OPEN", addresses[0], "UPDATE", addresses[1], "STAGED", addresses[2],
                              "SHOW", addresses[3], "SETPOS", addresses[4], "CLOSE", addresses[5],
                              "REGISTRY", addresses[6], "MCB", addresses[7], "PENDING", addresses[8],
@@ -856,13 +2026,36 @@ int main(int argc, char** argv) {
                              call_globals[6], addresses[15], call_globals[7], addresses[16],
                              call_globals[8], addresses[17], call_globals[9], addresses[18],
                              call_globals[10], addresses[19], call_globals[11], addresses[20],
-                             "LINK5CACHE", addresses[21], "CANCELBYTE", addresses[22],
-                             "SETCURSOR", addresses[23], "LINK5LATCH", addresses[24], "LINK5CB", addresses[25],
+                             call_globals[12], addresses[21],
+                             "LINK5CACHE", addresses[kData], "CANCELBYTE", addresses[kData + 1],
+                             "SETCURSOR", addresses[kData + 2], "LINK5LATCH", addresses[kData + 3],
+                             "LINK5CB", addresses[kData + 4],
                              "CONVERT", convert_address, "MOUSE", mouse_addresses[0], "HITTEST", mouse_addresses[1],
                              "MOUSEREAD", mouse_addresses[2], "SINK", input_addresses[0],
                              "ROUTING", input_addresses[1], "COMPASS", compass_addresses[0],
                              "COMPASSGLOBAL", compass_addresses[1], "MACROGATE", macro_addresses[0],
-                             "MACROOBJECT", macro_addresses[1], "ABILITYOPEN", ability_address, NULL};
+                             "MACROOBJECT", macro_addresses[1], "ABILITYOPEN", ability_address,
+                             "YESNOVTABLE", yesno_address, "YESNOCONFIRM", dead_addresses[0],
+                             "YESNOASK", dead_addresses[1], "DEADTICK", dead_addresses[2],
+                             "DEADDECIDER", dead_addresses[3], "MESSAGE", dead_addresses[4],
+                             "DEADCALLBACK", dead_addresses[5], "MONEYCONFIRM", box_addresses[0],
+                             "ITEMCONFIRM", box_addresses[1], "MONEYSETUP", box_addresses[2],
+                             "ITEMSETUP", box_addresses[3], "YESNOCANCEL", box_addresses[4],
+                             "ASKTRADEITEM", box_addresses[5], "ASKHANDOVERGIL", box_addresses[6],
+                             "SORTYNSETUP", asked_addresses[0], "BANKOPEN", asked_addresses[1],
+                             "MAPLISTCLOSE", asked_addresses[2], "OKINPUT", asked_addresses[3],
+                             "CLOSEINSTANCE", asked_addresses[4], "MAP0INPUT", asked_addresses[5],
+                             "MAPCLOSE", asked_addresses[6], "DOORINPUT", talk_addresses[0],
+                             "DOORHANDLER", talk_addresses[1], "DOORVTABLE", talk_addresses[2],
+                             "DOOROPENED", talk_addresses[3], "DOOROPENHOOK", talk_addresses[4],
+                             "DOORTICK", talk_addresses[5], "DIALOGUEINPUT", talk_addresses[6],
+                             "DIALOGUETICK", talk_addresses[7], "KEYTEST", talk_addresses[8],
+                             "CLICKRETURN", talk_addresses[9], "MENUDRAW", draw_addresses[0],
+                             "SPRITEDRAW", draw_addresses[1], "QUADDRAW", draw_addresses[2],
+                             "TARGETRETURN", draw_addresses[3], "PICKRETURN", draw_addresses[4],
+                             "PRIMITIVEDRAW", draw_addresses[5], "TRADEINPUT", offer_addresses[0],
+                             "TRADEOPEN", offer_addresses[1], "HANDOVERINPUT", offer_addresses[2],
+                             "INVENTORROWS", offer_addresses[3], "TRADESTAGE", offer_addresses[4], NULL};
 
     const char kExpectFailure[] =
         "local hu = load_engine()\n"
@@ -1129,6 +2322,449 @@ int main(int argc, char** argv) {
             " key, installs nothing");
     }
 
+    // -- the 0.11.0 sites of the target arrows and the template swap: the
+    //    per-menu draw, the sprite draw, the draw primitive, the quad routine
+    //    and the swap, each a signature, the quad routine's call reaching the
+    //    draw primitive; the target window's two arrow draws, each a
+    //    signature and a call of the sprite draw; and comment's start,
+    //    reached through its open hook
+    {
+        uint8_t* menu_draw = static_cast<uint8_t*>(g_fake->menu_draw);
+        uint8_t* sprite = static_cast<uint8_t*>(g_fake->sprite_draw);
+        uint8_t* primitive = static_cast<uint8_t*>(g_fake->primitive_draw);
+        uint8_t* quad = static_cast<uint8_t*>(g_fake->quad_draw);
+        uint8_t* swap = static_cast<uint8_t*>(g_fake->calls[10]);
+        uint8_t* arrow = NULL;
+        uint8_t* pick = NULL;
+        for (int i = 0; i < 0x100; ++i) {
+            uint8_t* at = g_fake->target_draw + i;
+            if (!arrow && at[0] == 0x8b && at[1] == 0x4c && at[4] == 0x68) {
+                arrow = at;
+            } else if (!pick && at[0] == 0x8b && at[1] == 0x4c && at[4] == 0x52) {
+                pick = at;
+            }
+        }
+        uint8_t* line = NULL;
+        for (int i = 0; i < 0x40 && !line; ++i) {
+            uint8_t* at = g_fake->comment_start + i;
+            line = at[0] == 0x88 && at[1] == 0x5e && at[2] == 0x14 ? at : NULL;
+        }
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[10] = {
+            {menu_draw + 7, 0x90, "signature menu_draw: not found"},
+            {sprite + 9, 0x90, "signature sprite_draw: not found"},
+            {primitive + 8, 0x90, "signature primitive_draw: not found"},
+            {quad + 8, 0x90, "signature quad_draw: not found"},
+            {quad + 0x232, static_cast<uint8_t>(quad[0x232] + 1),
+             "quad_draw: its call at +0x231 does not reach primitive_draw"},
+            {swap + 7, 0x90, "signature template_swap: not found"},
+            {arrow + 4, 0x6a, "signature target_arrow: not found"},
+            {pick + 4, 0x51, "signature pick_arrow: not found"},
+            {arrow + 0x11, static_cast<uint8_t>(arrow[0x11] + 1),
+             "target_arrow: the target window's two arrow draws are not its calls of sprite_draw"},
+            {line + 2, 0x15, "comment_input: its open hook does not start the field on a line"},
+        };
+        for (int i = 0; i < 10; ++i) {
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+        }
+        check(arrow && pick && line && static_cast<uint8_t*>(g_fake->open)[0] == open_first && menu_draw[0] == 0x83
+                && primitive[0] == 0x83 && quad[0] == 0x8b && swap[0] == 0x83 && !engine_mapped(),
+            "a per-menu draw, sprite draw, draw primitive, quad routine or template swap that differs, a quad routine"
+            " calling another draw, an arrow draw that differs or calls another routine, and a comment start that"
+            " records no line, each install nothing");
+    }
+
+    // -- the 0.11.0 sites: select-row, and the yes/no class's constructor
+    //    the class's vtable is read out of
+    {
+        uint8_t* select = static_cast<uint8_t*>(g_fake->calls[kFakeCalls - 1]);
+        uint8_t* site = g_fake->yesno_site;
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[2] = {
+            {select + 9, 0x90, "signature select_row: not found"},
+            {site + 30, 0x07, "signature yesno_class: not found"},
+        };
+        for (int i = 0; i < 2; ++i) {
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+        }
+        check(static_cast<uint8_t*>(g_fake->open)[0] == open_first && !engine_mapped(),
+            "a select-row or a yes/no class constructor that differs installs nothing");
+    }
+
+    // -- the 0.11.0 checks on the yes/no class's confirm, which must still
+    //    keep its question where the replies read and write it, and on the
+    //    KO window's confirm, which must ask through the registry's comyn
+    //    slot with a callback marking dead's controller, and its tick, on the
+    //    confirm's decider
+    {
+        uint8_t* confirm = g_fake->yesno_confirm;
+        uint8_t* site = g_fake->dead_site;
+        uint8_t* callback = g_fake->dead_callback;
+        uint8_t* tick = g_fake->dead_tick;
+        uint8_t* ask = static_cast<uint8_t*>(g_fake->yesno_ask_this);
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[11] = {
+            {confirm + 5, 0x44, "signature yesno_confirm: not found"},
+            {confirm + 0x44, 0x3b, "yesno_confirm: its read of the chained flag +0x3A is not there"},
+            {confirm + 0x58, 0x18, "yesno_confirm: its clear of the callback +0x14 is not there"},
+            {confirm + 0x93, 0x3c, "yesno_confirm: its read of the chained default +0x3B is not there"},
+            {site + 14, 0x75, "signature dead_confirm: not found"},
+            {site + 37, static_cast<uint8_t>(site[37] + 4), "dead_confirm: its asker's global"},
+            {callback + 15, 0x25, "dead_confirm: its callback"},
+            {callback + 9, static_cast<uint8_t>(callback[9] + 4), "dead_confirm: its callback"},
+            {tick + 10, 0x18, "signature dead_tick: not found"},
+            {tick + 38, static_cast<uint8_t>(tick[38] + 1),
+             "dead_tick: its decider is not the one the KO window's confirm calls"},
+            {ask + 14, 0x18, "dead_confirm: the ask it calls"},
+        };
+        for (int i = 0; i < 11; ++i) {
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+        }
+        check(static_cast<uint8_t*>(g_fake->open)[0] == open_first && !engine_mapped() && g_fake->log->ask_calls == 0,
+            "a yes/no confirm that differs or keeps its question elsewhere, a KO window confirm that differs, asks"
+            " through another global or another ask or names a callback that marks nothing in dead's controller, and"
+            " a KO window tick that differs or calls another decider, install nothing");
+    }
+
+    // -- the 0.11.0 number boxes: the confirms, which must close through the
+    //    manager; the setups, which must open their own key through the open
+    //    routine after writing the question; the askers, whose globals must be
+    //    the registry's and whose calls must reach the box's setup; and the
+    //    yes/no class's cancel, which must test the cancellable byte
+    {
+        uint8_t* money_confirm = static_cast<uint8_t*>(g_fake->box_confirm[0]);
+        uint8_t* money_setup = static_cast<uint8_t*>(g_fake->box_setup[0]);
+        uint8_t* item_setup = static_cast<uint8_t*>(g_fake->box_setup[1]);
+        uint8_t* input = g_fake->yesno_input;
+        uint8_t* cancellable = NULL;
+        for (int i = 0; i < 16 && !cancellable; ++i) {
+            if (input[i] == 0x8a && input[i + 1] == 0x4e && input[i + 2] == 0x39) {
+                cancellable = input + i + 2;
+            }
+        }
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[10] = {
+            {money_confirm + 5, 0x2d, "signature moneyctr_confirm: not found"},
+            {money_confirm + 54, static_cast<uint8_t>(money_confirm[54] + 4),
+             "moneyctr_confirm: its close does not go through the menu manager"},
+            {item_setup + 51, static_cast<uint8_t>(item_setup[51] + 1),
+             "itemctrl_setup: its open does not name the registry's itemctrl key"},
+            {money_setup + 64, 0x88, "moneyctr_setup: its writes of the max, the context and the extra callback"},
+            {money_setup + 78, static_cast<uint8_t>(money_setup[78] + 1),
+             "moneyctr_setup: it does not open through the menu manager's open routine"},
+            {g_fake->askers[8] + 24, static_cast<uint8_t>(g_fake->askers[8][24] + 4),
+             "ask_trade_item: its global is not the registry's trade slot"},
+            {g_fake->askers[1] + 2, static_cast<uint8_t>(g_fake->askers[1][2] + 4),
+             "ask_handover_gil: its box global is not the registry's moneyctr slot"},
+            {g_fake->askers[15] + 31, static_cast<uint8_t>(g_fake->askers[15][31] + 1),
+             "ask_shop_sell: its call does not reach itemctrl's setup"},
+            {g_fake->askers[0] + 6, 0x7f, "signature ask_delivery_gil: not found"},
+            {cancellable, 0x38, "yes/no class: its cancel's test of the cancellable byte +0x39 is not there"},
+        };
+        for (int i = 0; i < 10; ++i) {
+            if (!pokes[i].at) {
+                check(false, "the yes/no class's input routine carries its cancel's test");
+                continue;
+            }
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+        }
+        check(static_cast<uint8_t*>(g_fake->open)[0] == open_first && !engine_mapped(),
+            "a box confirm or setup that differs or names another manager, key or open routine, an asker whose global"
+            " is not the registry's or whose call reaches no setup, and a yes/no class whose cancel does not test its"
+            " cancellable byte, install nothing");
+    }
+
+    // -- the 0.11.0 Asked windows: each signature, and what the engine
+    //    checks it holds: the keys, globals and routines it names, and the
+    //    routines it leads to
+    {
+        uint8_t* const* a = g_fake->asked_sites;
+        uint8_t* evitem_setup = call_target(a[2] + 63);
+        uint8_t* evitem_cb = NULL;
+        memcpy(&evitem_cb, evitem_setup + 55, 4);
+        uint8_t* bank_clear = call_target(a[5] + 48);
+        uint8_t* map_rebuild = call_target(a[7] + 48 + 83 + 14);
+        uint8_t* map_cursor = call_target(a[7] + 48 + 147 + 28);
+        uint8_t* map0 = g_fake->map0_input;
+        uint8_t* map_close = g_fake->map_close;
+        const char kMap0Cancel[] = "map0_input: its cancel does not close map0 by instance, then call a routine on the"
+            " controller in mapframe's registry slot";
+        const char kMapClose[] = "map0_input: the routine its cancel calls is not the map's close";
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[33] = {
+            {a[0] + 5, 0x86, "signature sortyn_setup: not found"},
+            {a[0] + 47, static_cast<uint8_t>(a[0][47] + 1), "sortyn_setup: it does not open sortyn's key"},
+            {a[1] + 62, static_cast<uint8_t>(a[1][62] + 1), "sortyn_confirm: it does not close sortyn's key"},
+            {a[2] + 58, static_cast<uint8_t>(a[2][58] + 4), "evitem_ask: it does not open evitem01's key, then ask"
+             " through evitem01's registry slot"},
+            {evitem_setup + 11, 0x75, "evitem_ask: the setup it calls does not write the question"},
+            {evitem_cb + 3, static_cast<uint8_t>(evitem_cb[3] + 4), "evitem_ask: the callback its setup sets does not"
+             " read the registry's evitem slot"},
+            {a[3] + 61, 0x8b, "evitem_input: it does not close its window by instance after the callback"},
+            {a[4] + 56, static_cast<uint8_t>(a[4][56] + 1), "confyn_input: it does not restore through a routine of"
+             " the game's and close by instance"},
+            {a[5] + 1, static_cast<uint8_t>(a[5][1] + 4), "bank_open: its test of Mog Safe 2 is not a read of a flag"},
+            {bank_clear + 3, 0x01, "bank_open: bankmenu's begin-close does not clear its callback"},
+            {a[6] + 52, static_cast<uint8_t>(a[6][52] + 1), "bank_input: it does not close the window through its"
+             " class's close"},
+            {a[6] + 5, 0x57, "signature bank_input: not found"},
+            {a[7] + 49, static_cast<uint8_t>(a[7][49] + 4), "maplist_close: the key handler after it does not read"
+             " the registry's maplist slot"},
+            {a[7] + 48 + 27, 0x68, "maplist_close: its key handler's confirm of a leaf row is not there"},
+            {a[7] + 2, 0xf0, "signature maplist_close: not found"},
+            {a[7] + 65, static_cast<uint8_t>(a[7][65] + 4), "maplist_close: its key handler does not need the player"
+             " data's global first"},
+            {a[7] + 48 + 147 + 12, 0xd8, "maplist_close: its key handler's confirm of a row with a list of its own is"
+             " not there"},
+            {a[7] + 48 + 102 + 2, 0x46, "maplist_close: its key handler's steps between levels do not rebuild the list"
+             " through one routine and select a row through another"},
+            {map_rebuild + 4, 0x02, "maplist_close: the rebuild its steps between levels call does not empty and free"
+             " the rows as close+reset does"},
+            {map_cursor + 10, 0x4e, "maplist_close: the routine its step down keeps the row under the cursor with is"
+             " not the list's cursor read"},
+            {a[8] + 7, static_cast<uint8_t>(a[8][7] + 1), "gmtell_poll: it does not read the question's result word"},
+            {a[8] + 13, 0x85, "signature gmtell_poll: not found"},
+            {a[9] + 85 + 2, 0x18, "mp_dead_input: its tick's countdown and its choice at the deadline are not there"},
+            {a[9] + 3, 0x75, "signature mp_dead_input: not found"},
+            {a[10] + 62, static_cast<uint8_t>(a[10][62] + 4), "ok_input: it does not close its window by instance"},
+            {a[10] + 76, 0x59, "ok_input: it does not close its window by instance after the callback, and again"},
+            {map0 + 9, 0x26, "signature map0_input: not found"},
+            {map0 + 24, static_cast<uint8_t>(map0[24] + 4), kMap0Cancel},
+            {map0 + 29, static_cast<uint8_t>(map0[29] + 1), kMap0Cancel},
+            {map0 + 35, static_cast<uint8_t>(map0[35] + 4), kMap0Cancel},
+            {map_close + 3, 0x08, kMapClose},
+            {map_close + 0xAE + 15 + 1, static_cast<uint8_t>(map_close[0xAE + 15 + 1] + 0x2c), kMapClose},
+            {map_close + 0xAE + 75 + 6, 0x54, kMapClose},
+        };
+        for (int i = 0; i < 33; ++i) {
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+        }
+        check(static_cast<uint8_t*>(g_fake->open)[0] == open_first && !engine_mapped(),
+            "an Asked window's signature that differs, or holds another key, global, manager or routine than the"
+            " registry's and the game's, or leads to a setup, callback, clear, close or tick that differs, installs"
+            " nothing; so does a map0 cancel that does not close map0 by instance on the manager and call a routine"
+            " on mapframe's global, or calls one that is not the map's close of its windows by name and fade-out");
+    }
+
+    // -- mogdoor, the dialogue boxes and the key test: each signature, and
+    //    what the engine checks in it and in what it leads to. The game
+    //    thread is paused: the UI update calls the key test every frame.
+    {
+        uint8_t* door = g_fake->door_input;
+        uint8_t* handler = g_fake->door_handler;
+        uint8_t* input = g_fake->dialogue_input;
+        uint8_t* talk = call_target(input + 15);
+        uint8_t* dispatch = call_target(talk + 0x44);
+        uint8_t* gate = call_target(dispatch + 9);
+        uint8_t* update = static_cast<uint8_t*>(g_fake->ui_update);
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        // The dispatch past its gate's call: the global its first compare
+        // names (+2), the other box's (+12, again at +29), the gate's call
+        // (+17, its displacement at +18).
+        uint8_t* twin = dispatch + 14;
+        const char kTwin[] = "dialogue_input: the text dispatch does not hand its code on to the other dialogue box's"
+            " text object";
+        const Poke pokes[20] = {
+            {door + 9, 0x90, "signature door_input: not found"},
+            {door + 63, 0x90, "door_input: its rows of the list of areas or of the top are not the ones the engine"
+             " answers"},
+            {door + 0x8c + 1, 0x4e, "door_input: its top's rows do not stay, go back, change floors and open the list"
+             " of areas"},
+            {door + 0xe6 + 16, 0x90, "door_input: the exit after its rows is not the one the engine makes"},
+            {door + 0xe6 + 50, 0x05, "door_input: the exit does not set the three bytes the engine sets"},
+            {g_fake->door_opened + 24, 0x90, "door_input: the routine its exit gives the door does not send"
+             " mogdoor's exit"},
+            {g_fake->door_open_hook + 5, 0x90, "door_open: mogdoor's open hook does not take a nation's list of"
+             " areas from a table and show the top"},
+            {g_fake->door_tick + 12, 0x18, "door_tick: mogdoor's tick does not enable its Mog Garden and floor rows"},
+            {static_cast<uint8_t*>(const_cast<void*>(g_fake->door_vtable[4])) + 5, 0x90,
+             "door_draw: mogdoor's draw does not show the texts the engine reads"},
+            {handler + 20, 0x89, "signature door_handler: not found"},
+            {handler + 7, static_cast<uint8_t>(handler[7] + 4), "door_handler: it does not write the nation on"
+             " mogdoor's controller"},
+            {input + 1, 0x89, "signature dialogue_input: not found"},
+            {input + 22, static_cast<uint8_t>(input[22] + 4), "dialogue_input: it does not hand its codes to one"
+             " handler, again for the controllers in the registry's rem4line and rem4li2 slots"},
+            {talk + 0x5d + 2, 0x60, "dialogue_input: its handler does not hand the code to the text dispatch, then"
+             " cancel as the box's own cancel does"},
+            {gate + 3, 0x02, "dialogue_input: the text dispatch, its gate on a page waiting for a key"},
+            {twin + 2, static_cast<uint8_t>(twin[2] + 4), kTwin},
+            {twin + 12, static_cast<uint8_t>(twin[12] + 4), kTwin},
+            {twin + 18, static_cast<uint8_t>(twin[18] + 1), kTwin},
+            {g_fake->dialogue_tick + 8, 0x04, "dialogue_tick: its test of the left button through the key test"},
+            {g_fake->key_test + 6, 0x90, "key_test: the routine the UI update calls is not the key test"},
+        };
+        for (int i = 0; i < 20; ++i) {
+            pause_game();
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+            resume_game();
+        }
+        // The UI update's call reaching past the key test's first byte.
+        pause_game();
+        int32_t rel;
+        memcpy(&rel, update + 21, 4);
+        const int32_t moved = rel + 1;
+        for (int k = 0; k < 4; ++k) {
+            poke(update + 21 + k, static_cast<uint8_t>(moved >> (8 * k)));
+        }
+        const char* g[] = {"EXPECT", "key_test: the routine the UI update calls is not the key test", NULL};
+        lua_State* L = fresh(g);
+        phase(L, kExpectFailure);
+        lua.close(L);
+        for (int k = 0; k < 4; ++k) {
+            poke(update + 21 + k, static_cast<uint8_t>(rel >> (8 * k)));
+        }
+        resume_game();
+        check(static_cast<uint8_t*>(g_fake->open)[0] == open_first && !engine_mapped(),
+            "mogdoor's input routine, rows, exit, the routine it gives the door, open hook, tick and draw, the door's"
+            " handler, the dialogue boxes' input routine, handler, dispatch gate and tick, a dispatch whose two"
+            " globals are one, that loads one global and compares with another, or that calls another gate for the"
+            " other box, the key test, and a UI update whose call reaches another routine, each differing, install"
+            " nothing");
+    }
+
+    // -- the text-entry windows: each input routine's signature, and a
+    //    shape in what the engine reads out of each
+    {
+        uint8_t* const* in = g_fake->text_inputs;
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[12] = {
+            {in[0] + 3, 0x90, "signature stringdl_input: not found"},
+            {in[0] + 0x3C + 7, 0x90, "stringdl_input: with a reply written, it does not raise the outgoing box"
+             " through the manager"},
+            {in[1] + 1, 0x90, "signature comment_input: not found"},
+            {in[1] + 0x73 + 10, 0x90, "comment_input: its Escape does not end the field, then close the window by"
+             " instance"},
+            {in[2] + 1, 0x90, "signature msgline_input: not found"},
+            {in[2] + 0x34 + 3, 0x90, "msgline_input: its commit does not test the player's data, then take the"
+             " mode's case"},
+            {in[3] + 5, 0x90, "signature scname_input: not found"},
+            {in[3] + 0x6E + 11, 0x90, "scname_input: its row 2 does not name the player search and start it"},
+            {in[4] + 1, 0x90, "signature link11_input: not found"},
+            {in[4] + 0x11B + 50, 0x90, "link11_input: its row 5 does not send the new linkshell's request"},
+            {in[5] + 1, 0x90, "signature passinpu_input: not found"},
+            {in[5] + 0x23, 0x90, "signature passinpu_input: not found"},
+        };
+        for (int i = 0; i < 12; ++i) {
+            pause_game();
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+            resume_game();
+        }
+        check(!engine_mapped(), "each text window's input routine differing, or a shape in it, installs nothing");
+    }
+
+    // -- the trade windows: each signature, and a shape in what the engine
+    //    reads out of each
+    {
+        uint8_t* ti = g_fake->trade_input;
+        uint8_t* to = g_fake->trade_open;
+        uint8_t* hi = g_fake->handover_input;
+        uint8_t* ir = g_fake->inventor_rows;
+        struct Poke {
+            uint8_t* at;
+            uint8_t value;
+            const char* expect;
+        };
+        const Poke pokes[10] = {
+            {ti + 1, 0x90, "signature trade_input: not found"},
+            {ti + 0x3F + 12, 0x90, "trade_input: its rows of the offer do not take an item back out through the stage"
+             " its item count's asker calls"},
+            {g_fake->trade_stage + 9, 0x90, "trade_stage: it does not stage on its cursor's row into the offer's slots,"
+             " then write both states"},
+            {to + 1, 0x90, "signature trade_open: not found"},
+            {to + 0x5B + 6, 0x90, "trade_open: it does not hand the inventory list the trade's mode"},
+            {hi + 1, 0x90, "signature handover_input: not found"},
+            {call_target(hi + 0x67 + 2) + 1, 0x90, "handover_input: its OK, its close or its stage is not the one the"
+             " engine calls"},
+            {ir + 6, 0x90, "signature inventor_rows: not found"},
+            {ir + 0x46 + 52, 0x90, "inventor_rows: it does not lock an item's data around its mode's test of the row"},
+            {ir + 0xA6 + 1, 0x03, "inventor_rows: its status rule names a case it does not have"},
+        };
+        for (int i = 0; i < 10; ++i) {
+            pause_game();
+            const uint8_t saved = *pokes[i].at;
+            poke(pokes[i].at, pokes[i].value);
+            const char* g[] = {"EXPECT", pokes[i].expect, NULL};
+            lua_State* L = fresh(g);
+            phase(L, kExpectFailure);
+            lua.close(L);
+            poke(pokes[i].at, saved);
+            resume_game();
+        }
+        check(!engine_mapped(), "each trade window's signature differing, or a shape in what it leads to, installs"
+            " nothing");
+    }
+
     // -- a signature that matches twice
     {
         poke(g_fake->spare_set_position, 0x83);
@@ -1200,7 +2836,7 @@ int main(int argc, char** argv) {
             "check(ok == true, 'and shuts down: ' .. tostring(err))\n"
             "return finish()\n");
         lua.close(T);
-        check(!engine_mapped() && static_cast<uint8_t*>(g_fake->open)[0] == 0xE9,
+        check(engine_unmaps() && static_cast<uint8_t*>(g_fake->open)[0] == 0xE9,
             "the retried engine unmaps; the daemon's jump stays");
         // Its drain built a glyph table; the next image counts its own.
         InterlockedExchange(g_fake->convert_calls, 0);
@@ -1217,7 +2853,7 @@ int main(int argc, char** argv) {
         "local d = s.detail or {}\n"
         "check(s.ok and s.state == 'installed' and s.role == 'resident' and h ~= nil,"
         "  'installs against the stand-in FFXiMain: ' .. tostring(d.error))\n"
-        "check(s.engine == '0.10.0' and s.handles == 1 and s.dropped == 0 and hu.version() == 'hideui 0.10.0'"
+        "check(s.engine == '0.11.0' and s.handles == 1 and s.dropped == 0 and hu.version() == 'hideui 0.11.0'"
         "  and s.registry == nil and s.functions == nil,"
         "  'status: engine, handles and dropped at the top, the internals under detail; version is hideui 0.7.0')\n"
         "check(s.ui and s.ui.w == 1920 and s.ui.h == 1080 and d.ui and d.ui.w == 1920,"
@@ -1247,11 +2883,49 @@ int main(int argc, char** argv) {
         "  .. tostring(f.macro_gate) .. ' ' .. tostring(f.macro_object))\n"
         "check(f.ability_open == ABILITYOPEN, 'the ability opener resolved to the stand-in: '"
         "  .. tostring(f.ability_open))\n"
-        "check(calls == 11 and all and f.prtyjoin_pending == PENDING and f.query_confirm == nil"
+        "check(f.template_swap == F_template_swap and f.menu_draw == MENUDRAW and f.sprite_draw == SPRITEDRAW"
+        "  and f.primitive_draw == PRIMITIVEDRAW and f.quad_draw == QUADDRAW"
+        "  and f.target_arrow_return == TARGETRETURN and f.pick_arrow_return == PICKRETURN,"
+        "  'the template swap and the three draws hooked at the stand-in\\'s, the quad routine whose call names the'"
+        "  .. ' draw primitive found, and the two arrow draws\\' returns: '"
+        "  .. tostring(f.target_arrow_return) .. ' ' .. tostring(f.pick_arrow_return))\n"
+        "check(calls == 12 and all and f.prtyjoin_pending == PENDING and f.query_confirm == nil"
         "  and f.list_select == nil,"
-        "  'the eleven reply, re-dock and resize routines, arealist\\'s close+reset and latch clear among them,'"
-        "  .. ' and the invite flag resolved to the stand-in; query\\'s confirm and the list select-index are'"
-        "  .. ' not resolved')\n"
+        "  'the twelve reply, re-dock and resize routines, arealist\\'s close+reset and latch clear and select-row'"
+        "  .. ' among them, and the invite flag resolved to the stand-in; query\\'s confirm and the list'"
+        "  .. ' select-index are not resolved')\n"
+        "check(f.yesno_confirm == YESNOCONFIRM and f.yesno_ask == YESNOASK and f.dead_tick == DEADTICK"
+        "  and f.dead_decider == DEADDECIDER and f.message == MESSAGE and f.dead_callback == DEADCALLBACK,"
+        "  'the yes/no class\\'s confirm and ask, and the KO window\\'s tick, decider, message getter and callback'"
+        "  .. ' resolved to the stand-in\\'s')\n"
+        "check(f.moneyctr_confirm == MONEYCONFIRM and f.itemctrl_confirm == ITEMCONFIRM"
+        "  and f.moneyctr_setup == MONEYSETUP and f.itemctrl_setup == ITEMSETUP and f.yesno_cancel == YESNOCANCEL"
+        "  and type(f.askers) == 'table' and f.askers.ask_trade_item == ASKTRADEITEM"
+        "  and f.askers.ask_handover_gil == ASKHANDOVERGIL,"
+        "  'the number boxes\\' confirms and setups, the yes/no class\\'s cancel test and the askers\\' callbacks,"
+        " a site\\'s pushed one among them, resolved to the stand-in\\'s')\n"
+        "local asked = 0\n"
+        "for _ in pairs(f.askers or {}) do asked = asked + 1 end\n"
+        "check(asked == 16, 'sixteen askers under functions.askers: ' .. asked)\n"
+        "local a = f.asked or {}\n"
+        "check(a.sortyn_setup == SORTYNSETUP and a.bank_open == BANKOPEN and a.maplist_close == MAPLISTCLOSE"
+        "  and a.ok_input == OKINPUT and a.bank_safe2 == 0x21 and f.close_instance == CLOSEINSTANCE"
+        "  and type(a.evitem_callback) == 'string' and type(a.confyn_restore) == 'string'"
+        "  and type(a.gmtell_queue) == 'string' and type(a.maplist_rebuild) == 'string'"
+        "  and type(a.maplist_select) == 'string' and type(a.maplist_cursor) == 'string'"
+        "  and a.map0_input == MAP0INPUT and a.map_close == MAPCLOSE,"
+        "  'the Asked windows\\' sites, the routines they lead to, map0\\'s input routine and the map\\'s close and"
+        " close by instance resolved to the stand-in\\'s')\n"
+        "local dl = f.dialogue or {}\n"
+        "check(a.door_input == DOORINPUT and a.door_handler == DOORHANDLER and a.door_vtable == DOORVTABLE"
+        "  and a.door_opened == DOOROPENED and a.door_open_hook == DOOROPENHOOK and a.door_tick == DOORTICK"
+        "  and a.door_nations == 10 and a.door_garden == 280 and a.door_floor_word == 0x30"
+        "  and dl.input == DIALOGUEINPUT and dl.tick == DIALOGUETICK and dl.click_return == CLICKRETURN"
+        "  and f.key_test == KEYTEST,"
+        "  'mogdoor\\'s routines, vtable and data, the dialogue boxes\\' input routine and tick, the key test and the"
+        " tick\\'s call of it resolved to the stand-in\\'s')\n"
+        "check(f.yesno_vtable == YESNOVTABLE, 'the yes/no class\\'s vtable resolved to the stand-in\\'s: '"
+        "  .. tostring(f.yesno_vtable))\n"
         "check(f.link5_cache == LINK5CACHE and f.query_cancel_allowed == CANCELBYTE,"
         "  'the link5 concierge cache and the query cancel-allowed byte resolved to the stand-in: '"
         "  .. tostring(f.link5_cache) .. ' ' .. tostring(f.query_cancel_allowed))\n"
@@ -1259,7 +2933,7 @@ int main(int argc, char** argv) {
         "  'SetCursor, the link5 pending latch and the event callback the link5 open site names resolved to the'"
         "  .. ' stand-in: ' .. tostring(f.set_cursor) .. ' ' .. tostring(f.link5_latch) .. ' '"
         "  .. tostring(f.link5_callback))\n"
-        "check(d.registry == REGISTRY and d.manager == MCB and d.rows == 370 and d.names == 370"
+        "check(d.registry == REGISTRY and d.manager == MCB and d.rows == 370 and d.names == 368"
         "  and d.ui and d.ui.w == 1920 and d.ui.h == 1080, 'registry, manager and UI size resolved')\n"
         "check(d.pinned and d.daemon and d.daemon.abi == 1, 'pinned, daemon abi ' .. tostring(d.daemon and d.daemon.abi))\n"
         "check(h:hide('logwindo') == true and h:block('menuwind') == true and h:move('equip', 300, 200) == true,"
@@ -1267,14 +2941,15 @@ int main(int argc, char** argv) {
         "local r, why = h:block('query')\n"
         "check(r == nil and why == \"query cannot be blocked or closed; answer it with answer('query', value) or"
         " cancel('query')\", 'block(query) is refused: ' .. tostring(why))\n"
-        "local prompts = {}\n"
+        "local prompts, queued = {}, {}\n"
         "for _, w in ipairs({'query', 'passinpu', 'prtyjoin', 'delivery', 'post1', 'post2', 'link5', 'arealist'}) do\n"
         "  local ok2, why2 = h:close(w)\n"
         "  if ok2 == nil and why2 == w .. \" is a prompt the game waits on; use cancel('\" .. w .. \"')\" then"
-        "    prompts[#prompts + 1] = w end\n"
+        "    prompts[#prompts + 1] = w elseif ok2 == true then queued[#queued + 1] = w end\n"
         "end\n"
-        "check(#prompts == 8, 'close() is refused for the eight prompt windows, with \"use cancel(name)\": '"
-        "  .. table.concat(prompts, ' '))\n"
+        "check(table.concat(prompts, ' ') == 'query' and #queued == 7, 'close() of query, which is never closed, is'"
+        "  .. ' refused at once with \"use cancel(name)\"; of the other seven prompt windows it queues, for the game'"
+        "  .. ' thread to refuse while they ask: ' .. table.concat(prompts, ' ') .. ' / ' .. table.concat(queued, ' '))\n"
         "check(h:hide('query') == true and h:unhide('query') == true, 'hide(query) is allowed')\n"
         "r, why = h:open('menuwind')\n"
         "check(r == nil and why:find('blocked', 1, true), 'open of a blocked name is refused')\n"
@@ -1343,11 +3018,25 @@ int main(int argc, char** argv) {
         "r, why = h:move_group('logwindo', 1, 1)\n"
         "check(r == nil and why:find('no such group', 1, true), 'move_group takes group names only')\n"
         "return finish()\n");
+    wait_frames(3);
+    phase(L,
+        "local refused = {}\n"
+        "for _, e in ipairs((h:poll())) do\n"
+        "  if e.event == 'error' and e.verb == 'close'\n"
+        "      and e.reason == e.name .. \" is a prompt the game waits on; use cancel('\" .. e.name .. \"')\" then\n"
+        "    refused[#refused + 1] = e.name\n"
+        "  end\n"
+        "end\n"
+        "check(table.concat(refused, ' ') == 'delivery post1 post2', 'the game thread refused the closes of the'"
+        "  .. ' prompts asking now, the delivery and post boxes, which always do; passinpu, prtyjoin, link5 and'"
+        "  .. ' arealist asked nothing: ' .. table.concat(refused, ' '))\n"
+        "return finish()\n");
 
     wait_frames(3);
     uint8_t* log = live_menu(kRowLog);
-    check(registry_row(kRowLog)[0x29] == 0x7F && log && log[0x60] == 0x7F,
-        "the drain, on the game thread, hid logwindo in the registry and on screen");
+    check(hidden_in_place(kRowLog, log),
+        "the drain, on the game thread, hid logwindo: the walk's call of its draw runs and paints nothing, its"
+        " registry row and live menu at its own layer");
     check(*g_fake->convert_calls == 11313 && *g_fake->convert_elsewhere == 0,
         "the glyph table: the converter called once for each of the 11313 Shift-JIS lead and trail pairs (EF 1F..EF 3F"
         " included), every call on the game thread");
@@ -1360,11 +3049,14 @@ int main(int argc, char** argv) {
         "  .. tostring(t.cp932_defined) .. ' by a pair code page 932 defines, ' .. tostring(t.cp932_undefined)"
         "  .. ' not, ' .. tostring(t.gaiji) .. ' by a lead-0xEF pair, built in ' .. tostring(t.build_ms) .. ' ms')\n"
         "return finish()\n");
-    check(registry_row(kRowMenuwind)[0x29] == 0x7F, "block hides menuwind's registry row");
+    check(memcmp(registry_row(kRowMenuwind), g_fake->pristine + kRowMenuwind * 0x2C, 0x2C) == 0,
+        "the block of menuwind, closed, leaves its registry row as the table has it");
 
     // -- the mouse kept off a hidden window (0.6.0): +0x77 on a new instance's
     //    open, the unhide and the hide, and the stand-in's mouse mode picker
-    //    through the hook, called here with no frame depending on it
+    //    through the hook, called here with no frame depending on it, which
+    //    from 0.11.0 holds world mode over a hidden prompt alone (the yes/no
+    //    windows below), never over a hidden window that asks nothing
     {
         typedef void (__fastcall* MouseFn)(void* mouse, void* edx);
         MouseFn mouse_mode;
@@ -1378,36 +3070,38 @@ int main(int argc, char** argv) {
             "return finish()\n");
         wait_frames(3);
         uint8_t* ability = static_cast<uint8_t*>(open_on_game_thread("menu    ability"));
-        check(ability && registry_row(kRowAbility)[0x29] == 0x7F && ability[0x60] == 0x7F && ability[0x77] == 0,
-            "ability opened while hidden: registry and live layer 0x7F, and +0x77 0, the open's post over the"
-            " stand-in constructor's 1");
+        check(ability && ability[0x77] == 0 && hidden_in_place(kRowAbility, ability),
+            "ability opened while hidden: +0x77 0, the open's post over the stand-in constructor's 1; its draw"
+            " paints nothing, its registry row and live menu at its own layer");
         const LONG calls = *g_fake->menu_up_calls;
         put32(g_fake->mcb, 0x54, reinterpret_cast<uint32_t>(ability));
         mouse[0x4D] = 2;
         mouse_mode(mouse, NULL);
-        check(mouse[0x4D] == 1 && *g_fake->menu_up_calls == calls,
-            "the mouse mode picker with the hidden window active: mode 1, its callee never ran (the pre did instead)");
+        check(mouse[0x4D] == 2 && *g_fake->menu_up_calls == calls + 1,
+            "the mouse mode picker with the hidden window active, one that asks nothing: the original runs (mode 2);"
+            " its +0x77 keeps clicks off its rows");
         phase(L,
             "check(h:unhide('ability') == true, 'unhide(ability) queues')\n"
             "return finish()\n");
         wait_frames(3);
-        const bool shown = ability[0x60] == layer && ability[0x77] == 1 && registry_row(kRowAbility)[0x29] == layer;
+        const bool shown = ability[0x60] == layer && ability[0x77] == 1 && registry_row(kRowAbility)[0x29] == layer
+            && walk_of(ability) == 'd';
         mouse_mode(mouse, NULL);
-        check(shown && mouse[0x4D] == 2 && *g_fake->menu_up_calls == calls + 1,
-            "unhide: +0x77 back to 1 with the layer; the picker's original runs and sets mode 2");
+        check(shown && mouse[0x4D] == 2 && *g_fake->menu_up_calls == calls + 2,
+            "unhide: +0x77 back to 1 and the walk draws it; the picker's original runs and sets mode 2");
         phase(L,
             "check(h:hide('ability') == true, 'hide(ability) while it is open queues')\n"
             "return finish()\n");
         wait_frames(3);
-        const bool hidden = ability[0x60] == 0x7F && ability[0x77] == 0;
+        const bool hidden = ability[0x77] == 0 && hidden_in_place(kRowAbility, ability);
         mouse_mode(mouse, NULL);
-        const bool held = mouse[0x4D] == 1 && *g_fake->menu_up_calls == calls + 1;
+        const bool menu_mode = mouse[0x4D] == 2 && *g_fake->menu_up_calls == calls + 3;
         put32(g_fake->mcb, 0x54, 0);
         mouse[0x4D] = 2;
         mouse_mode(mouse, NULL);
-        check(hidden && held && mouse[0x4D] == 1 && *g_fake->menu_up_calls == calls + 2,
-            "hide of the open window: +0x77 0 and the picker held in mode 1; with no active menu the original"
-            " runs (mode 1, its callee called)");
+        check(hidden && menu_mode && mouse[0x4D] == 1 && *g_fake->menu_up_calls == calls + 4,
+            "hide of the open window: +0x77 0 and its draw painting nothing at its own layer, the picker's original"
+            " still runs over it (mode 2); with no active menu the original runs (mode 1, its callee called)");
         phase(L,
             "local seen = {}\n"
             "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
@@ -1422,7 +3116,9 @@ int main(int argc, char** argv) {
 
     // -- keys and the gamepad kept off a hidden window (0.7.6): the stand-in's
     //    routing routine, the game's bytes, calling the hooked sink, called
-    //    here with no frame depending on it
+    //    here with no frame depending on it. From 0.11.0 only a hidden prompt
+    //    loses them (the yes/no windows below); ability asks nothing, so its
+    //    codes reach it hidden too, as the party list's must for <stpt>
     {
         typedef uint32_t (__fastcall* InputFn)(void* self, void* edx, int code);
         InputFn route;
@@ -1446,23 +3142,25 @@ int main(int argc, char** argv) {
             "check(h:hide('ability') == true, 'hide(ability) while it is open queues')\n"
             "return finish()\n");
         wait_frames(3);
-        bool dropped = ability[0x60] == 0x7F;
+        bool reached = hidden_in_place(kRowAbility, ability);
         for (int code = 1; code <= 0x20; ++code) {
-            dropped = route(g_fake->mcb, NULL, code) == 0 && dropped;
+            reached = route(g_fake->mcb, NULL, code) == 1 && fl->sink_code == code && reached;
         }
-        check(dropped && fl->sink_calls == calls + 1 && fl->main_menu_opens == opens,
-            "hidden and active: every code from the routing routine, 1 to 0x20, answers 0 without the sink's body"
-            " running, and code 7 opens no main menu");
+        check(reached && fl->sink_calls == calls + 1 + 0x20 && fl->sink_menu == ability
+                && fl->main_menu_opens == opens,
+            "hidden and active, a window that asks nothing: every code from the routing routine, 1 to 0x20, reaches"
+            " its sink, and code 7 opens no main menu");
+        const int routed = calls + 1 + 0x20;
         const uint32_t cursor = sink(ability, NULL, 9);
-        const bool from_cursor = cursor == 1 && fl->sink_calls == calls + 2 && fl->sink_code == 9;
+        const bool from_cursor = cursor == 1 && fl->sink_calls == routed + 1 && fl->sink_code == 9;
         const uint32_t wheel = sink(ability, NULL, 0x16);
-        check(from_cursor && wheel == 1 && fl->sink_calls == calls + 3 && fl->sink_code == 0x16
+        check(from_cursor && wheel == 1 && fl->sink_calls == routed + 2 && fl->sink_code == 0x16
                 && fl->sink_menu == ability,
-            "SetCursor's code 9 and the wheel's 0x16, from another caller, still reach the hidden window's sink");
+            "SetCursor's code 9 and the wheel's 0x16, from another caller, reach the hidden window's sink");
         put32(g_fake->mcb, 0x54, 0);
         const uint32_t none = route(g_fake->mcb, NULL, 5);
         const uint32_t menu_key = route(g_fake->mcb, NULL, 7);
-        check(none == 0 && menu_key == 0 && fl->sink_calls == calls + 3 && fl->main_menu_opens == opens + 1,
+        check(none == 0 && menu_key == 0 && fl->sink_calls == routed + 2 && fl->main_menu_opens == opens + 1,
             "with no active menu the routing routine runs as the game's: no sink, and code 7 opens the main menu");
         phase(L,
             "check(h:unhide('ability') == true, 'unhide(ability) queues')\n"
@@ -1470,13 +3168,14 @@ int main(int argc, char** argv) {
         wait_frames(3);
         put32(g_fake->mcb, 0x54, reinterpret_cast<uint32_t>(ability));
         const uint32_t again = route(g_fake->mcb, NULL, 6);
-        check(ability[0x60] == layer && again == 1 && fl->sink_calls == calls + 4 && fl->sink_code == 6,
-            "unhide: the routing routine's codes reach the window's sink again");
+        check(ability[0x60] == layer && again == 1 && fl->sink_calls == routed + 3 && fl->sink_code == 6,
+            "unhide: the routing routine's codes reach the window's sink as before");
         put32(g_fake->mcb, 0x54, 0);
         phase(L,
             "local seen = {}\n"
             "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
-            "check(table.concat(seen, ' ') == 'opened:ability', 'events: ' .. table.concat(seen, ' '))\n"
+            "check(table.concat(seen, ' ') == 'closed:ability opened:ability', 'events, the last block\\'s close"
+            " first: ' .. table.concat(seen, ' '))\n"
             "check(h:close('ability') == true, 'close of ability queues')\n"
             "return finish()\n");
         wait_frames(3);
@@ -1530,10 +3229,10 @@ int main(int argc, char** argv) {
         uint8_t* actl = controller_named("ability");
         check(static_cast<uint8_t*>(g_fake->ability_open)[0] == 0xE9, "the daemon's jump is on the stand-in's ability opener");
         phase(L, "h:poll()\nreturn finish()\n");
-        ability_open_on_game_thread(2, 0, 1);
+        ability_open_on_game_thread(2, 0, 0);
         wait_frames(3);
         check(live_menu(kRowAbility) && !live_menu(kRowSort) && *g_fake->ability_last_kind == 2 && get32(actl, 0x64) == 2,
-            "ability_open(2, 0, 1) through the site opens ability alone, its body storing 2 at the controller's +0x64");
+            "ability_open(2, 0, 0) through the site opens ability alone, its body storing 2 at the controller's +0x64");
         *g_fake->close_frames = 1;
         phase(L,
             "local p = h:info('ability')\n"
@@ -1576,19 +3275,19 @@ int main(int argc, char** argv) {
             "  'list() and status(): ability\\'s blocked stays the whole-window flag')\n"
             "return finish()\n");
         *g_fake->ability_last_kind = -1;
-        ability_open_on_game_thread(2, 0, 1);
+        ability_open_on_game_thread(2, 0, 0);
         wait_frames(3);
         check(!live_menu(kRowAbility) && *g_fake->ability_last_kind == -1,
-            "ability_open(2, 0, 1) with pet_commands blocked: the hooked opener runs nothing; nothing opens, no kind"
+            "ability_open(2, 0, 0) with pet_commands blocked: the hooked opener runs nothing; nothing opens, no kind"
             " stored");
-        ability_open_on_game_thread(2, 1, 1);
+        ability_open_on_game_thread(2, 1, 0);
         wait_frames(3);
         check(!live_menu(kRowAbility) && !live_menu(kRowSort) && *g_fake->ability_last_kind == -1,
             "with flag 1 neither abisortw nor ability opens");
-        ability_open_on_game_thread(1, 0, 1);
+        ability_open_on_game_thread(1, 0, 0);
         wait_frames(3);
         check(live_menu(kRowAbility) && *g_fake->ability_last_kind == 1 && get32(actl, 0x64) == 1,
-            "ability_open(1, 0, 1) still opens ability on job_abilities");
+            "ability_open(1, 0, 0) still opens ability on job_abilities");
         phase(L,
             "local seen = {}\n"
             "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name .. ':' .. tostring(e.category)"
@@ -1602,17 +3301,17 @@ int main(int argc, char** argv) {
             "check(h:close('ability') == true, 'close ability')\n"
             "return finish()\n");
         wait_frames(3);
-        ability_open_on_game_thread(2, 0, 1);
+        ability_open_on_game_thread(2, 0, 0);
         wait_frames(3);
         check(live_menu(kRowAbility) && get32(actl, 0x64) == 2,
-            "unblocked: ability_open(2, 0, 1) opens again on pet_commands");
+            "unblocked: ability_open(2, 0, 0) opens again on pet_commands");
         phase(L,
             "h:poll()\n"
             "check(h:block('ability', '2') == true, 'block(ability, 2) by number with the window on list 2 queues its close')\n"
             "return finish()\n");
         wait_frames(3);
         check(!live_menu(kRowAbility), "the category block closed the window showing that list");
-        ability_open_on_game_thread(3, 0, 1);
+        ability_open_on_game_thread(3, 0, 0);
         wait_frames(3);
         phase(L,
             "h:poll()\n"
@@ -1628,9 +3327,9 @@ int main(int argc, char** argv) {
         wait_frames(3);
         check(!live_menu(kRowAbility), "the whole block closed it");
         *g_fake->ability_last_kind = -1;
-        ability_open_on_game_thread(1, 0, 1);
-        ability_open_on_game_thread(4, 0, 1);
-        ability_open_on_game_thread(20, 0, 1);
+        ability_open_on_game_thread(1, 0, 0);
+        ability_open_on_game_thread(4, 0, 0);
+        ability_open_on_game_thread(20, 0, 0);
         wait_frames(3);
         check(!live_menu(kRowAbility) && *g_fake->ability_last_kind == -1,
             "blocked whole: kinds 1, 4 and 20 through the opener open nothing");
@@ -1638,8 +3337,8 @@ int main(int argc, char** argv) {
             "local seen = {}\n"
             "for _, e in ipairs((h:poll())) do if e.event == 'blocked' then seen[#seen + 1] = tostring(e.category) .. ':'"
             "  .. tostring(e.category_name) .. ':' .. table.concat(e.by, '+') .. ':' .. tostring(e.mine) end end\n"
-            "check(table.concat(seen, ' ') == '1:job_abilities:alpha:true 4:job_traits:alpha:true 20:weapon_skills:alpha:true',"
-            "  'blocked events carry each kind, 4 named job_traits and 20 weapon_skills, by alpha: ' .. table.concat(seen, ' '))\n"
+            "check(table.concat(seen, ' ') == '1:job_abilities:alpha:true 4:job_traits:alpha:true 20:monstrosity:alpha:true',"
+            "  'blocked events carry each kind, 4 named job_traits and 20 monstrosity, by alpha: ' .. table.concat(seen, ' '))\n"
             "local p = h:info('ability')\n"
             "check(p.blocked and #p.blocked_categories == 0, 'info(ability): blocked whole, no category')\n"
             "check(h:unblock('ability') == true, 'unblock(ability)')\n"
@@ -1660,9 +3359,9 @@ int main(int argc, char** argv) {
             "  .. table.concat(p.blocked_categories, ' '))\n"
             "check(h:unblock('ability', '7') == true and #h:info('ability').blocked_categories == 0, 'alpha unblocks 7')\n"
             "return finish()\n");
-        ability_open_on_game_thread(4, 0, 1);
+        ability_open_on_game_thread(4, 0, 0);
         wait_frames(3);
-        check(live_menu(kRowAbility) && get32(actl, 0x64) == 4, "nothing held: ability_open(4, 0, 1) opens job traits");
+        check(live_menu(kRowAbility) && get32(actl, 0x64) == 4, "nothing held: ability_open(4, 0, 0) opens job traits");
         phase(L,
             "local seen = {}\n"
             "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. tostring(e.category_name) end\n"
@@ -1671,6 +3370,711 @@ int main(int argc, char** argv) {
             "return finish()\n");
         wait_frames(3);
         put32(actl, 0x64, 0);
+    }
+
+    // -- open and open_set (0.11.0): open of exactly the window named, the
+    //    windows it refuses on every open slot and from abi 9, a list of
+    //    ability or magic alone through the game's opener of it, and the sets
+    //    through theirs: the stand-in's ability opener with its pane, the
+    //    magic opener (the game's bytes around a rebuild opening subwindo
+    //    every time), the equipment set's opener (the game's bytes and
+    //    layout, its guard, its opens and the 0x061 request) and the
+    //    Monstrosity check the equipment shortcut asks (the game's bytes)
+    {
+        static const char* const family[] = {"ability", "abisortw", "subwindo", "magic", "mgcsortw", "blusortw",
+                                             "equip", "persona", "money", "inventor", "iteminfo"};
+        const int count = static_cast<int>(sizeof(family) / sizeof(family[0]));
+        // The family's open windows, joined by ' ', in this order.
+        auto opened = [&](char* out, size_t size) -> const char* {
+            out[0] = '\0';
+            for (int i = 0; i < count; ++i) {
+                const uint8_t* menu = live_menu(row_named(family[i]));
+                if (menu && !menu[0x6E] && !menu[0x70]) {
+                    const size_t used = strlen(out);
+                    snprintf(out + used, size - used, "%s%s", used ? " " : "", family[i]);
+                }
+            }
+            return out;
+        };
+#define HU_CLOSE_FAMILY \
+            "for _, w in ipairs({'ability', 'abisortw', 'subwindo', 'magic', 'mgcsortw', 'blusortw', 'equip'," \
+            "    'persona', 'money', 'inventor', 'iteminfo'}) do\n" \
+            "  if h:info(w).open then check(h:close(w) == true, 'close ' .. w) end\n" \
+            "end\n"
+        static const char kCloseFamily[] = "h:poll()\n" HU_CLOSE_FAMILY "return finish()\n";
+        char now[192];
+        char label[512];
+        phase(L, kCloseFamily);
+        wait_frames(3);
+        snprintf(label, sizeof(label), "the family closed before the opens: [%s]", opened(now, sizeof(now)));
+        check(now[0] == '\0', label);
+        phase(L,
+            "h:poll()\n"
+            "local ok, why = h:open('equip')\n"
+            "check(ok == nil and why == \"equip opens only with its set: use open_set('equipment')\","
+            "  'open(equip) refused, pointing at its set: ' .. tostring(why))\n"
+            "ok, why = h:open('inventor')\n"
+            "check(ok == nil and tostring(why):find('inventor cannot be opened alone', 1, true) == 1"
+            "  and why:find(\"open_set('equipment')\", 1, true), 'open(inventor) refused: ' .. tostring(why))\n"
+            "ok, why = h:open('evitem')\n"
+            "check(ok == nil and tostring(why):find('evitem cannot be opened alone: it opens with what the game left', 1,"
+            "  true) == 1, 'open(evitem) refused: ' .. tostring(why))\n"
+            "ok, why = h:open('ability')\n"
+            "check(ok == nil and why == \"ability opens one list at a time: name the list, as in open('ability',"
+            " 'job_abilities')\", 'open(ability) with no list refused: ' .. tostring(why))\n"
+            "ok, why = h:open('magic')\n"
+            "check(ok == nil and why == \"magic opens one list at a time: name the list, as in open('magic',"
+            " 'white_magic')\", 'open(magic) with no list refused: ' .. tostring(why))\n"
+            "local lists = {}\n"
+            "for _, c in ipairs({{'ability', 'spells'}, {'ability', '5'}, {'ability', '7'}, {'ability', '0'},"
+            "    {'ability', '24'}, {'ability', '31'}, {'magic', '9'}, {'magic', '0'}, {'magic', 'pet_commands'}}) do\n"
+            "  local r, w = h:open(c[1], c[2])\n"
+            "  if r == nil and tostring(w):find('no such list of ' .. c[1] .. ': ' .. c[2], 1, true) == 1 then"
+            "    lists[#lists + 1] = c[1] .. ':' .. c[2] end\n"
+            "end\n"
+            "check(#lists == 9, 'a list past either table, 0, 5, 7 or another window\\'s list refused: '"
+            "  .. table.concat(lists, ' '))\n"
+            "ok, why = h:open('equip', 'job_abilities')\n"
+            "check(ok == nil and why == 'equip takes no argument: only ability, magic and the windows the README lists as"
+            " taking one do', 'open(equip, list): '"
+            "  .. tostring(why))\n"
+            "ok, why = h:open('fulllog')\n"
+            "check(ok == nil and why == \"fulllog has no controller now, and the game's open would crash the client\","
+            "  'open(fulllog), no controller in its slot: ' .. tostring(why))\n"
+            "ok, why = h:open('gift')\n"
+            "check(ok == nil and tostring(why):find('gift needs trade open', 1, true) == 1,"
+            "  'open(gift) with trade closed: ' .. tostring(why))\n"
+            "ok, why = h:open('auc2')\n"
+            "check(ok == nil and tostring(why):find('auc2 needs auc1 open', 1, true) == 1,"
+            "  'open(auc2) with auc1 closed: ' .. tostring(why))\n"
+            "ok, why = h:block('gift')\n"
+            "check(ok == nil and tostring(why):find('gift cannot be blocked', 1, true) == 1 and not h:info('gift').blockable,"
+            "  'block(gift) refused, and info says it cannot be blocked: ' .. tostring(why))\n"
+            "check(h:close('gift') == true, 'close(gift) with trade closed queues')\n"
+            "ok, why = h:open_set('nosuch')\n"
+            "check(ok == nil and why == 'no such set: nosuch (equipment, ability, magic, map, set_spells, attachments,'"
+            "  .. ' linkshell, instincts, synthesis, tabula, macros, friend, mail, mount, compare, status, region or'"
+            "  .. ' text_colors)', 'open_set(nosuch): ' .. tostring(why))\n"
+            "ok, why = h:open_set('equipment', 'job_abilities')\n"
+            "check(ok == nil and why == 'the equipment set takes no argument', 'open_set(equipment, list): '"
+            "  .. tostring(why))\n"
+            "ok, why = h:open_set('ability')\n"
+            "check(ok == nil and why == \"the ability set opens one list: name it, as in open_set('ability',"
+            " 'job_abilities')\", 'open_set(ability) with no list: ' .. tostring(why))\n"
+            "ok, why = h:open_set('magic', 'ready')\n"
+            "check(ok == nil and tostring(why):find('no such list of magic: ready', 1, true) == 1,"
+            "  'open_set(magic, ready): ' .. tostring(why))\n"
+            "local raised, err = pcall(h.open, h, 'ability', {})\n"
+            "check(not raised and tostring(err):find('string expected', 1, true),"
+            "  'open with a table for the list raises: ' .. tostring(err))\n"
+            "raised, err = pcall(h.open_set, h, {})\n"
+            "check(not raised and tostring(err):find('string expected', 1, true),"
+            "  'open_set with a table for the set raises: ' .. tostring(err))\n"
+            "check(#h:poll() == 0, 'no refusal reached the game thread')\n"
+            "return finish()\n");
+        // every open slot of every engine abi refuses the windows whose open
+        // alone crashes or strands the client
+        {
+            HuEngineApi api;
+            HuEngineHandle raw = {-1, 0};
+            char why[512] = "";
+            if (record_api(&api)) {
+                api.handle_open("raw_open", &raw, why, sizeof(why));
+            }
+            static const char* const kOpenRefusedAll[] = {"inventor", "bank", "itmstora", "shop", "bluinven", "bluequip", "cmbhlst", "mp_invnt", "holdtime", "mcrledit", "mcresed", "loot",
+                "lootope", "prvdungp", "conquer1", "beseige2", "campsan", "camparea", "auc4", "faqmain", "textcol1",
+                "textcol3", "conf11s", "rmlo1", "rmlo2", "rmlo4", "plnt1", "plnt2", "plnt3", "plnt4", "plnt5",
+                "plnt6", "netwait", "netbar", "keypad2", "keyselec", "keypad3", "roomlist", "mogdoor", "bankmenu",
+                "chocobor", "racecard", "mes1rcv", "mes2frnd", "auc1", "auclist", "auchisto", "ranking", "shopmain",
+                "guildsho", "ok", "mp_dead"};
+            const int kOpenRefusedCountAll = static_cast<int>(sizeof(kOpenRefusedAll) / sizeof(kOpenRefusedAll[0]));
+            int refused = 0;
+            int named = 0;
+            int every = 0;
+            for (int i = 0; raw.slot >= 0 && i < kOpenRefusedCountAll; ++i) {
+                const char* nm = kOpenRefusedAll[i];
+                char want[48];
+                snprintf(want, sizeof(want), "%s cannot be opened alone", nm);
+                const bool prompt = strcmp(nm, "ok") == 0 || strcmp(nm, "mp_dead") == 0 || strcmp(nm, "mogdoor") == 0
+                    || strcmp(nm, "bankmenu") == 0;
+                const int32_t r[4] = {
+                    api.open(&raw, nm, why, sizeof(why)) == 0 && strstr(why, want) == why,
+                    api.open3(&raw, nm, why, sizeof(why)) == 0 && strstr(why, want) == why,
+                    api.open8(&raw, nm, why, sizeof(why)) == 0 && (prompt ? strstr(why, "opens only for the game's own"
+                        " event") != NULL : strstr(why, want) == why),
+                    api.open9(&raw, nm, NULL, why, sizeof(why)) == 0 && (prompt ? strstr(why, "opens only for the"
+                        " game's own event") != NULL : strstr(why, want) == why),
+                };
+                for (int k = 0; k < 4; ++k) {
+                    refused += r[k];
+                }
+                named += r[0] && r[1];
+                ++every;
+            }
+            int gift = 0;
+            if (raw.slot >= 0) {
+                gift += api.block(&raw, "gift", why, sizeof(why)) == 0 && strstr(why, "gift cannot be blocked") == why;
+                gift += api.block3(&raw, "gift", why, sizeof(why)) == 0 && strstr(why, "gift cannot be blocked") == why;
+                gift += api.block5(&raw, "gift", why, sizeof(why)) == 0 && strstr(why, "gift cannot be blocked") == why;
+                gift += api.block7(&raw, "gift", NULL, why, sizeof(why)) == 0
+                    && strstr(why, "gift cannot be blocked") == why;
+                gift += api.block8(&raw, "gift", NULL, why, sizeof(why)) == 0
+                    && strstr(why, "gift cannot be blocked") == why;
+                gift += api.open(&raw, "gift", why, sizeof(why)) == 0 && strstr(why, "gift needs trade open") == why;
+                gift += api.open3(&raw, "mcrselop", why, sizeof(why)) == 0
+                    && strstr(why, "mcrselop needs mcrselec open") == why;
+            }
+            check(gift == 7, "gift refused by the block slots of engine abi 1, 3, 5, 7 and 8, and opened by no old slot"
+                " while trade is closed; mcrselop by none while mcrselec is closed");
+            const bool old_equip = raw.slot >= 0 && api.open8(&raw, "equip", why, sizeof(why)) == 1
+                && api.open9(&raw, "equip", NULL, why, sizeof(why)) == 0;
+            const bool missing = raw.slot >= 0 && api.open3(&raw, "fulllog", why, sizeof(why)) == 0
+                && strcmp(why, "fulllog has no controller now, and the game's open would crash the client") == 0;
+            if (raw.slot >= 0) {
+                api.handle_release(&raw);
+            }
+            check(every == kOpenRefusedCountAll && refused == 4 * every && named == every && old_equip && missing,
+                "every window whose open alone crashes or strands the client refused by the open slots of engine abi"
+                " 1, 3, 8 and 9, the earlier two with its own reason, the prompts among them by the later two as"
+                " prompts; a window with no controller in its slot refused by an old slot too; open8 keeps"
+                " opening equip, open9 refuses it");
+            wait_frames(3);
+            phase(L, kCloseFamily);
+            wait_frames(3);
+        }
+
+        // a list of ability alone, then its set
+        phase(L,
+            "h:poll()\n"
+            "check(h:open('ability', 'blood_pact_rage') == true, 'open(ability, blood_pact_rage) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const int32_t* last = g_fake->ability_last;
+        snprintf(label, sizeof(label), "open(ability, blood_pact_rage): the ability opener with (6, 0, 0): ability"
+            " alone, no abisortw, and no subwindo though the list has a pane: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "ability") == 0 && last[0] == 6 && last[1] == 0 && last[2] == 0, label);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name .. ':' .. tostring(e.category)"
+            "  .. ':' .. tostring(e.category_name) end\n"
+            "check(table.concat(seen, ' ') == 'opened:ability:6:blood_pact_rage',"
+            "  'one opened event, carrying 6, blood_pact_rage: ' .. table.concat(seen, ' '))\n"
+            "check(h:open_set('ability', '6') == true, 'open_set(ability, 6) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        snprintf(label, sizeof(label), "open_set(ability, 6): the opener with (6, 1, 1): ability, abisortw and"
+            " subwindo: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "ability abisortw subwindo") == 0 && last[0] == 6 && last[1] == 1 && last[2] == 1, label);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(seen, ' ') == 'opened:abisortw opened:subwindo',"
+            "  'each window its own opened event, in the game\\'s order, none for ability, open on the same list: '"
+            "  .. table.concat(seen, ' '))\n"
+            HU_CLOSE_FAMILY
+            "return finish()\n");
+        wait_frames(3);
+
+        // a list of magic alone, its rebuild's subwindo kept from opening,
+        // then its sets
+        const LONG lists = *g_fake->magic_lists;
+        const LONG closes = *g_fake->magic_closes;
+        put32(controller_named("magic"), 0xC0, 0xBAADF00Du);
+        phase(L,
+            "h:poll()\n"
+            "check(h:open('magic', 'songs') == true, 'open(magic, songs) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const int32_t* mlast = g_fake->magic_last;
+        snprintf(label, sizeof(label), "open(magic, songs): the magic opener with (5, 0, 0), its rebuild run: magic"
+            " alone, the rebuild's open of subwindo refused: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "magic") == 0 && *g_fake->magic_lists == lists + 1 && mlast[0] == 5 && mlast[1] == 0
+                && mlast[2] == 0, label);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(seen, ' ') == 'opened:magic', 'opened{magic} alone, nothing about subwindo: '"
+            "  .. table.concat(seen, ' '))\n"
+            "check(h:info('magic').open and not h:info('subwindo').open, 'info: magic open, subwindo not')\n"
+            "check(h:close('magic') == true, 'close(magic) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        snprintf(label, sizeof(label), "magic's begin-close, run by the close of a list opened alone on a fresh"
+            " controller, finds the sort window's controller the setup wrote with no sort, NULL (%ld runs, %ld"
+            " wild)", static_cast<long>(*g_fake->magic_closes - closes), static_cast<long>(*g_fake->magic_close_wild));
+        check(*g_fake->magic_closes == closes + 1 && *g_fake->magic_close_wild == 0 && !live_menu(row_named("magic")),
+            label);
+        phase(L,
+            "h:poll()\n"
+            "check(h:open_set('magic', 'blue_magic') == true, 'open_set(magic, blue_magic) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const bool blue = strcmp(opened(now, sizeof(now)), "subwindo magic blusortw") == 0 && mlast[0] == 6
+            && mlast[1] == 1 && mlast[2] == 0;
+        phase(L, kCloseFamily);
+        wait_frames(3);
+        phase(L,
+            "h:poll()\n"
+            "check(h:open_set('magic', 'white_magic') == true, 'open_set(magic, white_magic) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        snprintf(label, sizeof(label), "open_set(magic, blue_magic): magic, blusortw and subwindo; open_set(magic,"
+            " white_magic): mgcsortw: [%s]", opened(now, sizeof(now)));
+        check(blue && strcmp(now, "subwindo magic mgcsortw") == 0 && mlast[0] == 1, label);
+        phase(L, kCloseFamily);
+        wait_frames(3);
+
+        // the equipment set
+        const LONG sets = *g_fake->equipment_opens;
+        const LONG stats = *g_fake->stats_requests;
+        uint8_t* pctl = controller_named("persona");
+        pctl[0x1C] = 0;
+        phase(L,
+            "h:poll()\n"
+            "check(h:open_set('equipment') == true, 'open_set(equipment) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        snprintf(label, sizeof(label), "open_set(equipment): the set's opener past its tests and guard: persona in"
+            " mode 2, money, inventor, iteminfo and equip, then the 0x061 request: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "equip persona money inventor iteminfo") == 0 && *g_fake->equipment_opens == sets + 1
+                && *g_fake->stats_requests == stats + 1 && pctl[0x1C] == 2, label);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(seen, ' ') == 'opened:persona opened:money opened:inventor opened:iteminfo opened:equip',"
+            "  'each window its own opened event, in the game\\'s order, and no error: ' .. table.concat(seen, ' '))\n"
+            HU_CLOSE_FAMILY
+            "return finish()\n");
+        wait_frames(3);
+        // refused by the game: in Monstrosity (the player data's word, then
+        // the mode byte with that word clear and the data's pointer in eax),
+        // by the opener's first test, and by its guard
+        uint8_t* ectl = controller_named("equip");
+        const int16_t guard = get16(ectl, 0x1A);
+        struct Refusal {
+            const char* why;
+            const char* reason;
+        };
+        static const Refusal refusals[4] = {
+            {"the Monstrosity word of the player data", "the game refused it: it opens no equipment set in Monstrosity"},
+            {"the mode byte 0x17", "the game refused it: it opens no equipment set in Monstrosity"},
+            {"the first test of the opener", "the game refused it"},
+            {"the guard of the opener on the controller of equip", "the game refused it"},
+        };
+        int refusals_seen = 0;
+        for (int k = 0; k < 4; ++k) {
+            put16(g_fake->mon_player, 0x10, k == 0 ? 1 : 0);
+            *g_fake->game_mode = k == 1 ? 0x17 : 0;
+            *g_fake->set_refusal = k == 2 ? 1 : 0;
+            put16(ectl, 0x1A, k == 3 ? 1 : 0);
+            const LONG before = *g_fake->equipment_opens;
+            phase(L,
+                "h:poll()\n"
+                "check(h:open_set('equipment') == true, 'open_set(equipment) queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            char script[1024];
+            snprintf(script, sizeof(script),
+                "local seen = {}\n"
+                "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. tostring(e.verb) .. ':'"
+                "  .. tostring(e.name) .. ':' .. tostring(e.reason) end\n"
+                "check(table.concat(seen, ' ') == 'error:open_set:equipment:%s', 'refused by %s: '"
+                "  .. table.concat(seen, ' '))\n"
+                "return finish()\n", refusals[k].reason, refusals[k].why);
+            phase(L, script);
+            refusals_seen += strcmp(opened(now, sizeof(now)), "") == 0 && *g_fake->equipment_opens == before;
+        }
+        put16(g_fake->mon_player, 0x10, 0);
+        *g_fake->game_mode = 0;
+        *g_fake->set_refusal = 0;
+        put16(ectl, 0x1A, guard);
+        check(refusals_seen == 4, "open_set(equipment) refused by the game, each an error event to the handle,"
+            " nothing opened: in Monstrosity by the player data's word and by the mode byte (the opener not run,"
+            " al alone read), by the opener's first test and by its guard");
+
+        // refused up front: a window of the set blocked, a list blocked
+        phase(L,
+            "local other = hu.new('blocker')\n"
+            "check(other:block('persona') == true, 'another handle blocks persona')\n"
+            "local ok, why = h:open_set('equipment')\n"
+            "check(ok == nil and why == 'persona is blocked; the equipment set opens it', 'open_set(equipment) with'"
+            "  .. ' persona blocked: ' .. tostring(why))\n"
+            "check(other:block('blusortw') == true, 'and blusortw')\n"
+            "ok, why = h:open_set('magic', 'blue_magic')\n"
+            "check(ok == nil and why == 'blusortw is blocked; the magic set opens it', 'open_set(magic, blue_magic)'"
+            "  .. ' with blusortw blocked: ' .. tostring(why))\n"
+            "check(h:open_set('magic', 'white_magic') == true, 'open_set(magic, white_magic) does not open blusortw:'"
+            "  .. ' it queues')\n"
+            "check(other:block('ability', 'pet_commands') == true, 'and the pet commands list')\n"
+            "ok, why = h:open('ability', 'pet_commands')\n"
+            "local list_ok = ok == nil and why == \"ability's list pet_commands is blocked\"\n"
+            "ok, why = h:open_set('ability', '2')\n"
+            "check(list_ok and ok == nil and why == \"ability's list pet_commands is blocked\","
+            "  'open and open_set of a blocked list refused: ' .. tostring(why))\n"
+            "check(other:release() == true, 'the blocker releases')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L, kCloseFamily);
+        wait_frames(3);
+
+        // a pet's list with no pet out: the game closes it again at once,
+        // and the handle is told
+        *g_fake->no_pet = 1;
+        *g_fake->close_frames = 1;
+        phase(L,
+            "h:poll()\n"
+            "check(h:open('ability', 'pet_commands') == true, 'open(ability, pet_commands) queues')\n"
+            "return finish()\n");
+        wait_frames(4);
+        *g_fake->no_pet = 0;
+        *g_fake->close_frames = 0;
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. tostring(e.name)"
+            "  .. (e.event == 'error' and (':' .. e.verb .. ':' .. e.reason) or '') end\n"
+            "check(table.concat(seen, ' ') == 'opened:ability closed:ability error:ability:open:the game refused it:'"
+            "  .. ' it closed again at once', 'a pet\\'s list with no pet out: opened, closed by the game\\'s'"
+            "  .. ' per-frame, then the error: ' .. table.concat(seen, ' '))\n"
+            "check(not h:info('ability').open, 'ability is closed')\n"
+            "return finish()\n");
+#undef HU_CLOSE_FAMILY
+    }
+
+    // -- the other sets (0.11.0), each through the stand-in's opener of the
+    //    game's bytes, which the engine's signatures and shapes resolve, run
+    //    as the player's route runs it: map; set_spells and attachments on
+    //    their controllers, refused but for the job; linkshell behind its
+    //    row's check; instincts in Monstrosity alone; synthesis and tabula
+    //    for an inventory index through the item use's type, and the item
+    //    use's check; macros on the editor's object. Then the open
+    //    routine's last argument as the game's openers pass it: titlehan
+    //    shows over titlewin, targetwi parks under ut_point.
+    {
+        static const char* const members[] = {"mapframe", "map0", "persona", "bluehelp", "bluinven", "bluepoin",
+                                              "bluequip", "statpup", "automato", "link5", "link6", "mp_stat",
+                                              "mp_cstm", "mp_mncst", "inventor", "iteminfo", "tskill1", "prvdungp",
+                                              "mcrbedit", "mcr1edit", "mcr2edit", "titlewin", "titlehan", "targetwi",
+                                              "ut_point"};
+        const int count = static_cast<int>(sizeof(members) / sizeof(members[0]));
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        // The members open now, joined by ' ', in this order.
+        auto opened = [&](char* out, size_t size) -> const char* {
+            out[0] = '\0';
+            for (int i = 0; i < count; ++i) {
+                const uint8_t* menu = live_menu(row_named(members[i]));
+                if (menu && !menu[0x6E] && !menu[0x70]) {
+                    const size_t used = strlen(out);
+                    snprintf(out + used, size - used, "%s%s", used ? " " : "", members[i]);
+                }
+            }
+            return out;
+        };
+        // Every member closed by the game's own close by name.
+        auto close_all = [&]() {
+            pause_game();
+            for (int i = 0; i < count; ++i) {
+                if (live_menu(row_named(members[i]))) {
+                    char key[17];
+                    snprintf(key, sizeof(key), "menu    %-8s", members[i]);
+                    close_by_name(g_fake->mcb, NULL, key);
+                }
+            }
+            resume_game();
+            wait_frames(3);
+            phase(L, "h:poll()\nreturn finish()\n");
+        };
+        // The script that checks the handle's events, joined as
+        // event:name[:verb:reason], are `want`.
+        auto events_are = [&](const char* want, const char* what) {
+            char script[1400];
+            snprintf(script, sizeof(script),
+                "local seen = {}\n"
+                "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. tostring(e.name)"
+                "  .. (e.event == 'error' and (':' .. e.verb .. ':' .. e.reason) or '') end\n"
+                "check(table.concat(seen, ' ') == '%s', '%s: ' .. table.concat(seen, ' '))\n"
+                "return finish()\n", want, what);
+            phase(L, script);
+        };
+        auto run_lua = [&](const char* line) {
+            char script[512];
+            snprintf(script, sizeof(script), "h:poll()\n%s\nreturn finish()\n", line);
+            phase(L, script);
+            wait_frames(3);
+        };
+        FakeSets* fs = g_fake->sets;
+        char now[256];
+        char label[512];
+        close_all();
+        memset(const_cast<LONG*>(fs->calls), 0, sizeof(fs->calls));
+
+        // the map
+        run_lua("check(h:open_set('map') == true, 'open_set(map) queues')");
+        snprintf(label, sizeof(label), "open_set(map): the map's opener, mode 0, its routine on mapframe's controller"
+            " with the mode as its third argument: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "mapframe map0") == 0 && fs->calls[kSetsMap] == 1 && fs->args[0] == 0 && fs->args[1] == 2,
+            label);
+        events_are("opened:mapframe opened:map0", "each its own opened event, in the game\\'s order");
+        close_all();
+        fs->refuse = 1;
+        run_lua("check(h:open_set('map') == true, 'open_set(map) queues')");
+        fs->refuse = 0;
+        events_are("error:map:open_set:the game refused it", "the map\\'s routine refusing");
+        check(opened(now, sizeof(now))[0] == '\0', "the map refused: nothing open");
+
+        // the blue magic set and the automaton's
+        uint8_t* pctl = controller_named("persona");
+        pctl[0x1C] = 0;
+        run_lua("check(h:open_set('set_spells') == true, 'open_set(set_spells) queues')");
+        snprintf(label, sizeof(label), "open_set(set_spells): the opener on bluequip's controller past its job test:"
+            " persona in mode 2, bluehelp and bluinven by their openers, bluepoin, bluequip: [%s]",
+            opened(now, sizeof(now)));
+        check(strcmp(now, "persona bluehelp bluinven bluepoin bluequip") == 0 && pctl[0x1C] == 2, label);
+        events_are("opened:persona opened:bluehelp opened:bluinven opened:bluepoin opened:bluequip",
+            "the blue magic set, each its own opened event");
+        close_all();
+        uint8_t* actl = controller_named("automato");
+        actl[0x1C] = 0xFF;
+        run_lua("check(h:open_set('attachments') == true, 'open_set(attachments) queues')");
+        snprintf(label, sizeof(label), "open_set(attachments): the opener on automato's controller, a puppetmaster by"
+            " the sub job (+0x1C 1): bluehelp, bluinven, statpup, automato: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "bluehelp bluinven statpup automato") == 0 && actl[0x1C] == 1, label);
+        events_are("opened:bluehelp opened:bluinven opened:statpup opened:automato",
+            "the automaton\\'s set, each its own opened event");
+        close_all();
+        *g_fake->main_job = 1;
+        *g_fake->sub_job = 2;
+        run_lua("check(h:open_set('set_spells') == true and h:open_set('attachments') == true, 'both queue')");
+        *g_fake->main_job = 0x10;
+        *g_fake->sub_job = 0x12;
+        events_are("error:set_spells:open_set:the game refused it error:attachments:open_set:the game refused it",
+            "neither a blue mage nor a puppetmaster: each opener\\'s refusal");
+        check(opened(now, sizeof(now))[0] == '\0', "both refused for the job: nothing open");
+
+        // the linkshell list behind its row's check
+        fs->linkshell_check = 1;
+        run_lua("check(h:open_set('linkshell') == true, 'open_set(linkshell) queues')");
+        const bool held = fs->calls[kSetsLinkshell] == 0 && fs->check_args[0] == 1 && fs->check_args[1] == 1;
+        events_are("error:linkshell:open_set:the game refused it", "the linkshell row\\'s check refusing");
+        fs->linkshell_check = 0;
+        run_lua("check(h:open_set('linkshell') == true, 'open_set(linkshell) queues')");
+        snprintf(label, sizeof(label), "open_set(linkshell): the row's check (1, 1) refusing, the opener unrun;"
+            " passing, the opener on link5's controller with (0, 0, 0): link6, then link5 through its jump to the open"
+            " routine: [%s]", opened(now, sizeof(now)));
+        check(held && strcmp(now, "link5 link6") == 0 && fs->calls[kSetsLinkshell] == 1
+                && fs->self == controller_named("link5") && fs->args[0] == 0 && fs->args[1] == 0 && fs->args[2] == 0,
+            label);
+        events_are("opened:link6 opened:link5", "link6, then link5");
+        // link5 as the plain list asks nothing, and close() closes it as its
+        // Escape does; while the event's choice is pending, the game thread
+        // refuses the close and points at cancel()
+        uint8_t* lctl = controller_named("link5");
+        put32(lctl, 0x68, 0);
+        put32(lctl, 0x6C, 0);
+        const uint32_t close_frames = *g_fake->close_frames;
+        *g_fake->close_frames = 1;
+        run_lua("check(h:close('link5') == true, 'close(link5) queues')");
+        wait_frames(2);
+        *g_fake->close_frames = close_frames;
+        snprintf(label, sizeof(label), "close(link5) showing the plain list: closed, no refusal: [%s]",
+            opened(now, sizeof(now)));
+        check(!live_menu(row_named("link5")), label);
+        events_are("closed:link5", "link5 closed through its close, no error");
+        open_on_game_thread("menu    link5   ");
+        wait_frames(2);
+        phase(L, "h:poll()\nreturn finish()\n");
+        *g_fake->link5_latch = 1;
+        put32(lctl, 0x68, 1);
+        put32(lctl, 0x6C, reinterpret_cast<uint32_t>(g_fake->link5_callback));
+        run_lua("check(h:close('link5') == true, 'close(link5) queues')");
+        const bool kept = live_menu(row_named("link5")) != NULL;
+        *g_fake->link5_latch = 0;
+        put32(lctl, 0x68, 0);
+        put32(lctl, 0x6C, 0);
+        check(kept, "close(link5) with the event's choice pending: link5 left open");
+        events_are("error:link5:close:link5 is a prompt the game waits on; use cancel(\\'link5\\')",
+            "the game thread refusing the close of a pending link5");
+        close_all();
+
+        // the instincts, in Monstrosity alone
+        put16(g_fake->mon_player, 0x10, 0);
+        *g_fake->game_mode = 0;
+        run_lua("check(h:open_set('instincts') == true, 'open_set(instincts) queues')");
+        events_are("error:instincts:open_set:the game refused it: it opens instincts only in Monstrosity",
+            "outside Monstrosity");
+        put16(g_fake->mon_player, 0x10, 1);
+        run_lua("check(h:open_set('instincts') == true, 'open_set(instincts) queues')");
+        put16(g_fake->mon_player, 0x10, 0);
+        snprintf(label, sizeof(label), "open_set(instincts): outside Monstrosity the opener unrun; in it the opener:"
+            " mp_stat's and mp_cstm's openers, mp_mncst: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "mp_stat mp_cstm mp_mncst") == 0 && fs->calls[kSetsInstincts] == 1, label);
+        events_are("opened:mp_stat opened:mp_cstm opened:mp_mncst", "each its own opened event");
+        close_all();
+
+        // synthesis and the maze editor, by the item at an inventory index:
+        // 5 a crystal, 6 an M tabula, 7 an R tabula, 8 a plain item, 9 an
+        // item with no data, 10 empty
+        uint8_t* inventory = g_fake->player + 0x9860;
+        uint8_t saved[6 * 0x2C];
+        memcpy(saved, inventory + 5 * 0x2C, sizeof(saved));
+        memset(inventory + 5 * 0x2C, 0, sizeof(saved));
+        const uint16_t ids[5] = {4096, 28672, 28704, 4509, 9999};
+        for (int i = 0; i < 5; ++i) {
+            put16(inventory + (5 + i) * 0x2C, 0, ids[i]);
+            inventory[(5 + i) * 0x2C + 2] = static_cast<uint8_t>(5 + i);
+            put32(inventory + (5 + i) * 0x2C, 4, 1);
+        }
+        fs->use_check = 1;
+        // the main menu's Items row first, which opens inventor with the
+        // row's list; a list that is none of the game's (its table's first
+        // routine outside the code) refuses the synthesis, whose cancel would
+        // reopen inventor with it
+        uint8_t* ictl = controller_named("inventor");
+        uint32_t list_was;
+        memcpy(&list_was, ictl + 0x5C, 4);
+        put32(ictl, 0x5C, 0xBAADF00Du);
+        static const void* bad_table[1];
+        static const void* bad_list[1];
+        bad_list[0] = bad_table;
+        uint8_t* policy_was = *g_fake->policy_ptr;
+        *g_fake->policy_ptr = reinterpret_cast<uint8_t*>(bad_list);
+        g_fake->routes->order[0] = '\0';
+        run_lua("check(h:open_set('synthesis', '5') == true, 'open_set(synthesis, 5) queues')");
+        events_are("opened:inventor opened:iteminfo error:synthesis:open_set:the game\\'s Items row left inventor with"
+            " no list of the game\\'s, which the synthesis\\'s cancel would reopen it with",
+            "the Items row\\'s list none of the game\\'s");
+        check(fs->calls[kSetsSynthesis] == 0 && strcmp(g_fake->routes->order, "items_view inventor_open") == 0,
+            "synthesis refused when the Items row leaves inventor no list of the game's: the opener unrun");
+        close_all();
+        *g_fake->policy_ptr = policy_was;
+        put32(ictl, 0x5C, 0xBAADF00Du);
+        ictl[0x90] = 0;
+        g_fake->routes->order[0] = '\0';
+        run_lua("check(h:open_set('synthesis', '5') == true, 'open_set(synthesis, 5) queues')");
+        snprintf(label, sizeof(label), "open_set(synthesis, 5), a crystal: the Items row (the item view (0, 1),"
+            " inventor's +0x90 set 1, inventor opened with the row's list), the item use's check (0x77, 0), then the"
+            " synthesis's opener on tskill1's controller with (5, 4096, 0): inventor, iteminfo, tskill1: [%s]",
+            opened(now, sizeof(now)));
+        uint32_t list_now;
+        memcpy(&list_now, ictl + 0x5C, 4);
+        check(strcmp(now, "inventor iteminfo tskill1") == 0 && fs->calls[kSetsSynthesis] == 1
+                && fs->self == controller_named("tskill1") && fs->args[0] == 5 && fs->args[1] == 4096
+                && fs->args[2] == 0 && fs->check_args[0] == 0x77 && fs->check_args[1] == 0
+                && strcmp(g_fake->routes->order, "items_view inventor_open") == 0 && ictl[0x90] == 1
+                && list_now == static_cast<uint32_t>(reinterpret_cast<uintptr_t>(policy_was)), label);
+        events_are("opened:inventor opened:iteminfo opened:tskill1",
+            "the Items row\\'s inventor and iteminfo, none for the opener\\'s open of them again, then tskill1");
+        close_all();
+        run_lua("for _, i in ipairs({'6', '8', '9', '10'}) do\n"
+            "  check(h:open_set('synthesis', i) == true, 'open_set(synthesis, ' .. i .. ') queues')\n"
+            "end");
+        events_are("error:synthesis:open_set:the item at index 6 is not a crystal"
+            " error:synthesis:open_set:the item at index 8 is not a crystal"
+            " error:synthesis:open_set:the game has no data for the item at index 9"
+            " error:synthesis:open_set:the inventory has no item at index 10",
+            "a tabula, a plain item, an item with no data and an empty index refused");
+        fs->use_check = 0;
+        run_lua("check(h:open_set('synthesis', '5') == true, 'open_set(synthesis, \\'5\\') queues')");
+        fs->use_check = 1;
+        events_are("opened:inventor opened:iteminfo error:synthesis:open_set:the game refused it",
+            "the item use\\'s check refusing after the Items row");
+        check(fs->calls[kSetsSynthesis] == 1 && strcmp(opened(now, sizeof(now)), "inventor iteminfo") == 0,
+            "synthesis refused by the item, and by the item use's check: the opener unrun, the Items row's inventor"
+            " and iteminfo open");
+        close_all();
+        phase(L,
+            "h:poll()\n"
+            "local ok, why = h:open_set('synthesis')\n"
+            "check(ok == nil and why == \"the synthesis set opens for one crystal: give its index in the inventory, as"
+            " in open_set('synthesis', 5)\", 'open_set(synthesis) with no index: ' .. tostring(why))\n"
+            "ok, why = h:open_set('synthesis', '81')\n"
+            "check(ok == nil and why == \"no such inventory index: 81 (the crystal's index in the inventory, 1 to"
+            " 80)\", 'open_set(synthesis, 81): ' .. tostring(why))\n"
+            "ok, why = h:open_set('tabula', 'x')\n"
+            "check(ok == nil and why == \"no such inventory index: x (the Maze Tabula's index in the inventory, 1 to"
+            " 80)\", 'open_set(tabula, x): ' .. tostring(why))\n"
+            "ok, why = h:open_set('map', '5')\n"
+            "check(ok == nil and why == 'the map set takes no argument', 'open_set(map, 5): ' .. tostring(why))\n"
+            "local raised, err = pcall(h.open_set, h, 'synthesis', 5)\n"
+            "check(not raised and tostring(err):find('string expected', 1, true),"
+            "  'the binding takes the index as its digits, as hideui.lua hands it on: ' .. tostring(err))\n"
+            "check(#h:poll() == 0, 'no refusal reached the game thread')\n"
+            "return finish()\n");
+        run_lua("check(h:open_set('tabula', '6') == true, 'open_set(tabula, 6) queues')");
+        snprintf(label, sizeof(label), "open_set(tabula, 6), an M tabula: the maze editor's opener on prvdungp's"
+            " controller with (0, 6), its setup: prvdungp, bluehelp, bluinven: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "bluehelp bluinven prvdungp") == 0 && fs->calls[kSetsTabula] == 1
+                && fs->self == controller_named("prvdungp") && fs->args[0] == 0 && fs->args[1] == 6, label);
+        events_are("opened:prvdungp opened:bluehelp opened:bluinven", "each its own opened event");
+        close_all();
+        run_lua("check(h:open_set('tabula', '7') == true and h:open_set('tabula', '5') == true, 'both queue')");
+        const bool r_mode = fs->calls[kSetsTabula] == 2 && fs->args[0] == 1 && fs->args[1] == 7;
+        events_are("opened:prvdungp opened:bluehelp opened:bluinven"
+            " error:tabula:open_set:the item at index 5 is not a Maze Tabula", "an R tabula, then a crystal");
+        check(r_mode && fs->calls[kSetsTabula] == 2, "an R tabula opens the editor in mode 1; a crystal is refused,"
+            " the opener unrun");
+        close_all();
+        memcpy(inventory + 5 * 0x2C, saved, sizeof(saved));
+        memcpy(ictl + 0x5C, &list_was, 4);
+
+        // the macro editor on its object, the palette last used last
+        g_fake->macro_editor[0x0C] = 1;
+        run_lua("check(h:open_set('macros') == true, 'open_set(macros) queues')");
+        snprintf(label, sizeof(label), "open_set(macros): the macro editor's opener on its object: mcrbedit, mcr2edit"
+            " and mcr1edit: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "mcrbedit mcr1edit mcr2edit") == 0, label);
+        events_are("opened:mcrbedit opened:mcr2edit opened:mcr1edit", "palette 1 last used: mcr1edit last");
+        close_all();
+        *g_fake->macro_editor_ptr = NULL;
+        run_lua("check(h:open_set('macros') == true, 'open_set(macros) queues')");
+        *g_fake->macro_editor_ptr = g_fake->macro_editor;
+        events_are("error:macros:open_set:the game\\'s macro editor does not exist yet", "no editor object yet");
+
+        // a block on a member refuses up front
+        phase(L,
+            "h:poll()\n"
+            "local other = hu.new('blocker')\n"
+            "check(other:block('statpup') == true and other:block('mapframe') == true, 'another handle blocks')\n"
+            "local ok, why = h:open_set('attachments')\n"
+            "local ok2, why2 = h:open_set('map')\n"
+            "check(ok == nil and why == 'statpup is blocked; the attachments set opens it' and ok2 == nil"
+            "  and why2 == 'mapframe is blocked; the map set opens it', 'blocked members: ' .. tostring(why) .. ', '"
+            "  .. tostring(why2))\n"
+            "check(other:release() == true, 'the blocker releases')\n"
+            "return finish()\n");
+
+        // the open routine's last argument: 0 for titlehan, which shows at
+        // once over titlewin; 1 for targetwi, which parks under ut_point
+        close_all();
+        run_lua("check(h:open('titlewin') == true and h:open('titlehan') == true, 'titlewin and titlehan open')");
+        const uint8_t* han = live_menu(row_named("titlehan"));
+        uint32_t han_state = 0xFF;
+        if (han) {
+            memcpy(&han_state, han + 0x10, 4);
+        }
+        snprintf(label, sizeof(label), "open(titlehan) over titlewin, its overlap group's: the open routine's last"
+            " argument 0 (%d), and titlehan shows at once (state 0x%X)", *g_fake->last_overlap,
+            static_cast<unsigned>(han_state));
+        check(*g_fake->last_overlap == 0 && han && han_state != 0x0E && han[0x75] == 0, label);
+        events_are("opened:titlewin opened:titlehan", "both opened, nothing covered");
+        run_lua("check(h:open('ut_point') == true and h:open('targetwi') == true, 'ut_point and targetwi open')");
+        const uint8_t* target = live_menu(row_named("targetwi"));
+        uint32_t target_state = 0;
+        if (target) {
+            memcpy(&target_state, target + 0x10, 4);
+        }
+        snprintf(label, sizeof(label), "open(targetwi) under ut_point: the open routine's last argument 1 (%d), as"
+            " the game's own openers pass it, and targetwi opens dormant under ut_point (state 0x%X)",
+            *g_fake->last_overlap, static_cast<unsigned>(target_state));
+        check(*g_fake->last_overlap == 1 && target && target_state == 0x0E && target[0x75] == 1, label);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. tostring(e.name) end\n"
+            "check(table.concat(seen, ' ') == 'opened:ut_point opened:targetwi' and h:info('targetwi').covered,"
+            "  'targetwi opened, and covered as info reads it: ' .. table.concat(seen, ' '))\n"
+            "return finish()\n");
+        close_all();
     }
 
     // -- the compass (0.8.0): the stand-in's object and draw entry, hooked;
@@ -1884,6 +4288,1088 @@ int main(int argc, char** argv) {
             "return finish()\n");
     }
 
+    // -- open(name, argument) and the sets past macros (0.11.0): the argument
+    //    as hideui.lua hands it on (a number as its digits, a table as
+    //    key=value pairs), refused up front for a value outside the window's
+    //    range; each route as the game's own row, command or list runs it,
+    //    through the stand-in's routines and sites (the game's bytes where
+    //    the engine runs them), the window its opener brings along held off
+    {
+        static const char* const members[] = {
+            "storage", "storage2", "mogpost", "jobcselu", "friend", "titlehan", "msglist", "blklist", "mount",
+            "abisortw", "subwindo", "jbpcat", "fp_cat2", "conf11l", "quest00", "quest01", "miss00", "scresult",
+            "searchjo", "comgenre", "sccompar", "scsibori", "inventor", "iteminfo", "itemxinf", "itemyinf",
+            "casttime", "eventtim", "persona", "mp_stat", "macro", "mcrledit", "map0", "scanlist", "cnqframe",
+            "colopoin", "coloresu", "colorank", "textcol1", "textcol2", "mcrbedit", "mcr1edit", "mcr2edit", "level",
+            "statcom2", "mp_stat", "mp_cstm", "mp_mncst", "comgenre", "sccompar"};
+        const int count = static_cast<int>(sizeof(members) / sizeof(members[0]));
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        auto opened = [&](char* out, size_t size) -> const char* {
+            out[0] = '\0';
+            for (int i = 0; i < count; ++i) {
+                const uint8_t* menu = live_menu(row_named(members[i]));
+                if (menu && !menu[0x6E] && !menu[0x70]) {
+                    const size_t used = strlen(out);
+                    snprintf(out + used, size - used, "%s%s", used ? " " : "", members[i]);
+                }
+            }
+            return out;
+        };
+        FakeRoutes* fr = g_fake->routes;
+        auto close_all = [&]() {
+            pause_game();
+            for (int i = 0; i < count; ++i) {
+                if (live_menu(row_named(members[i]))) {
+                    char key[17];
+                    snprintf(key, sizeof(key), "menu    %-8s", members[i]);
+                    close_by_name(g_fake->mcb, NULL, key);
+                }
+            }
+            resume_game();
+            wait_frames(3);
+            phase(L, "h:poll()\nreturn finish()\n");
+            fr->order[0] = '\0';
+        };
+        auto events_are = [&](const char* want, const char* what) {
+            char script[1400];
+            snprintf(script, sizeof(script),
+                "local seen = {}\n"
+                "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. tostring(e.name)"
+                "  .. (e.event == 'error' and (':' .. e.verb .. ':' .. e.reason) or '') end\n"
+                "check(table.concat(seen, ' ') == '%s', '%s: ' .. table.concat(seen, ' '))\n"
+                "return finish()\n", want, what);
+            phase(L, script);
+        };
+        auto run_lua = [&](const char* line) {
+            char script[600];
+            snprintf(script, sizeof(script), "h:poll()\n%s\nreturn finish()\n", line);
+            phase(L, script);
+            wait_frames(3);
+        };
+        auto open_now = [&](const char* nm) {
+            char key[17];
+            snprintf(key, sizeof(key), "menu    %-8s", nm);
+            open_on_game_thread(key);
+            wait_frames(2);
+            phase(L, "h:poll()\nreturn finish()\n");
+        };
+        char now[512];
+        char label[640];
+        close_all();
+
+        // refused on the Lua thread, nothing queued
+        phase(L,
+            "h:poll()\n"
+            "local cases = {\n"
+            "  {'open', 'jobcselu', nil, \"jobcselu needs a job to change: open('jobcselu', 'main')\"},\n"
+            "  {'open', 'mogpost', 'post', \"no such mode of mogpost: post ('mog_house' or 'nomad')\"},\n"
+            "  {'open', 'jbpcat', '23', 'no such job of jbpcat: 23'},\n"
+            "  {'open', 'iteminfo', 'bag=wallet;slot=1', 'no such bag for iteminfo: wallet'},\n"
+            "  {'open', 'iteminfo', 'item=65535', 'no such item id for iteminfo: 65535'},\n"
+            "  {'open', 'macro', 'palette=alt;row=11', 'no such row of macro: 11 (1 to 10)'},\n"
+            "  {'open', 'casttime', '0', 'no such length of casttime: 0'},\n"
+            "  {'open', 'persona', 'status', 'persona takes no argument'},\n"
+            "  {'open', 'mp_stat', nil, \"mp_stat opens only with its set: use open_set('status')\"},\n"
+            "  {'open', 'miss00', 'zilart', \"no such log of miss00: zilart ('San d'Oria', 'Bastok'\"},\n"
+            "  {'open', 'quest01', nil, 'quest01 needs quest00 open'},\n"
+            "  {'open', 'sccompar', 'purpose=comment;category=2', 'sccompar needs comgenre or scresult open'},\n"
+            "  {'open', 'storage', 'bag=inventory;slot=1;item', 'storage: the argument is not one hideui reads'},\n"
+            "  {'open_set', 'region', nil, \"the region set opens for one kind: 'Conquest', 'Besieged', 'Campaign' or"
+            " 'Colonization'\"},\n"
+            "  {'open_set', 'region', 'moon', 'no such kind of the region set: moon'},\n"
+            "  {'open_set', 'text_colors', '5', 'no such category of the text_colors set: 5'},\n"
+            "  {'open_set', 'compare', 'item=16555', 'itemxinf needs iteminfo open'},\n"
+            "  {'open_set', 'friend', '1', 'the friend set takes no argument'},\n"
+            "}\n"
+            "for _, c in ipairs(cases) do\n"
+            "  local ok, why = h[c[1]](h, c[2], c[3])\n"
+            "  check(ok == nil and tostring(why):find(c[4], 1, true) == 1, c[1] .. '(' .. c[2] .. ', '"
+            "    .. tostring(c[3]) .. ') refused: ' .. tostring(why))\n"
+            "end\n"
+            "check(#h:poll() == 0, 'no refusal reached the game thread')\n"
+            "return finish()\n");
+        {
+            HuEngineApi api;
+            HuEngineHandle raw = {-1, 0};
+            char why[512] = "";
+            if (record_api(&api)) {
+                api.handle_open("raw_route", &raw, why, sizeof(why));
+            }
+            const bool old_route = raw.slot >= 0 && api.open(&raw, "storage", why, sizeof(why)) == 1;
+            const bool old_bare = raw.slot >= 0 && api.open8(&raw, "casttime", why, sizeof(why)) == 0
+                && strstr(why, "casttime needs a length") == why;
+            const bool new_needs = raw.slot >= 0 && api.open9(&raw, "casttime", NULL, why, sizeof(why)) == 0
+                && strstr(why, "casttime needs a length") == why;
+            if (raw.slot >= 0) {
+                api.handle_release(&raw);
+            }
+            wait_frames(3);
+            check(old_route && old_bare && new_needs, "an old slot's plain open of a window with a default runs its"
+                " route; one of a window that needs an argument is refused in every slot");
+            close_all();
+        }
+
+        run_lua("check(h:open('storage') == true and h:open('storage2') == true and h:open('mogpost') == true,"
+            " 'storage, storage2 and mogpost queue')");
+        events_are("error:storage:open:the game refused it: the Mog House\\'s storage opens only in the Mog House"
+            " error:storage2:open:the game refused it: the Nomad Moogle\\'s storage opens only where a Nomad Moogle"
+            " serves error:mogpost:open:the game refused it: the Mog House\\'s post opens only in the Mog House",
+            "the Mog House\\'s storage and post and the Nomad Moogle\\'s storage refused outside their areas");
+        *g_fake->mog_house_ptr = g_fake->mog_house;
+        run_lua("check(h:open('storage') == true and h:open('storage2') == true, 'storage and storage2 queue')");
+        *g_fake->mog_house_ptr = NULL;
+        events_are("opened:storage error:storage2:open:the game refused it: the Nomad Moogle\\'s storage opens only"
+            " where a Nomad Moogle serves", "in the Mog House its storage, and the Nomad Moogle\\'s refused");
+        *g_fake->nomad_ptr = g_fake->mog_house;
+        run_lua("check(h:open('storage2') == true, 'storage2 queues')");
+        *g_fake->nomad_ptr = NULL;
+        snprintf(label, sizeof(label), "open(storage) in the Mog House and open(storage2) where a Nomad Moogle"
+            " serves: the storage list's opener, the game's bytes, on each one's controller with 0 and 1: [%s]",
+            opened(now, sizeof(now)));
+        check(strcmp(now, "storage storage2") == 0 && get32(controller_named("storage"), 0x14) == 0
+                && get32(controller_named("storage2"), 0x14) == 1, label);
+        events_are("opened:storage2", "storage2 its own opened event");
+        close_all();
+
+        run_lua("check(h:open('mogpost', 'nomad') == true, 'mogpost, nomad queues')");
+        events_are("error:mogpost:open:the game refused it: the Nomad Moogle\\'s post asks the server for the delivery"
+            " box only in the Mog House or where a Nomad Moogle serves", "nomad refused with neither manager");
+        *g_fake->nomad_ptr = g_fake->mog_house;
+        run_lua("check(h:open('mogpost', 'nomad') == true, 'mogpost, nomad queues')");
+        *g_fake->nomad_ptr = NULL;
+        check(live_menu(row_named("mogpost")) && get32(controller_named("mogpost"), 0x14) == 1,
+            "open(mogpost, nomad) where a Nomad Moogle serves: the post menu's opener, the game's bytes, with 1");
+        events_are("opened:mogpost", "mogpost opened");
+        close_all();
+
+        *g_fake->mog_house_ptr = g_fake->mog_house;
+        run_lua("check(h:open('jobcselu', 'support') == true, 'jobcselu, support queues')");
+        *g_fake->mog_house_ptr = NULL;
+        check(live_menu(row_named("jobcselu")) && get32(controller_named("jobcselu"), 0x14) == 2
+                && strcmp(fr->order, "language_key") == 0 && fr->args[0] == 6,
+            "open(jobcselu, support) in the Mog House: the row 2 at +0x14, then the open by the key the language's"
+            " lookup (6) answers");
+        events_are("opened:jobcselu", "jobcselu opened");
+        close_all();
+
+        run_lua("check(h:open('friend') == true, 'friend queues')");
+        snprintf(label, sizeof(label), "open(friend): the friend list's opener with 0, titlehan it opens held off:"
+            " [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "friend") == 0 && strcmp(fr->order, "friend") == 0 && fr->args[0] == 0
+                && fr->self == controller_named("friend"), label);
+        events_are("opened:friend", "friend alone");
+        close_all();
+        run_lua("check(h:open_set('friend') == true, 'open_set(friend) queues')");
+        events_are("opened:friend opened:titlehan", "open_set(friend): friend and titlehan");
+        close_all();
+        fr->msglist = 0;
+        run_lua("check(h:open('msglist') == true, 'msglist queues')");
+        fr->msglist = 1;
+        events_are("error:msglist:open:the game refused it: PlayOnline\\'s mail is busy or not there",
+            "the mail list\\'s opener refusing");
+        run_lua("check(h:open('msglist') == true and h:open('blklist') == true, 'msglist and blklist queue')");
+        snprintf(label, sizeof(label), "open(msglist): the mail list's opener with (0, 0, 0), titlehan held off;"
+            " open(blklist): the blacklist's opener: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "msglist blklist") == 0, label);
+        events_are("opened:msglist opened:blklist", "msglist alone, then blklist");
+        close_all();
+        run_lua("check(h:open_set('mail') == true, 'open_set(mail) queues')");
+        events_are("opened:msglist opened:titlehan", "open_set(mail): msglist and titlehan");
+        close_all();
+
+        run_lua("check(h:open('mount') == true, 'mount queues')");
+        snprintf(label, sizeof(label), "open(mount): the mount list's opener (the game's bytes) with (1, 0), its"
+            " setup on mount's controller, subwindo held off: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "mount") == 0 && strcmp(fr->order, "mount_build") == 0
+                && fr->self == controller_named("mount"), label);
+        events_are("opened:mount", "mount alone");
+        close_all();
+        run_lua("check(h:open_set('mount') == true, 'open_set(mount) queues')");
+        events_are("opened:abisortw opened:mount opened:subwindo", "open_set(mount) with a sort: abisortw, mount,"
+            " subwindo");
+        close_all();
+
+        fr->job_level[6] = 90;
+        run_lua("check(h:open('jbpcat', 'thf') == true, 'jbpcat, thf queues')");
+        events_are("error:jbpcat:open:the game refused it: its job list offers thf only at level 99",
+            "the Job Points test, the game\\'s bytes, refusing a job under 99");
+        fr->job_level[6] = 99;
+        run_lua("check(h:open('jbpcat', 'thf') == true and h:open('fp_cat2', '3') == true, 'jbpcat and fp_cat2"
+            " queue')");
+        check(controller_named("jbpcat")[0x54] == 6 && controller_named("fp_cat2")[0x50] == 3,
+            "open(jbpcat, thf) at 99: its opener with 6; open(fp_cat2, 3) with 3, each the game's bytes");
+        events_are("opened:jbpcat opened:fp_cat2", "jbpcat and fp_cat2 opened");
+        close_all();
+
+        run_lua("check(h:open('conf11l', '2') == true and h:open('quest00', 'Ranking Information') == true,"
+            " 'conf11l and quest00 queue')");
+        check(get32(controller_named("conf11l"), 0x14) == 1 && get32(controller_named("quest00"), 0x68) == 2,
+            "open(conf11l, 2) writes 1 and open(quest00, 'Ranking Information') 2 where the game's rows write them");
+        events_are("opened:conf11l opened:quest00", "conf11l and quest00 opened");
+        fr->order[0] = '\0';
+        run_lua("check(h:open('quest01', '2') == true, 'quest01 queues')");
+        events_are("error:quest01:open:the game refused it: quest01\\'s list 2 opens only from quest00\\'s mode 1",
+            "quest01\\'s list 2 refused from quest00\\'s mode 3");
+        close_all();
+        run_lua("check(h:open('quest00') == true, 'quest00 queues')");
+        events_are("opened:quest00", "quest00 in its mode 1");
+        fr->order[0] = '\0';
+        run_lua("check(h:open('quest01', '2') == true, 'quest01 queues')");
+        check(get32(controller_named("quest00"), 0x68) == 0 && strcmp(fr->order, "quest00_dim quest00_dim2 quest01") == 0
+                && fr->args[0] == 1 && fr->self == controller_named("quest01") && live_menu(row_named("quest01")),
+            "open(quest01, 2) from quest00's mode 1: quest00's confirm's two calls, quest01's open, its setup with 1");
+        events_are("opened:quest01", "quest01 opened");
+        close_all();
+
+        *g_fake->nation = 1;
+        run_lua("check(h:open('miss00') == true, 'miss00 queues')");
+        const bool nation = get32(controller_named("miss00"), 0x70) == 1;
+        events_are("opened:miss00", "miss00 opened on the nation\\'s log");
+        fr->expansion = 0;
+        run_lua("check(h:open('miss00', 'Chains of Promathia') == true, 'miss00, Chains of Promathia queues')");
+        events_are("error:miss00:open:the game refused it: the Chains of Promathia log\\'s expansion is not on",
+            "a log whose expansion is off");
+        fr->expansion = 1u << 2;
+        close_all();
+        run_lua("check(h:open('miss00', 'chains of promathia') == true, 'miss00, chains of promathia queues')");
+        check(nation && get32(controller_named("miss00"), 0x70) == 4, "open(miss00): the missions menu's setter, the"
+            " game's bytes, with 0 for the nation's log; a named log behind its expansion bit, written");
+        events_are("opened:miss00", "miss00 opened again on its log");
+        close_all();
+
+        uint8_t* results = controller_named("scresult");
+        put32(results, 0x58, 0);
+        run_lua("check(h:open('searchjo') == true, 'searchjo queues')");
+        check(strcmp(fr->order, "search_reset") == 0 && fr->self == results && fr->args[0] == 0
+                && live_menu(row_named("searchjo")),
+            "open(searchjo): the search reset on scresult's controller with 0, then the picker");
+        events_are("opened:searchjo", "searchjo opened");
+        close_all();
+        run_lua("check(h:open('searchjo', 'refine') == true, 'searchjo, refine queues')");
+        events_are("error:searchjo:open:the game refused it: no search has run to refine", "refine with no search");
+        put32(results, 0x58, 1);
+        run_lua("check(h:open('comgenre', 'refine') == true, 'comgenre, refine queues')");
+        check(get16(controller_named("comgenre"), 0x14) == 2 && fr->order[0] == '\0',
+            "open(comgenre, refine) after a search: its opener, the game's bytes, with 2, no reset");
+        events_are("opened:comgenre", "comgenre opened");
+        run_lua("check(h:open('sccompar', 'purpose=comment;category=2') == true, 'sccompar queues')");
+        check(get32(controller_named("sccompar"), 0x14) == 0 && get32(controller_named("sccompar"), 0x18) == 0x20,
+            "open(sccompar, {purpose = comment, category = 2}) with comgenre open: its opener, the game's bytes, with"
+            " 0 and the base 0x20");
+        events_are("opened:sccompar", "sccompar opened");
+        open_now("scresult");
+        run_lua("check(h:open('scsibori') == true, 'scsibori queues')");
+        events_are("opened:scsibori", "scsibori with scresult open and a search run");
+        put32(results, 0x58, 0);
+        close_all();
+
+        uint8_t* inventory = g_fake->player + 0x9860;
+        uint8_t kept[0x2C];
+        memcpy(kept, inventory + 5 * 0x2C, sizeof(kept));
+        memset(inventory + 5 * 0x2C, 0, sizeof(kept));
+        put16(inventory + 5 * 0x2C, 0, 16555);
+        inventory[5 * 0x2C + 2] = 5;
+        put32(inventory + 5 * 0x2C, 4, 1);
+        run_lua("check(h:open('iteminfo', 'bag=inventory;slot=5') == true, 'iteminfo queues')");
+        check(strcmp(fr->order, "item_panel") == 0 && fr->self == controller_named("iteminfo") && fr->args[0] == 0
+                && fr->args[1] == 16555 && fr->args[2] == 5 && fr->args[3] == 0
+                && fr->args[4] == static_cast<int32_t>(reinterpret_cast<uintptr_t>(inventory + 5 * 0x2C + 0x10)),
+            "open(iteminfo, {bag, slot}): the item panel's set-and-open with mode 0, the record's id, index, bag and"
+            " extra data");
+        events_are("opened:iteminfo", "iteminfo opened");
+        fr->bag_size[0] = 5;
+        run_lua("check(h:open('iteminfo', 'bag=inventory;slot=5') == true, 'iteminfo queues')");
+        events_are("error:iteminfo:open:inventory has no slot 5: it has slots 1 to 4 now",
+            "a slot past the bag\\'s size");
+        fr->bag_size[0] = 0xFF;
+        run_lua("check(h:open('iteminfo', 'bag=0;slot=1') == true, 'iteminfo queues')");
+        fr->bag_size[0] = 81;
+        events_are("error:iteminfo:open:inventory has no slots now", "a bag with none");
+        run_lua("check(h:open('iteminfo', 'item=5021') == true and h:open('itemxinf', 'item=16555') == true,"
+            " 'both queue')");
+        snprintf(label, sizeof(label), "open(iteminfo, {item = 5021}) refused for an item of type 21; open(itemxinf,"
+            " {item}) with mode 5 beside equip and inventor, itemyinf held off: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "iteminfo itemxinf") == 0 && fr->args[0] == 5 && fr->args[4] == 0
+                && fr->args[5] == static_cast<int32_t>(reinterpret_cast<uintptr_t>(controller_named("equip")))
+                && fr->args[6] == static_cast<int32_t>(reinterpret_cast<uintptr_t>(controller_named("inventor"))),
+            label);
+        events_are("error:iteminfo:open:item 5021 is of a kind the panel shows with its bag\\'s copy of it, and by its"
+            " id alone it would crash the client: give its bag and slot opened:itemxinf", "the type refused, then"
+            " itemxinf");
+        run_lua("check(h:open_set('compare', 'bag=inventory;slot=5') == true, 'open_set(compare) queues')");
+        events_are("opened:itemyinf", "open_set(compare): itemyinf, itemxinf already open");
+        memcpy(inventory + 5 * 0x2C, kept, sizeof(kept));
+        close_all();
+
+        run_lua("check(h:open('casttime', 'seconds=2;style=countdown') == true and h:open('eventtim', '30') == true,"
+            " 'the timers queue')");
+        float cast_ticks = 0;
+        float event_ticks = 0;
+        memcpy(&cast_ticks, controller_named("casttime") + 0x14, 4);
+        memcpy(&event_ticks, controller_named("eventtim") + 0x14, 4);
+        check(get32(controller_named("casttime"), 0x20) == 4 && cast_ticks == 120.0f
+                && get32(controller_named("eventtim"), 0x20) == 0 && event_ticks == 1800.0f,
+            "the timers' openers, the game's bytes, with the kind and the length in 1/60 seconds");
+        events_are("opened:casttime opened:eventtim", "both timers opened");
+        close_all();
+        run_lua("check(h:open('eventtim', '2.5') == true and h:open('casttime', 'seconds=0.016666666666666666')"
+            " == true,"
+            " 'fractions queue')");
+        memcpy(&cast_ticks, controller_named("casttime") + 0x14, 4);
+        memcpy(&event_ticks, controller_named("eventtim") + 0x14, 4);
+        check(cast_ticks == 1.0f && event_ticks == 150.0f, "a fraction of a second in the game's unit: 2.5 seconds"
+            " 150 counts, 1/60 one");
+        events_are("opened:eventtim opened:casttime", "both timers opened");
+        close_all();
+
+        run_lua("check(h:open('persona') == true, 'persona queues')");
+        const bool layout = controller_named("persona")[0x1C] == 2 && live_menu(row_named("persona"));
+        events_are("opened:persona", "persona in the equipment layout");
+        close_all();
+        run_lua("check(h:open_set('status') == true, 'open_set(status) queues')");
+        const bool status = controller_named("persona")[0x1C] == 1;
+        events_are("opened:persona", "open_set(status): persona in the Status row\\'s layout");
+        close_all();
+        put16(g_fake->mon_player, 0x10, 1);
+        run_lua("check(h:open_set('status') == true, 'open_set(status) queues')");
+        put16(g_fake->mon_player, 0x10, 0);
+        check(layout && status && live_menu(row_named("mp_stat")) && get32(controller_named("mp_stat"), 0x14) == 0,
+            "open(persona) writes the equipment layout 2; open_set(status) the Status row's 1, or in Monstrosity runs"
+            " mp_stat's opener, the game's bytes, with 0");
+        events_are("opened:mp_stat", "mp_stat in Monstrosity");
+        close_all();
+        run_lua("check(h:open_set('status') == true, 'open_set(status) queues')");
+        open_now("level");
+        open_now("statcom2");
+        run_lua("check(h:close('persona') == true, 'close(persona) queues')");
+        snprintf(label, sizeof(label), "close(persona) with statcom2 open: the Status screen's Escape, statcom2 closed"
+            " by instance, its begin-close (the game's bytes) closing persona: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "level") == 0, label);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[e.event .. ':' .. e.name] = true end\n"
+            "check(seen['closed:statcom2'] and seen['closed:persona'] and not seen['closed:level'],"
+            "  'closed statcom2 and persona')\n"
+            "return finish()\n");
+        close_all();
+
+        g_fake->macro_editor[0x0C] = 1;
+        const LONG sounds = fr->switch_sounds;
+        run_lua("check(h:open('macro', 'palette=alt;row=4') == true, 'macro queues')");
+        snprintf(label, sizeof(label), "open(macro, {palette = alt, row = 4}) on the Ctrl palette: the game's palette"
+            " switch (its bytes, its sound) to 2, mcr2edit it opens held off, then the editor's pick with 3, mcrledit"
+            " held off: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "macro") == 0 && g_fake->macro_editor[0x0C] == 2 && g_fake->macro_editor[0x0E] == 3
+                && fr->switch_sounds == sounds + 1, label);
+        events_are("opened:macro", "macro alone");
+        close_all();
+        run_lua("check(h:open('macro', 'palette=alt;row=2') == true, 'macro queues')");
+        check(g_fake->macro_editor[0x0C] == 2 && g_fake->macro_editor[0x0E] == 1 && fr->switch_sounds == sounds + 1,
+            "open(macro) on the palette already up: no switch, the pick");
+        events_are("opened:macro", "macro again");
+        g_fake->macro_editor[0x0C] = 1;
+        close_all();
+
+        open_now("map0");
+        fr->untracked = 0;
+        fr->tracking = 1;
+        fr->scan_answer = -1;
+        run_lua("check(h:open('scanlist') == true, 'scanlist queues')");
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(seen, ' ') == 'opened:comyn', 'the Wide Scan row\\'s question: '"
+            "  .. table.concat(seen, ' '))\n"
+            "local q = h:options('comyn')\n"
+            "check(q and q.name == 'comyn' and q.cancellable ~= nil, 'its question on comyn')\n"
+            "check(h:answer('comyn', false) == true, 'no')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(fr->scan_answer == 0 && fr->tracking == 1 && !live_menu(row_named("scanlist")),
+            "open(scanlist) while the map tracks: the Wide Scan row's question on comyn, its callback (the game's"
+            " own) answered no: still tracking, no list");
+        phase(L, "h:poll()\nreturn finish()\n");
+        run_lua("check(h:open('scanlist') == true, 'scanlist queues')");
+        phase(L,
+            "h:poll()\n"
+            "check(h:answer('comyn', true) == true, 'yes')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(fr->scan_answer == 1 && fr->tracking == 0 && live_menu(row_named("scanlist")),
+            "answered yes: the callback stops the tracking and opens the list");
+        events_are("opened:scanlist closed:comyn", "scanlist opened, and comyn closed, the stand-in freeing it at"
+            " once and its closed event coming at the frame\\'s end");
+        close_all();
+        open_now("map0");
+        fr->tracking = 0;
+        run_lua("check(h:open('scanlist') == true, 'scanlist queues')");
+        check(live_menu(row_named("scanlist")) && strstr(fr->order, "list_format") != NULL,
+            "open(scanlist) with map0 open, not tracking: scanlist's opener, the game's bytes");
+        events_are("opened:scanlist", "scanlist opened");
+        fr->untracked = 1;
+        close_all();
+
+        put32(g_fake->route_player, 0x40, 230);
+        run_lua("check(h:open_set('region', 'colonization') == true, 'open_set(region) queues')");
+        snprintf(label, sizeof(label), "open_set(region, colonization): the Region Info opener on cnqframe's"
+            " controller with 3 and the player's area: cnqframe, colopoin: [%s]", opened(now, sizeof(now)));
+        check(strcmp(now, "cnqframe colopoin") == 0 && fr->args[0] == 3 && fr->args[1] == 230, label);
+        events_are("opened:cnqframe opened:colopoin", "cnqframe and colopoin");
+        open_now("colorank");
+        run_lua("check(h:open('coloresu', '5') == true, 'coloresu queues')");
+        check(get32(controller_named("coloresu"), 0x18) == 5 && live_menu(row_named("coloresu"))
+                && !live_menu(row_named("colorank")),
+            "open(coloresu, 5) on the Colonization map: the region written, coloresu opened, colorank closed");
+        events_are("opened:coloresu closed:colorank", "coloresu, and colorank closed");
+        run_lua("check(h:close('cnqframe') == true, 'close(cnqframe) queues')");
+        const bool fading = live_menu(row_named("cnqframe")) && (controller_named("cnqframe")[0x14] & 0x40)
+            && !live_menu(row_named("coloresu")) && !live_menu(row_named("colopoin"));
+        wait_frames(10);
+        check(fading && !live_menu(row_named("cnqframe")),
+            "close(cnqframe): its Escape, the fade's start (the stand-in's) and its windows closed by name, coloresu"
+            " and colopoin among them; the frame closes itself once faded");
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[e.event .. ':' .. e.name] = true end\n"
+            "check(seen['closed:coloresu'] and seen['closed:colopoin'] and seen['closed:cnqframe'],"
+            "  'closed coloresu, colopoin and cnqframe')\n"
+            "return finish()\n");
+        close_all();
+
+        run_lua("check(h:open_set('text_colors', '2') == true, 'open_set(text_colors) queues')");
+        check(get32(controller_named("textcol1"), 0x14) == 1 && get32(controller_named("textcol2"), 0x1C) == 1
+                && get32(controller_named("textcol3"), 0x18) == 1,
+            "open_set(text_colors, 2): the category 1 into textcol1, textcol2 and textcol3, as the menu's row writes");
+        events_are("opened:textcol2 opened:textcol1", "textcol2, then textcol1");
+        run_lua("check(h:close('textcol1') == true, 'close(textcol1) queues')");
+        snprintf(label, sizeof(label), "close(textcol1): its Escape, textcol2 then textcol1 closed by name: [%s]",
+            opened(now, sizeof(now)));
+        check(!live_menu(row_named("textcol1")) && !live_menu(row_named("textcol2")), label);
+        events_are("closed:textcol1 closed:textcol2", "textcol1 and textcol2 closed, at the frame\\'s end as the"
+            " stand-in frees them at once");
+        close_all();
+
+        // a parent's close leaves no child behind: quest01 closed through its
+        // own close before quest00's, as the player's Escape leaves it; and
+        // the instincts' Escape, the game's own routine (the stand-in's bytes)
+        run_lua("check(h:open('quest00', '3') == true, 'quest00 queues')");
+        run_lua("check(h:open('quest01', '6') == true, 'quest01 queues')");
+        run_lua("check(h:close('quest00') == true, 'close(quest00) queues')");
+        check(!live_menu(row_named("quest00")) && !live_menu(row_named("quest01")),
+            "close(quest00) with quest01 open: quest01 closed, then quest00");
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[e.event .. ':' .. e.name] = true end\n"
+            "check(seen['closed:quest01'] and seen['closed:quest00'], 'closed quest01 and quest00')\n"
+            "return finish()\n");
+        open_now("comgenre");
+        open_now("sccompar");
+        run_lua("check(h:close('comgenre') == true, 'close(comgenre) queues')");
+        check(!live_menu(row_named("comgenre")) && !live_menu(row_named("sccompar")),
+            "close(comgenre) with sccompar open and scresult closed: sccompar closed, then comgenre");
+        open_now("mp_stat");
+        open_now("mp_cstm");
+        open_now("mp_mncst");
+        run_lua("check(h:close('mp_mncst') == true, 'close(mp_mncst) queues')");
+        check(!live_menu(row_named("mp_stat")) && !live_menu(row_named("mp_cstm")) && !live_menu(row_named("mp_mncst")),
+            "close(mp_mncst): its Escape, the game's routine: mp_stat, mp_cstm and mp_mncst closed by name");
+        close_all();
+
+        run_lua("check(h:open_set('macros') == true, 'open_set(macros) queues')");
+        phase(L, "h:poll()\nreturn finish()\n");
+        fr->order[0] = '\0';
+        run_lua("check(h:close('mcr1edit') == true, 'close(mcr1edit) queues')");
+        snprintf(label, sizeof(label), "close(mcr1edit): a palette's Escape: the macro editor's close (the game's"
+            " bytes) of mcrbedit, mcr1edit and mcr2edit, then titlewin's step back (0, 2): [%s]",
+            opened(now, sizeof(now)));
+        check(now[0] == '\0' && strcmp(fr->order, "title") == 0 && fr->args[0] == 0 && fr->args[1] == 2
+                && fr->self == controller_named("titlewin"), label);
+        close_all();
+    }
+
+    // -- the target arrows (0.11.0): the stand-in's per-menu draw, sprite
+    //    draw and quad routine, hooked, under the stand-in's draw walk each
+    //    frame; the target window's draw paints its frame, its content and
+    //    its arrows, each quad tagged in the walk's log
+    {
+        FakeLog* fl = g_fake->log;
+        uint8_t* tctl = controller_named("targetwi");
+        const int trow = row_named("targetwi");
+        // The quads of the last walked frame, read between frames.
+        char drawn[128];
+        auto walked = [&]() {
+            wait_frames(3);
+            pause_game();
+            memcpy(drawn, fl->quads, sizeof(drawn));
+            drawn[sizeof(drawn) - 1] = '\0';
+            resume_game();
+            return static_cast<const char*>(drawn);
+        };
+        const bool target_was_open = live_menu(trow) != NULL;
+        if (target_was_open) {
+            phase(L,
+                "check(h:close('targetwi') == true, 'close(targetwi)')\n"
+                "return finish()\n");
+            wait_frames(3);
+        }
+        tctl[0x65] = 0;
+        tctl[0xB8] = 0;
+        tctl[0xBA] = 0;
+        put16(tctl, 0xBC, 0);
+        phase(L,
+            "h:poll()\n"
+            "return finish()\n");
+        open_on_game_thread("menu    targetwi");
+        wait_frames(2);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(seen, ' ') == 'opened:targetwi', 'targetwi opens with no arrow: '"
+            "  .. table.concat(seen, ' '))\n"
+            "local t = h:list().targetarrow or {}\n"
+            "check(t.name == 'targetarrow' and t.open == false and t.blockable == true and t.hidden == false"
+            "  and t.layer == nil and t.moved == false and t.detail and t.detail.policy == 0,"
+            "  'list(): targetarrow, not drawn, blockable, no hold, no layer')\n"
+            "local i = h:info('TargetArrow')\n"
+            "check(i and i.name == 'targetarrow' and i.open == false and i.resize.holds == 'none' and i.rect == nil"
+            "  and i.layer == nil and i.focused == false and i.docked == false and i.detail.controller"
+            "  and #i.detail.arrows == 0, 'info(targetarrow) in any case: not drawn, nothing to resize, no rect')\n"
+            "return finish()\n");
+        put16(tctl, 0xBC, 640);
+        put16(tctl, 0xBE, 300);
+        wait_frames(2);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(seen, ' ') == 'opened:targetarrow', 'an arrow to draw: opened{targetarrow}: '"
+            "  .. table.concat(seen, ' '))\n"
+            "local i = h:info('targetarrow')\n"
+            "local a = i.detail.arrows\n"
+            "check(i.open == true and i.rect == nil and i.origin == nil and #a == 1 and a[1].x == 640 and a[1].y == 300,"
+            "  'info(targetarrow): drawn, no box, the arrow at 640,300 under detail')\n"
+            "local set = {}\n"
+            "for _, n in ipairs(h:opened()) do set[n] = true end\n"
+            "check(set.targetarrow and set.targetwi and h:rects().targetarrow == nil and h:rects().targetwi,"
+            "  'opened() names targetarrow; rects() has targetwi\\'s frame and nothing for the arrows')\n"
+            "check(h:move('targetarrow', 10, 20) == true and h:resize('targetarrow', 3) == true"
+            "  and h:resize('targetarrow', 10, 20) == true and h:reset('targetarrow') == true,"
+            "  'move, resize and reset of targetarrow are accepted')\n"
+            "local a1, w1 = h:answer('targetarrow', 1)\n"
+            "local c1, w2 = h:cancel('targetarrow')\n"
+            "local o1, w3 = h:options('targetarrow')\n"
+            "check(a1 == nil and w1:find('takes no answer', 1, true) and c1 == nil and o1 == nil,"
+            "  'answer, cancel and options of targetarrow refuse as for any window that is no prompt')\n"
+            "return finish()\n");
+        tctl[0xB8] = 1;
+        put16(tctl, 0xC0, 700);
+        put16(tctl, 0xC2, 310);
+        InterlockedExchange(g_fake->draw_walk, 1);
+        const char* q = walked();
+        const int frames = count_of(q, 'f');
+        const bool plain = strstr(q, "tcaa") != NULL && count_of(q, 't') == 1 && count_of(q, 'a') == 2;
+        phase(L,
+            "check(h:remembered().targetarrow == nil and h:list().targetarrow.moved == false"
+            "  and h:info('targetarrow').detail.arrows[2].x == 700, 'nothing remembered for the arrows; the picking'"
+            "  .. ' arrow at 700 under detail')\n"
+            "check(h:hide('targetwi') == true, 'hide(targetwi)')\n"
+            "return finish()\n");
+        q = walked();
+        uint8_t* tmenu = live_menu(trow);
+        const bool kept = strstr(q, "aa") != NULL && count_of(q, 't') == 0 && count_of(q, 'c') == 0
+            && count_of(q, 'a') == 2 && count_of(q, 'f') == frames && registry_row(trow)[0x29] == 2
+            && tmenu && tmenu[0x60] == 2 && tmenu[0x77] == 0;
+        phase(L,
+            "check(h:hide('targetarrow') == true, 'hide(targetarrow)')\n"
+            "return finish()\n");
+        q = walked();
+        const bool both = count_of(q, 't') == 0 && count_of(q, 'c') == 0 && count_of(q, 'a') == 0
+            && count_of(q, 'f') == frames;
+        phase(L,
+            "check(h:unhide('targetwi') == true, 'unhide(targetwi)')\n"
+            "return finish()\n");
+        q = walked();
+        const bool arrowless = strstr(q, "tc") != NULL && count_of(q, 'a') == 0 && count_of(q, 'f') == frames
+            && tmenu[0x77] == 1;
+        phase(L,
+            "check(h:unhide('targetarrow') == true, 'unhide(targetarrow)')\n"
+            "return finish()\n");
+        q = walked();
+        const bool back = strstr(q, "tcaa") != NULL && count_of(q, 'f') == frames;
+        check(plain && kept && both && arrowless && back,
+            "the walk over the target window: frame, content and both arrows drawn; hidden, it keeps its layer 2 in"
+            " its row and live menu and +0x77 0, and only its arrows are drawn; with targetarrow hidden too,"
+            " nothing of it; targetarrow alone hidden, all but the arrows; both shown, all again; no other"
+            " window's frame dropped at any step");
+        phase(L,
+            "check(h:close('targetarrow') == true, 'close(targetarrow) is a hide')\n"
+            "return finish()\n");
+        q = walked();
+        const bool closed = count_of(q, 'a') == 0 && strstr(q, "tc") != NULL;
+        phase(L,
+            "check(h:info('targetarrow').hidden and h:info('targetarrow').open and #(h:poll()) == 0,"
+            "  'info(targetarrow) after close: hidden, still drawn by the game, no event')\n"
+            "check(h:open('targetarrow') == true and h:block('targetarrow') == true, 'open(targetarrow) is an unhide;'"
+            "  .. ' block(targetarrow) holds')\n"
+            "return finish()\n");
+        q = walked();
+        const bool blocked = count_of(q, 'a') == 0 && strstr(q, "tc") != NULL;
+        phase(L,
+            "local i = h:info('targetarrow')\n"
+            "check(i.blocked and i.hidden and #i.blocked_by == 1 and #(h:poll()) == 0, 'blocked: hidden by the block,'"
+            "  .. ' no event')\n"
+            "check(h:unblock('targetarrow') == true, 'unblock(targetarrow)')\n"
+            "return finish()\n");
+        q = walked();
+        check(closed && blocked && strstr(q, "tcaa") != NULL,
+            "close and block of targetarrow hold its arrows off the screen as a hide does; open and unblock drop"
+            " the hold");
+        tctl[0xB8] = 0;
+        put16(tctl, 0xBC, 0);
+        wait_frames(2);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "check(table.concat(seen, ' ') == 'closed:targetarrow' and h:info('targetarrow').open == false,"
+            "  'no arrow left to draw: closed{targetarrow}: ' .. table.concat(seen, ' '))\n"
+            "check(h:close('targetwi') == true, 'close(targetwi)')\n"
+            "return finish()\n");
+        InterlockedExchange(g_fake->draw_walk, 0);
+        wait_frames(3);
+        if (target_was_open) {
+            open_on_game_thread("menu    targetwi");
+            wait_frames(2);
+        }
+        phase(L,
+            "h:poll()\n"
+            "return finish()\n");
+    }
+
+    // -- a hidden window runs as the game runs it shown (0.11.0): the
+    //    stand-in's walk each frame, a close ended by the per-menu draw and
+    //    an instance freed by the update once it is marked. Nothing of a
+    //    hidden window's draw reaches the device and every other window's
+    //    does as before; conq3pts, closed by its own controller's draw once
+    //    its data is gone, runs out its input wait, closes and is freed on
+    //    the same frames hidden as shown; hidden maplist, answered, runs
+    //    map0's callback, which opens map0 again, then closes, and is freed
+    //    before map0's input wait runs out; nothing touches a freed instance
+    {
+        FakeLog* fl = g_fake->log;
+        typedef int (*CountFn)();
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        const CountFn touched = fake_export<CountFn>("fake_freed_touched");
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        const uint32_t close_frames = *g_fake->close_frames;
+        uint8_t* const conq_data = *g_fake->conq_data;
+        *g_fake->close_frames = 2;
+        InterlockedExchange(g_fake->close_draws, 1);
+        phase(L,
+            "h:poll()\n"
+            "return finish()\n");
+
+        // The device's draws of one walk, each menu's, made here while no
+        // frame runs.
+        auto painted_by = [&](const uint8_t* menu) {
+            int n = 0;
+            for (int i = 0; i < fl->painted_count; ++i) {
+                n += fl->painted[i] == menu ? 1 : 0;
+            }
+            return n;
+        };
+        auto walk_here = [&]() {
+            typedef void (__cdecl* WalkFn)();
+            WalkFn walk;
+            memcpy(&walk, &g_fake->walk_now, sizeof(walk));
+            pause_game();
+            const LONG before = fl->pixels;
+            walk();
+            const LONG pixels = fl->pixels - before;
+            resume_game();
+            return pixels;
+        };
+        uint8_t* equip = live_menu(kRowEquip) ? live_menu(kRowEquip)
+            : static_cast<uint8_t*>(open_on_game_thread("menu    equip"));
+        uint8_t* buff = live_menu(kRowBuff) ? live_menu(kRowBuff)
+            : static_cast<uint8_t*>(open_on_game_thread("menu    buff"));
+        wait_frames(2);
+        const LONG all = walk_here();
+        int before[64];
+        for (int i = 0; i < fl->walked_count; ++i) {
+            before[i] = painted_by(static_cast<const uint8_t*>(fl->walked[i]));
+        }
+        const int walked = fl->walked_count;
+        const int buff_before = painted_by(buff);
+        phase(L,
+            "check(h:hide('buff') == true, 'hide(buff)')\n"
+            "return finish()\n");
+        wait_frames(2);
+        const LONG hidden_all = walk_here();
+        bool others = equip && buff && fl->walked_count == walked;
+        int buff_after = -1;
+        for (int i = 0; others && i < walked; ++i) {
+            const uint8_t* m = static_cast<const uint8_t*>(fl->walked[i]);
+            const int now = painted_by(m);
+            if (m == buff) {
+                buff_after = now;
+            } else {
+                others = now == before[i];
+            }
+        }
+        char text[512];
+        snprintf(text, sizeof(text),
+            "one walk over %d menus: %ld draws at the device with nothing hidden, buff's %d; with buff hidden, %ld,"
+            " none of buff's (%d) and every other menu's as before", walked, static_cast<long>(all), buff_before,
+            static_cast<long>(hidden_all), buff_after);
+        check(others && buff_before > 0 && buff_after == 0 && hidden_all == all - buff_before
+                && painted_by(equip) > 0, text);
+        phase(L,
+            "check(h:unhide('buff') == true, 'unhide(buff)')\n"
+            "return finish()\n");
+
+        // conq3pts shown, then hidden: opened, its input wait 3 put on it,
+        // then its data gone, each between frames; the frames each of the
+        // two runs out after, the frame of its closed event, and its freed
+        // instance.
+        InterlockedExchange(g_fake->draw_walk, 1);
+        const int crow = row_named("conq3pts");
+        struct Run {
+            LONG ready;
+            LONG freed;
+            bool gone;
+            int pixels;
+        };
+        auto conq_run = [&](bool hidden) {
+            Run r;
+            memset(&r, 0, sizeof(r));
+            r.ready = -1;
+            r.freed = -1;
+            if (hidden) {
+                phase(L,
+                    "check(h:hide('conq3pts') == true, 'hide(conq3pts)')\n"
+                    "return finish()\n");
+                wait_frames(2);
+            }
+            uint8_t* menu = static_cast<uint8_t*>(open_on_game_thread("menu    conq3pts"));
+            pause_game();
+            const int readies = fl->ready_count;
+            if (menu) {
+                put16(menu, 0x56, 3);
+            }
+            const LONG opened = *g_fake->frames;
+            resume_game();
+            wait_frames(5);
+            phase(L,
+                "h:poll()\n"
+                "return finish()\n");
+            pause_game();
+            for (int i = readies; i < fl->ready_count; ++i) {
+                r.ready = fl->ready[i] == menu ? fl->ready_frame[i] - opened : r.ready;
+            }
+            const int frees = fl->freed_count;
+            for (int i = 0; i < fl->painted_count; ++i) {
+                r.pixels += fl->painted[i] == menu ? 1 : 0;
+            }
+            *g_fake->conq_data = NULL;
+            const LONG gone = *g_fake->frames;
+            resume_game();
+            wait_frames(8);
+            pause_game();
+            for (int i = frees; i < fl->freed_count; ++i) {
+                r.freed = fl->freed[i] == menu ? fl->freed_frame[i] - gone : r.freed;
+            }
+            r.gone = live_menu(crow) == NULL;
+            *g_fake->conq_data = conq_data;
+            resume_game();
+            phase(L,
+                "local closed, set = 0, {}\n"
+                "for _, e in ipairs((h:poll())) do\n"
+                "  if e.event == 'closed' and e.name == 'conq3pts' then closed = closed + 1 end\n"
+                "end\n"
+                "for _, n in ipairs(h:opened()) do set[n] = true end\n"
+                "check(closed == 1 and not set.conq3pts and h:unhide('conq3pts') == true, 'conq3pts closed by its own'"
+                "  .. ' draw: closed{conq3pts} once, out of opened(); unhide(conq3pts)')\n"
+                "return finish()\n");
+            return r;
+        };
+        const Run shown = conq_run(false);
+        const Run hidden = conq_run(true);
+        snprintf(text, sizeof(text),
+            "conq3pts shown: its input wait out %ld frames after it was put on, freed %ld frames after its data is"
+            " gone, its own controller's draw closing it, %d draws of it at the device in the last walked frame"
+            " before; hidden: out %ld frames after, freed %ld frames after, %d draws of it",
+            static_cast<long>(shown.ready), static_cast<long>(shown.freed), shown.pixels,
+            static_cast<long>(hidden.ready), static_cast<long>(hidden.freed), hidden.pixels);
+        check(shown.ready == 3 && shown.freed == 6 && shown.gone && shown.pixels == 2 && hidden.ready == shown.ready
+                && hidden.freed == shown.freed && hidden.gone && hidden.pixels == 0, text);
+
+        // hidden maplist answered at its top, a map: map0's callback opens
+        // map0 again with its input wait of 8, then maplist's close+reset
+        // closes it; its staged close runs out in its draws and the update
+        // frees it, before map0's wait is out; then map0 closed by the game
+        const int mrow = row_named("maplist");
+        const int zrow = row_named("map0");
+        phase(L,
+            "check(h:hide('maplist') == true, 'hide(maplist)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        asked_on_game_thread(4, 100);
+        wait_frames(2);
+        uint8_t* list = live_menu(mrow);
+        const int readies = fl->ready_count;
+        const int frees = fl->freed_count;
+        phase(L,
+            "local o = h:options('maplist')\n"
+            "check(o and o.level == 'top' and o.rows[1].kind == 'map' and h:info('maplist').hidden == true,"
+            "  'maplist up, hidden, at its top, its first row a map')\n"
+            "check(h:answer('maplist', 1) == true, 'answer(maplist, 1): the leaf')\n"
+            "return finish()\n");
+        wait_frames(12);
+        uint8_t* map0 = live_menu(zrow);
+        LONG list_freed = -1;
+        LONG map0_ready = -1;
+        pause_game();
+        for (int i = frees; i < fl->freed_count; ++i) {
+            list_freed = fl->freed[i] == list ? fl->freed_frame[i] : list_freed;
+        }
+        for (int i = readies; i < fl->ready_count; ++i) {
+            map0_ready = fl->ready[i] == map0 ? fl->ready_frame[i] : map0_ready;
+        }
+        const bool list_gone = live_menu(mrow) == NULL;
+        resume_game();
+        phase(L,
+            "local closed, set = 0, {}\n"
+            "for _, e in ipairs((h:poll())) do\n"
+            "  if e.event == 'closed' and e.name == 'maplist' then closed = closed + 1 end\n"
+            "end\n"
+            "for _, n in ipairs(h:opened()) do set[n] = true end\n"
+            "check(closed == 1 and not set.maplist and set.map0, 'closed{maplist} once; opened() names map0 and not'"
+            "  .. ' maplist')\n"
+            "return finish()\n");
+        pause_game();
+        const int map0_frees = fl->freed_count;
+        close_by_name(g_fake->mcb, NULL, "menu    map0    ");
+        resume_game();
+        wait_frames(8);
+        pause_game();
+        bool map0_freed = false;
+        for (int i = map0_frees; i < fl->freed_count; ++i) {
+            map0_freed = map0_freed || fl->freed[i] == map0;
+        }
+        const int touches = touched ? touched() : -1;
+        resume_game();
+        snprintf(text, sizeof(text),
+            "hidden maplist answered with map0 opening again: its instance freed at frame %ld, map0's input wait out"
+            " at frame %ld; map0 then closed by the game and freed (%d); %d freed instances touched since",
+            static_cast<long>(list_freed), static_cast<long>(map0_ready), map0_freed ? 1 : 0, touches);
+        check(list && map0 && list_gone && list_freed > 0 && map0_ready > 0 && list_freed < map0_ready && map0_freed
+                && touches == 0, text);
+        phase(L,
+            "check(h:unhide('maplist') == true, 'unhide(maplist)')\n"
+            "h:poll()\n"
+            "return finish()\n");
+        InterlockedExchange(g_fake->draw_walk, 0);
+        InterlockedExchange(g_fake->close_draws, 0);
+        *g_fake->close_frames = close_frames;
+        wait_frames(3);
+    }
+
+    // -- map0's close (0.11.0): its own cancel, as its input routine runs it
+    //    on Escape: closed by instance, then the map's close on mapframe's
+    //    global with 0, which closes the map's windows by name and starts the
+    //    frame's fade-out (the stand-in's closes the frame at once). Shown,
+    //    hidden, and as a block's close of it alike; mapv2 and mapframe close
+    //    by name alone
+    {
+        FakeLog* fl = g_fake->log;
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        uint8_t* frame = controller_named("mapframe");
+        const uint32_t close_frames = *g_fake->close_frames;
+        *g_fake->close_frames = 1;
+        const int map_row = row_named("map0");
+        const int frame_row = row_named("mapframe");
+        const int v2_row = row_named("mapv2");
+        auto map_up = [&]() {
+            open_on_game_thread("menu    mapframe");
+            open_on_game_thread("menu    map0    ");
+            open_on_game_thread("menu    mapv2   ");
+            wait_frames(2);
+            phase(L,
+                "h:poll()\n"
+                "return finish()\n");
+            return live_menu(map_row) && live_menu(frame_row) && live_menu(v2_row);
+        };
+        // Each of the three map windows closed once since the last poll, and
+        // none open.
+        auto all_closed = [&](const char* what) {
+            char script[768];
+            snprintf(script, sizeof(script),
+                "local n, seen = {}, {}\n"
+                "for _, e in ipairs((h:poll())) do\n"
+                "  seen[#seen + 1] = e.event .. ':' .. tostring(e.name)\n"
+                "  if e.event == 'closed' then n[e.name] = (n[e.name] or 0) + 1 end\n"
+                "end\n"
+                "local o = {}\n"
+                "for _, w in ipairs(h:opened()) do o[w] = true end\n"
+                "check(n.map0 == 1 and n.mapv2 == 1 and n.mapframe == 1 and not o.map0 and not o.mapv2"
+                "  and not o.mapframe, '%s: closed{map0}, closed{mapv2} and closed{mapframe} once each, none open: '"
+                "  .. table.concat(seen, ' '))\n"
+                "return finish()\n", what);
+            phase(L, script);
+        };
+        const bool up = map_up();
+        int closes = fl->map_closes;
+        int fades = fl->map_fades;
+        phase(L,
+            "check(h:close('map0') == true, 'close(map0) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        pause_game();
+        const bool shown = fl->map_closes == closes + 1 && fl->map_fades == fades + 1 && fl->map_frame == frame
+            && fl->map_mode == 0 && fl->map0_open_at_close == 0 && !live_menu(map_row) && !live_menu(frame_row)
+            && !live_menu(v2_row);
+        resume_game();
+        all_closed("close(map0)");
+        check(up && shown,
+            "close(map0): closed by instance first, then the map's close once, on mapframe's controller with 0, its"
+            " closes by name taking mapv2 and its fade-out the frame");
+
+        const bool up_hidden = map_up();
+        closes = fl->map_closes;
+        fades = fl->map_fades;
+        phase(L,
+            "check(h:hide('map0') == true and h:info('map0').hidden == true, 'hide(map0)')\n"
+            "return finish()\n");
+        wait_frames(2);
+        phase(L,
+            "check(h:close('map0') == true, 'close(map0), hidden')\n"
+            "return finish()\n");
+        wait_frames(3);
+        pause_game();
+        const bool hidden = fl->map_closes == closes + 1 && fl->map_fades == fades + 1 && fl->map_frame == frame
+            && fl->map0_open_at_close == 0 && !live_menu(map_row) && !live_menu(frame_row) && !live_menu(v2_row);
+        resume_game();
+        all_closed("close(map0), hidden");
+        phase(L,
+            "check(h:unhide('map0') == true, 'unhide(map0)')\n"
+            "return finish()\n");
+
+        const bool up_blocked = map_up();
+        closes = fl->map_closes;
+        fades = fl->map_fades;
+        phase(L,
+            "check(h:block('map0') == true, 'block(map0) with map0 open')\n"
+            "return finish()\n");
+        wait_frames(3);
+        pause_game();
+        const bool blocked = fl->map_closes == closes + 1 && fl->map_fades == fades + 1 && fl->map_frame == frame
+            && fl->map0_open_at_close == 0 && !live_menu(map_row) && !live_menu(frame_row) && !live_menu(v2_row);
+        resume_game();
+        all_closed("block(map0)");
+        phase(L,
+            "check(h:unblock('map0') == true, 'unblock(map0)')\n"
+            "h:poll()\n"
+            "return finish()\n");
+        check(up_hidden && hidden && up_blocked && blocked,
+            "hidden, and as the close a block of it queues, map0's close is the same cancel");
+
+        const bool up_others = map_up();
+        closes = fl->map_closes;
+        phase(L,
+            "check(h:close('mapv2') == true and h:close('mapframe') == true, 'close(mapv2) and close(mapframe)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        pause_game();
+        const bool others = fl->map_closes == closes && live_menu(map_row) && !live_menu(frame_row)
+            && !live_menu(v2_row);
+        close_by_name(g_fake->mcb, NULL, "menu    map0    ");
+        resume_game();
+        wait_frames(2);
+        phase(L,
+            "local n = {}\n"
+            "for _, e in ipairs((h:poll())) do\n"
+            "  if e.event == 'closed' then n[e.name] = (n[e.name] or 0) + 1 end\n"
+            "end\n"
+            "check(n.map0 == 1 and n.mapv2 == 1 and n.mapframe == 1, 'mapv2 and mapframe closed, then map0 by the"
+            " game')\n"
+            "check(h:close('map0') == true, 'close(map0) with map0 not open queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(up_others && others && fl->map_closes == closes,
+            "mapv2 and mapframe close by name alone, map0 left open; close(map0) with no map0 open runs no map's"
+            " close");
+        *g_fake->close_frames = close_frames;
+    }
+
+    // -- a hidden window at its own draw layer (0.11.0): the stand-in's
+    //    update picks the active menu as the game's does, by the order the
+    //    draw layers give the manager's list. Hidden stringdl, asking the
+    //    name, is the active menu while it is up alone and takes no routed
+    //    key; delivery, opened after it as the outgoing box's commit of a
+    //    name focuses it, takes the focus and the keys. stringdl's draw
+    //    runs and paints nothing throughout.
+    {
+        typedef uint32_t (__fastcall* InputFn)(void* self, void* edx, int code);
+        InputFn route;
+        memcpy(&route, &g_fake->menu_routing, sizeof(route));
+        const FakeLog* fl = g_fake->log;
+        const int row_entry = row_named("stringdl");
+        const int row_box = row_named("delivery");
+        const bool closed_before = !live_menu(row_entry) && !live_menu(row_box);
+        phase(L,
+            "h:poll()\n"
+            "check(h:hide('stringdl') == true, 'hide(stringdl)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        uint8_t* outgoing = controller_named("delivery");
+        uint8_t* asking = controller_named("stringdl");
+        put16(outgoing, 0x1B4, 6);
+        asking[0x14] = 1;
+        InterlockedExchange(g_fake->active_pick, 1);
+        uint8_t* entry = static_cast<uint8_t*>(open_on_game_thread("menu    stringdl"));
+        wait_frames(3);
+        const bool entry_active = entry && get32(g_fake->mcb, 0x54) == reinterpret_cast<uint32_t>(entry);
+        const int sinks = fl->sink_calls;
+        const bool dropped = route(g_fake->mcb, NULL, 5) == 0 && fl->sink_calls == sinks;
+        const bool entry_hidden = hidden_in_place(row_entry, entry);
+        uint8_t* box = static_cast<uint8_t*>(open_on_game_thread("menu    delivery"));
+        wait_frames(3);
+        const bool box_active = box && get32(g_fake->mcb, 0x54) == reinterpret_cast<uint32_t>(box);
+        const bool reached = route(g_fake->mcb, NULL, 5) == 1 && fl->sink_calls == sinks + 1 && fl->sink_menu == box;
+        const bool still_hidden = hidden_in_place(row_entry, entry) && walk_of(box) == 'd';
+        InterlockedExchange(g_fake->active_pick, 0);
+        put32(g_fake->mcb, 0x54, 0);
+        check(closed_before && entry_active && dropped && entry_hidden,
+            "hidden stringdl asking the name, opened with nothing above it, is the active menu at its own layer 2:"
+            " its draw paints nothing and no routed key reaches it");
+        check(box_active && reached && still_hidden,
+            "delivery, opened after it, is the active menu the stand-in's pick makes and takes the routed keys;"
+            " stringdl stays hidden at its own layer under it");
+        phase(L,
+            "check(h:unhide('stringdl') == true, 'unhide(stringdl)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        {
+            typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+            CloseFn close_by_name;
+            memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, "menu    delivery");
+            close_by_name(g_fake->mcb, NULL, "menu    stringdl");
+            put16(outgoing, 0x1B4, 0);
+            asking[0x14] = 0;
+            resume_game();
+        }
+        wait_frames(3);
+        phase(L,
+            "h:poll()\n"
+            "return finish()\n");
+    }
+
     // -- the macro keys (0.9.0): the stand-in's gate, hooked, consulted each
     //    frame a number key is held; a block has it say no and closes a bar
     //    the handler has up; macros() and status() read who holds it
@@ -1988,8 +5474,8 @@ int main(int argc, char** argv) {
         "for _, e in ipairs(list) do\n"
         "  seen[#seen + 1] = e.event .. ':' .. e.name\n"
         "end\n"
-        "check(table.concat(seen, ' ') == 'blocked:menuwind opened:equip' and dropped == 0,"
-        "  'events: ' .. table.concat(seen, ' '))\n"
+        "check(table.concat(seen, ' ') == 'blocked:menuwind' and dropped == 0,"
+        "  'events, none for equip, open already: ' .. table.concat(seen, ' '))\n"
         "local p = h:info('equip')\n"
         "local m = p and p.memory and p.memory.position or {}\n"
         "check(p and p.open and p.origin.x == 300 and p.origin.y == 200 and m.mine and m.owner == 'alpha'"
@@ -2019,10 +5505,10 @@ int main(int argc, char** argv) {
         "local g = h:groups()\n"
         "local carried = {}\n"
         "for _, n in ipairs(g.chat_log.members) do carried[n] = true end\n"
-        "check(g.chat_log.anchor == 'logwindo' and g.chat_log.anchor_open and #g.chat_log.members == 50"
+        "check(g.chat_log.anchor == 'logwindo' and g.chat_log.anchor_open and #g.chat_log.members == 49"
         "  and carried.ability and carried.partywin and carried.targetwi and carried.subwindo and not carried.logwindo"
         "  and g.chat_log.index == nil and g.chat_log.mask == nil and g.chat_log.name == nil,"
-        "  'groups(): chat_log anchored on logwindo, carrying ' .. #g.chat_log.members .. ' pieces: its 42,"
+        "  'groups(): chat_log anchored on logwindo, carrying ' .. #g.chat_log.members .. ' pieces: its 41,"
         " partywin, its 6 and subwindo; no index or mask')\n"
         "check(#g.party_list.members == 7 and #g.target_window.members == 1 and g.target_window.members[1] == 'subwindo',"
         "  'groups(): party_list carries ' .. #g.party_list.members .. ', target_window ' .. #g.target_window.members)\n"
@@ -2054,6 +5540,2320 @@ int main(int argc, char** argv) {
     check(origin(log, 0) == 100 + kRowLog + 5 && origin(log, 1) == 50 + 7,
         "move_group chat_log to its origin + 5,7: logwindo's origin there");
     check(origin(equip, 0) == 10 && origin(equip, 1) == 20, "beta's later move of equip wins");
+
+    // -- the yes/no windows (0.11.0): the stand-in's class, its ask run on the
+    //    game thread as the game's askers run it, each question answered or
+    //    canceled as the class's own confirm and cancel end it
+    {
+        FakeLog* yl = g_fake->log;
+        uint8_t* comyn = controller_named("comyn");
+        uint8_t* resyn = controller_named("resyn");
+        const int kRowComyn = row_named("comyn");
+        const int kRowResynus = row_named("resynus");
+        phase(L,
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "function yesno_events(handle)\n"
+            "  local out = {}\n"
+            "  for _, e in ipairs((handle:poll())) do out[#out + 1] = e.event .. ':' .. tostring(e.name) end\n"
+            "  return table.concat(out, ' ')\n"
+            "end\n"
+            "local o, why = h:options('comyn')\n"
+            "check(o == nil and why == 'no question is pending in comyn', 'options(comyn) with nothing asked: '"
+            "  .. tostring(why))\n"
+            "local ok, w = h:open('comyn')\n"
+            "check(ok == nil and w == \"comyn opens only for the game's own event; answer or cancel it instead\","
+            "  'open(comyn) refused: ' .. tostring(w))\n"
+            "ok, w = h:close('comyn')\n"
+            "check(ok == nil and w == \"comyn is a prompt the game waits on; use cancel('comyn')\","
+            "  'close(comyn) refused: ' .. tostring(w))\n"
+            "ok, w = h:answer('comyn', true)\n"
+            "check(ok == nil and w == 'no question is pending in comyn', 'answer(comyn) with nothing pending: '"
+            "  .. tostring(w))\n"
+            "return finish()\n");
+        const int selects = yl->select_calls;
+        const int asked = ask_on_game_thread("comyn", 0, 1, 0, 0);
+        uint8_t* first = live_menu(kRowComyn);
+        check(asked == 1 && first && get16(first, 0x4C) == 2 && yl->select_calls == selects + 1
+                && yl->select_menu == first && yl->select_row == 2,
+            "comyn asks, its default no: its window opens and the class's select-row puts the cursor on no");
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('comyn')\n"
+            "check(o and o.name == 'comyn' and o.text == '\\129\\153Log out now?' and o.undecoded == 0"
+            "  and o.default == false and o.cancellable == true and o.hold == false and o.detail"
+            "  and o.detail.mode == 0 and type(o.id) == 'number',"
+            "  'options(comyn): the question from the game\\'s text, no first, cancellable, no hold: '"
+            "  .. tostring(o and o.text))\n"
+            "local seg = o and o.segments or {}\n"
+            "check(#seg == 3 and seg[1].text == '\\129\\153Log out ' and seg[1].color == 1 and seg[1].escape == 30"
+            "  and seg[2].text == 'now' and seg[2].color == 2 and seg[3].text == '?' and seg[3].color == 1,"
+            "  'its runs: the green one between, the 7F escape at its end drawn as nothing')\n"
+            "local ok, err = pcall(h.answer, h, 'comyn', 1)\n"
+            "check(not ok and tostring(err):find(\"answer('comyn', yes) takes true for yes or false for no\", 1, true),"
+            "  'answer(comyn, 1) raises: ' .. tostring(err))\n"
+            "comyn_prompt = o\n"
+            "return finish()\n");
+        {
+            HuEngineApi api;
+            HuEngineHandle raw = {-1, 0};
+            char why[512] = "";
+            const bool have = record_api(&api);
+            if (have) {
+                api.handle_open("raw", &raw, why, sizeof(why));
+            }
+            const int32_t old = raw.slot >= 0
+                ? api.answer5(&raw, "comyn", HU_ANSWER_BOOLEAN, 1, NULL, 0, 0, why, sizeof(why)) : -2;
+            check(old == 0 && strstr(why, "comyn takes no answer; answer() replies to query, link5, arealist,"
+                    " passinpu and prtyjoin") == why,
+                "an engine abi 5 slot treats comyn as any window: answer5 refuses it, naming abi 5's prompts");
+            check(raw.slot >= 0 && !sets_field(raw_read(api.options5, &raw, "comyn"), "hold")
+                    && sets_field(raw_read(api.options8, &raw, "comyn"), "hold"),
+                "options5 reads no question in comyn; options8 does");
+            if (raw.slot >= 0) {
+                api.handle_release(&raw);
+            }
+        }
+        yl->closes[0] = '\0';
+        const int calls = yl->yesno_calls;
+        phase(L,
+            "check(h:answer('comyn', true, comyn_prompt.id) == true, 'answer(comyn, true) with its prompt queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(yl->yesno_calls == calls + 1 && yl->yesno_answer == 1 && yl->yesno_context == comyn
+                && get32(comyn, 0x14) == 0 && !live_menu(kRowComyn) && strcmp(yl->closes, "holdtime|comyn   |") == 0
+                && yl->yesno_inputs == 0,
+            "answer(comyn, true): the callback once, with yes and the question's context; the question cleared,"
+            " holdtime then comyn closed by name, as the class's confirm closes them; nothing reached the class's"
+            " input routine");
+        phase(L,
+            "local o, why = h:options('comyn')\n"
+            "check(o == nil and why == 'no question is pending in comyn', 'answered, comyn asks nothing')\n"
+            "check(yesno_events(h) == 'opened:comyn closed:comyn', 'one opened event for the question, and its'"
+            "  .. ' closed once answered')\n"
+            "return finish()\n");
+
+        // a default of yes, and the cancel
+        check(ask_on_game_thread("comyn", 1, 1, 0, 0) == 1 && get16(live_menu(kRowComyn), 0x4C) == 1,
+            "comyn asks again, its default yes: the cursor stays on yes");
+        wait_frames(2);
+        yl->closes[0] = '\0';
+        phase(L,
+            "local o = h:options('comyn')\n"
+            "check(o and o.default == true and o.id == comyn_prompt.id + 1, 'options(comyn): yes first, a new id')\n"
+            "local ok, w = h:answer('comyn', false, comyn_prompt.id)\n"
+            "check(ok == nil and w == 'that prompt is gone', 'answer with the last question\\'s id: ' .. tostring(w))\n"
+            "check(h:cancel(o.name, o.id) == true, 'cancel(comyn) queues: the question is cancellable')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(yl->yesno_calls == calls + 2 && yl->yesno_answer == 0 && get32(comyn, 0x14) == 0
+                && !live_menu(kRowComyn) && strcmp(yl->closes, "comyn   |holdtime|") == 0,
+            "cancel(comyn): the callback with no, then comyn and holdtime closed, the cancel's order");
+
+        // merityn: built not cancellable
+        check(ask_on_game_thread("merityn", 0, 1, 0, 0) == 1, "merityn asks");
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('merityn')\n"
+            "check(o and o.text == 'Spend the merit points?' and o.cancellable == false and #o.segments == 1,"
+            "  'options(merityn): its class is built not cancellable')\n"
+            "local ok, w = h:cancel(o.name, o.id)\n"
+            "check(ok == nil and w == 'this question cannot be canceled; answer it', 'cancel(merityn): ' .. tostring(w))\n"
+            "check(h:answer(o.name, false, o.id) == true, 'answer(merityn, false) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(yl->yesno_calls == calls + 3 && yl->yesno_answer == 0 && !live_menu(row_named("merityn")),
+            "answer(merityn, false): the callback with no, the window closed");
+
+        // the resyn family: one controller, keyed to the client's language
+        uint8_t* family_menu = ask_on_game_thread("resyn", 1, 1, 0, 0) == 1 ? live_menu(kRowResynus) : NULL;
+        const uint8_t* family_res = family_menu ? reinterpret_cast<const uint8_t*>(get32(family_menu, 4)) : NULL;
+        check(family_res && memcmp(family_res + 0x46, "menu    resynus ", 16) == 0,
+            "the resyn family's one controller asks through the key it holds: the window that opens is resynus");
+        wait_frames(2);
+        phase(L,
+            "local o, why = h:options('resyn')\n"
+            "check(o == nil and why == 'the game asks through resynus, not resyn', 'options(resyn): ' .. tostring(why))\n"
+            "local ok, w = h:answer('resynde', true)\n"
+            "check(ok == nil and w == 'the game asks through resynus, not resynde', 'answer(resynde): ' .. tostring(w))\n"
+            "o = h:options('resynus')\n"
+            "check(o and o.name == 'resynus' and o.text == 'Return to your home point?' and o.default == true"
+            "  and o.cancellable == false, 'options(resynus): the question, yes first, not cancellable')\n"
+            "check(h:answer(o.name, true, o.id) == true, 'answer(resynus, true) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(yl->yesno_calls == calls + 4 && yl->yesno_answer == 1 && yl->yesno_context == resyn
+                && get32(resyn, 0x14) == 0 && !live_menu(kRowResynus),
+            "answer(resynus, true): the shared controller's callback with yes, the window closed");
+
+        // a question asked again from inside the callback, its default no
+        check(ask_on_game_thread("comyn", 1, 1, 0, 1) == 1, "comyn asks, its callback asking again");
+        wait_frames(2);
+        uint8_t* asked_first = live_menu(kRowComyn);
+        const int selects2 = yl->select_calls;
+        phase(L,
+            "chained = h:options('comyn')\n"
+            "check(chained and chained.default == true and h:answer('comyn', true, chained.id) == true, 'answer(comyn, true) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        uint8_t* again = live_menu(kRowComyn);
+        check(yl->yesno_calls == calls + 5 && yl->yesno_answer == 1 && get32(comyn, 0x14) != 0 && comyn[0x3A] == 0
+                && again && again != asked_first && get16(again, 0x4C) == 2 && yl->select_calls == selects2 + 1
+                && yl->select_menu == again,
+            "the callback asked again: comyn closed and opened anew on that question, the chained flag cleared,"
+            " the cursor on no, its default");
+        phase(L,
+            "local o = h:options('comyn')\n"
+            "check(o and o.text == 'Really?' and o.default == false and o.id == chained.id + 1,"
+            "  'options(comyn): the question asked again, a new prompt with a new id')\n"
+            "local ok, w = h:answer('comyn', true, chained.id)\n"
+            "check(ok == nil and w == 'that prompt is gone', 'the first question\\'s prompt is gone: ' .. tostring(w))\n"
+            "check(h:answer(o.name, false, o.id) == true, 'answer to the question asked again queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(yl->yesno_calls == calls + 6 && yl->yesno_answer == 0 && get32(comyn, 0x14) == 0 && !live_menu(kRowComyn),
+            "it ends as any question does");
+
+        // asked again with its default yes: no select-row
+        check(ask_on_game_thread("comyn", 1, 1, 0, 2) == 1, "comyn asks, its callback asking again, yes first");
+        wait_frames(2);
+        const int selects3 = yl->select_calls;
+        phase(L,
+            "check(h:answer('comyn', false) == true, 'answer(comyn, false) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(yl->yesno_answer == 0 && get32(comyn, 0x14) != 0 && live_menu(kRowComyn)
+                && get16(live_menu(kRowComyn), 0x4C) == 1 && yl->select_calls == selects3,
+            "a question asked again with its default yes opens with the cursor on yes, no select-row");
+        phase(L,
+            "local o = h:options('comyn')\n"
+            "check(o and o.default == true and h:cancel(o.name, o.id) == true, 'it reads yes first, and cancel queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(get32(comyn, 0x14) == 0 && !live_menu(kRowComyn), "and its cancel ends it");
+
+        // confirmed by holding: the reply is the confirm holdtime runs into
+        check(ask_on_game_thread("comyn", 0, 1, 1, 0) == 1, "comyn asks, its yes held to confirm (mode 1)");
+        wait_frames(2);
+        yl->closes[0] = '\0';
+        phase(L,
+            "local o = h:options('comyn')\n"
+            "check(o and o.hold == true and o.detail.mode == 1, 'options(comyn): hold, mode 1 under detail')\n"
+            "check(h:answer(o.name, true, o.id) == true, 'answer(comyn, true) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(yl->yesno_answer == 1 && get32(comyn, 0x14) == 0 && !live_menu(kRowComyn)
+                && strcmp(yl->closes, "holdtime|comyn   |") == 0,
+            "answer(comyn, true) held to confirm: the callback with yes, holdtime and comyn closed");
+
+        // hidden, it asks: no click, no key, no menu mouse mode
+        {
+            typedef uint32_t (__fastcall* InputFn)(void* self, void* edx, int code);
+            typedef void (__fastcall* MouseFn)(void* mouse, void* edx);
+            InputFn route;
+            MouseFn mouse_mode;
+            memcpy(&route, &g_fake->menu_routing, sizeof(route));
+            memcpy(&mouse_mode, &g_fake->mouse_mode, sizeof(mouse_mode));
+            static uint8_t mouse[0x60];
+            phase(L,
+                "check(h:hide('comyn') == true, 'hide(comyn) queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            check(ask_on_game_thread("comyn", 0, 1, 0, 0) == 1, "comyn asks while hidden");
+            uint8_t* menu = live_menu(kRowComyn);
+            const int sinks = yl->sink_calls;
+            const LONG ups = *g_fake->menu_up_calls;
+            put32(g_fake->mcb, 0x54, reinterpret_cast<uint32_t>(menu));
+            bool dropped = true;
+            for (int code = 1; code <= 0x20; ++code) {
+                dropped = route(g_fake->mcb, NULL, code) == 0 && dropped;
+            }
+            mouse[0x4D] = 2;
+            mouse_mode(mouse, NULL);
+            check(menu && menu[0x77] == 0 && dropped && yl->sink_calls == sinks && mouse[0x4D] == 1
+                    && *g_fake->menu_up_calls == ups && hidden_in_place(kRowComyn, menu),
+                "a hidden prompt active at its own layer: +0x77 0, no routed code reaches its sink, the picker holds"
+                " world mode, and its draw paints nothing");
+            put32(g_fake->mcb, 0x54, 0);
+            phase(L,
+                "check(h:answer('comyn', false) == true and h:unhide('comyn') == true, 'answer and unhide queue')\n"
+                "return finish()\n");
+            wait_frames(3);
+            check(!live_menu(kRowComyn) && registry_row(kRowComyn)[0x29] == g_fake->pristine[kRowComyn * 0x2C + 0x29],
+                "hidden, it is answered as any question; its row's layer the table's throughout");
+        }
+
+        // blocked (shopbuy; comyn is hide-only): an open question is left to
+        // its reply; a new one is refused
+        uint8_t* shop = controller_named("shopbuy");
+        const int kRowShopbuy = row_named("shopbuy");
+        check(ask_on_game_thread("shopbuy", 0, 1, 0, 0) == 1, "shopbuy asks");
+        phase(L,
+            "local ok, w = h:block('comyn')\n"
+            "check(ok == nil and w:find('comyn cannot be blocked or closed: ', 1, true) == 1, 'block(comyn) refused: '"
+            "  .. tostring(w))\n"
+            "check(h:block('shopbuy') == true, 'block(shopbuy) with a question up queues nothing to close')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(hidden_in_place(kRowShopbuy, live_menu(kRowShopbuy)) && get32(shop, 0x14) != 0,
+            "block(shopbuy): the open question stays, hidden at its own layer, for its reply");
+        phase(L,
+            "check(h:answer('shopbuy', true) == true, 'the blocked window\\'s question is answered')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const int blocked_calls = yl->yesno_calls;
+        check(!live_menu(kRowShopbuy) && ask_on_game_thread("shopbuy", 0, 1, 0, 0) == 0 && get32(shop, 0x14) == 0
+                && !live_menu(kRowShopbuy) && yl->yesno_calls == blocked_calls,
+            "blocked, a new question's open is refused: the ask answers 0 and clears its callback, unanswered");
+        phase(L,
+            "local o, why = h:options('shopbuy')\n"
+            "check(o == nil and why == 'no question is pending in shopbuy', 'nothing is pending after the refusal')\n"
+            "local seen = yesno_events(h)\n"
+            "check(seen:find('blocked:shopbuy', 1, true) ~= nil, 'the refused open is a blocked event: ' .. seen)\n"
+            "check(h:unblock('shopbuy') == true, 'unblock(shopbuy)')\n"
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "return finish()\n");
+
+        // the hide-only windows: refused by every block slot and every close
+        // slot, whatever its engine abi, each with its own reason
+        phase(L,
+            "local blocks = {}\n"
+            "for _, w in ipairs({'query', 'gmtell', 'comyn', 'dead', 'mp_dead', 'resyn', 'resynus', 'resynde', 'resynfr'})"
+            " do\n"
+            "  local ok, why = h:block(w)\n"
+            "  if ok == nil and why:find(w .. ' cannot be blocked or closed', 1, true) == 1 then blocks[#blocks + 1] = w end\n"
+            "end\n"
+            "check(#blocks == 9, 'block() refuses the nine hide-only windows, naming each: ' .. table.concat(blocks, ' '))\n"
+            "local ok, why = h:block('resynde')\n"
+            "check(ok == nil and why == 'resynde cannot be blocked or closed: blocked, the raise question is never shown,"
+            " so the player cannot accept a raise, and the game asks again every frame; hide it instead',"
+            "  'block(resynde): the raise question\\'s reason: ' .. tostring(why))\n"
+            "ok, why = h:close('dead')\n"
+            "check(ok == nil and why:find('dead cannot be blocked or closed: closing the KO window during a raise offer"
+            " declines the raise', 1, true) == 1 and why:find('; hide it instead', 1, true),"
+            "  'close(dead): its own reason, not cancel(): ' .. tostring(why))\n"
+            "ok, why = h:close('gmtell')\n"
+            "local gm = ok == nil and why == \"gmtell is a prompt the game waits on; use cancel('gmtell')\"\n"
+            "ok, why = h:close('mp_dead')\n"
+            "check(gm and ok == nil and why:find('mp_dead cannot be blocked or closed', 1, true) == 1,"
+            "  'close(gmtell) points at cancel(), a prompt cancel() ends; close(mp_dead) refused with its own"
+            " reason')\n"
+            "ok, why = h:open('dead')\n"
+            "check(ok == nil and why == \"dead opens only for the game's own event; answer it instead\","
+            "  'open(dead) refused: ' .. tostring(why))\n"
+            "return finish()\n");
+        {
+            HuEngineApi api;
+            HuEngineHandle raw = {-1, 0};
+            char why[512] = "";
+            if (record_api(&api)) {
+                api.handle_open("raw", &raw, why, sizeof(why));
+            }
+            static const char* const only[] = {"gmtell", "comyn", "dead", "mp_dead", "resyn", "resynus", "resynde",
+                                               "resynfr", "rem4line", "rem4li2", "stringdl"};
+            int blocks = 0;
+            int closes = 0;
+            for (int i = 0; raw.slot >= 0 && i < 11; ++i) {
+                char want[32];
+                snprintf(want, sizeof(want), "%s cannot be blocked or closed", only[i]);
+                const int32_t refused[5] = {
+                    api.block(&raw, only[i], why, sizeof(why)) == 0 && strstr(why, want) == why,
+                    api.block3(&raw, only[i], why, sizeof(why)) == 0 && strstr(why, want) == why,
+                    api.block5(&raw, only[i], why, sizeof(why)) == 0 && strstr(why, want) == why,
+                    api.block7(&raw, only[i], NULL, why, sizeof(why)) == 0 && strstr(why, want) == why,
+                    api.block8(&raw, only[i], NULL, why, sizeof(why)) == 0 && strstr(why, want) == why,
+                };
+                for (int k = 0; k < 5; ++k) {
+                    blocks += refused[k];
+                }
+                closes += api.close(&raw, only[i], why, sizeof(why)) == 0 && strstr(why, want) == why;
+                closes += api.close3(&raw, only[i], why, sizeof(why)) == 0 && strstr(why, want) == why;
+                closes += api.close4(&raw, only[i], why, sizeof(why)) == 0 && strstr(why, want) == why;
+                const bool prompt = strcmp(only[i], "comyn") == 0 || strcmp(only[i], "gmtell") == 0
+                    || strncmp(only[i], "resyn", 5) == 0 || strncmp(only[i], "rem4", 4) == 0
+                    || strcmp(only[i], "stringdl") == 0;
+                char use[64];
+                snprintf(use, sizeof(use), "%s is a prompt the game waits on; use cancel('%s')", only[i], only[i]);
+                closes += api.close8(&raw, only[i], why, sizeof(why)) == 0 && strstr(why, prompt ? use : want) == why;
+            }
+            check(blocks == 55 && closes == 44,
+                "gmtell, comyn, dead, mp_dead, the four resyn windows, the two dialogue boxes and stringdl refused by"
+                " the block slots of engine abi 1, 3, 5, 7 and 8 and the close slots of abi 1, 3, 4 and 8, each with"
+                " its reason (close8 sends gmtell, comyn, the resyn windows, the dialogue boxes and stringdl, prompts"
+                " cancel() ends, to cancel())");
+            static const char kOk[] = "ok cannot be closed: the game waits until it is acknowledged, and closed, it"
+                " waits forever; answer('ok') acknowledges it";
+            int ok_closes = 0;
+            if (raw.slot >= 0) {
+                ok_closes += api.close(&raw, "ok", why, sizeof(why)) == 0 && strcmp(why, kOk) == 0;
+                ok_closes += api.close3(&raw, "ok", why, sizeof(why)) == 0 && strcmp(why, kOk) == 0;
+                ok_closes += api.close4(&raw, "ok", why, sizeof(why)) == 0 && strcmp(why, kOk) == 0;
+                ok_closes += api.close8(&raw, "ok", why, sizeof(why)) == 0 && strcmp(why, kOk) == 0;
+            }
+            const bool ok_blocks = raw.slot >= 0 && api.block8(&raw, "ok", NULL, why, sizeof(why)) == 1
+                && api.unblock3(&raw, "ok", why, sizeof(why)) == 1;
+            check(ok_closes == 4 && ok_blocks,
+                "close('ok') refused by the close slots of engine abi 1, 3, 4 and 8 with its own reason, pointing at"
+                " answer('ok'); a block of it still taken");
+            const int32_t answered = raw.slot >= 0
+                ? api.answer5(&raw, "dead", HU_ANSWER_NONE, 0, NULL, 0, 0, why, sizeof(why)) : -2;
+            check(answered == 0 && strstr(why, "dead takes no answer; answer() replies to query, link5, arealist,"
+                    " passinpu and prtyjoin") == why
+                    && !sets_field(raw_read(api.options5, &raw, "dead"), "seconds"),
+                "an engine abi 5 slot treats dead as any window: answer5 and options5 refuse it");
+            if (raw.slot >= 0) {
+                api.handle_release(&raw);
+            }
+        }
+
+        // the KO window: options() reads its countdown; answer() is its own
+        // confirm, asking its question through comyn with the arguments its
+        // input handler passes; cancel() and close() refused
+        {
+            uint8_t* ko = controller_named("dead");
+            const int kRowDead = row_named("dead");
+            phase(L,
+                "local o, why = h:options('dead')\n"
+                "check(o == nil and why == 'dead is not open', 'options(dead) with the KO window down: ' .. tostring(why))\n"
+                "local ok, w = h:answer('dead')\n"
+                "check(ok == nil and w == 'dead is not open', 'answer(dead) with the KO window down: ' .. tostring(w))\n"
+                "return finish()\n");
+            put32(ko, 0x1C, 54321);
+            put32(ko, 0x20, 125 * 60);
+            ko[0x24] = 0;
+            uint8_t* ko_menu = static_cast<uint8_t*>(open_on_game_thread("menu    dead"));
+            wait_frames(2);
+            phase(L,
+                "dead_prompt = h:options('dead')\n"
+                "local o = dead_prompt\n"
+                "check(o and o.name == 'dead' and type(o.id) == 'number' and o.seconds == 125 and o.askable == true"
+                "  and o.detail and o.detail.remaining == 7500 and o.detail.deadline == 54321"
+                "  and o.detail.chosen == false and o.text == nil,"
+                "  'options(dead): the countdown in seconds, askable, the raw fields under detail')\n"
+                "local misuse = {}\n"
+                "for _, v in ipairs({false, 1, 'yes', {}}) do\n"
+                "  local ok, err = pcall(h.answer, h, 'dead', v)\n"
+                "  if not ok and tostring(err):find(\"answer('dead') takes no value, or true\", 1, true) then"
+                "    misuse[#misuse + 1] = type(v) end\n"
+                "end\n"
+                "check(#misuse == 4, 'answer(dead) with false, a number, a string or a table raises: '"
+                "  .. table.concat(misuse, ' '))\n"
+                "local ok, w = h:cancel('dead')\n"
+                "check(ok == nil and w == \"dead has no cancel: the game's own Escape there only hands focus to the chat"
+                " log\", 'cancel(dead) refused: ' .. tostring(w))\n"
+                "return finish()\n");
+            // a question pending in comyn: the ask would answer 0
+            check(ask_on_game_thread("comyn", 0, 1, 0, 0) == 1, "comyn asks while the KO window is up");
+            wait_frames(2);
+            phase(L,
+                "local o = h:options('dead')\n"
+                "local ok, w = h:answer('dead')\n"
+                "check(o and o.askable == false and ok == nil and w == 'comyn already has a question pending',"
+                "  'with comyn asking, options(dead).askable is false and answer(dead) refused: ' .. tostring(w))\n"
+                "check(h:answer('comyn', false) == true, 'comyn answered')\n"
+                "return finish()\n");
+            wait_frames(3);
+            const int deciders = yl->decider_calls;
+            const int messages = yl->message_calls;
+            const int asks = yl->ask_calls;
+            const int selects4 = yl->select_calls;
+            *g_fake->dead_set = 0;
+            phase(L,
+                "check(h:answer('dead', nil, dead_prompt.id) == true, 'answer(dead) with its prompt\\'s id and no value"
+                " queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            uint8_t* question = live_menu(kRowComyn);
+            const int pushed[5] = {0, 0, 0, 1, 0};
+            check(yl->decider_calls == deciders + 1 && yl->decider_args[0] == 1 && yl->decider_args[1] == 0
+                    && yl->message_calls == messages + 1 && yl->message_args[0] == 0x0E && yl->message_args[1] == 0x46
+                    && yl->ask_calls == asks + 1 && yl->ask_ctl == comyn && yl->ask_callback == g_fake->dead_callback
+                    && yl->ask_text && strcmp(yl->ask_text, "Return to home point?") == 0
+                    && memcmp(yl->ask_args, pushed, sizeof(pushed)) == 0 && question && get16(question, 0x4C) == 2
+                    && yl->select_calls == selects4 + 1 && get32(comyn, 0x14) == get32(g_fake->dead_site, 53)
+                    && ko[0x24] == 0 && live_menu(kRowDead) == ko_menu,
+                "answer(dead): the site's decider with (1, 0), its 0 picking message 0x46 of category 0x0E, then"
+                " comyn's ask with the site's callback, context 0, no first, no help, cancellable, mode 0: comyn asks,"
+                " its cursor on no; the KO window left as it was");
+            phase(L,
+                "local o = h:options('comyn')\n"
+                "check(o and o.text == 'Return to home point?' and o.default == false and o.cancellable == true,"
+                "  'options(comyn): the KO window\\'s question')\n"
+                "local d = h:options('dead')\n"
+                "check(d and d.askable == false, 'options(dead).askable is false while its question waits')\n"
+                "check(h:answer(o.name, true, o.id) == true, 'answer(comyn, true) queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            check(ko[0x24] == 1 && !live_menu(kRowComyn) && get32(comyn, 0x14) == 0,
+                "comyn's yes runs the KO window's callback, the game's own bytes: the home point chosen");
+            phase(L,
+                "local d = h:options('dead')\n"
+                "check(d and d.detail.chosen == true and d.askable == true, 'options(dead): chosen under detail')\n"
+                "return finish()\n");
+            ko[0x24] = 0;
+            *g_fake->dead_set = 1;
+            phase(L,
+                "local d = h:options('dead')\n"
+                "check(h:answer('dead', true, d.id) == true, 'answer(dead, true) with its id queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            check(yl->message_args[0] == 0x0E && yl->message_args[1] == 0x258 && yl->ask_text
+                    && strcmp(yl->ask_text, "Leave this area?") == 0 && get32(comyn, 0x14) != 0,
+                "the decider's 1, al alone, picks message 0x258");
+            phase(L,
+                "check(h:cancel('comyn') == true, 'cancel(comyn) queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            check(ko[0x24] == 0 && !live_menu(kRowComyn) && get32(comyn, 0x14) == 0,
+                "the question canceled through comyn: the home point not chosen");
+            *g_fake->dead_set = 0;
+
+            // hidden, the KO window takes no routed key: Enter on it asks nothing
+            {
+                typedef uint32_t (__fastcall* InputFn)(void* self, void* edx, int code);
+                InputFn route;
+                memcpy(&route, &g_fake->menu_routing, sizeof(route));
+                phase(L,
+                    "check(h:hide('dead') == true, 'hide(dead) queues')\n"
+                    "return finish()\n");
+                wait_frames(3);
+                const int sinks = yl->sink_calls;
+                put32(g_fake->mcb, 0x54, reinterpret_cast<uint32_t>(ko_menu));
+                bool dropped = true;
+                for (int code = 1; code <= 0x20; ++code) {
+                    dropped = route(g_fake->mcb, NULL, code) == 0 && dropped;
+                }
+                put32(g_fake->mcb, 0x54, 0);
+                check(hidden_in_place(kRowDead, ko_menu) && dropped && yl->sink_calls == sinks,
+                    "a hidden KO window active at its own layer: no routed code reaches its sink");
+                phase(L,
+                    "check(h:unhide('dead') == true, 'unhide(dead)')\n"
+                    "return finish()\n");
+                wait_frames(3);
+            }
+
+            typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+            CloseFn close_by_name;
+            memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, "menu    dead    ");
+            resume_game();
+            wait_frames(2);
+            phase(L,
+                "local o, why = h:options('dead')\n"
+                "check(o == nil and why == 'dead is not open', 'the KO window closed by the game: nothing to read')\n"
+                "for _, x in ipairs({h, h2}) do x:poll() end\n"
+                "return finish()\n");
+        }
+    }
+
+    // -- the number boxes (0.11.0): moneyctr and itemctrl asked through their
+    //    setups, the game's bytes, on the game thread; answered and canceled
+    //    through their confirms, the game's bytes, with the window up, hidden
+    //    and blocked; a blocked question announced, listed by pending() and
+    //    ended with a pending event every other handle reads; the asker's row
+    //    checked; the earlier slots treating the boxes as any window
+    {
+        FakeLog* bl = g_fake->log;
+        uint8_t* money = controller_named("moneyctr");
+        uint8_t* item = controller_named("itemctrl");
+        const int kRowMoney = row_named("moneyctr");
+        const int kRowItem = row_named("itemctrl");
+        put32(g_fake->gil_record, 4, 7000);
+        phase(L,
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "function box_events(handle)\n"
+            "  local out = {}\n"
+            "  for _, e in ipairs((handle:poll())) do\n"
+            "    if e.event == 'pending' then out[#out + 1] = 'pending:' .. e.what .. ':' .. tostring(e.pending)\n"
+            "    elseif e.name == 'moneyctr' or e.name == 'itemctrl' then out[#out + 1] = e.event .. ':' .. e.name end\n"
+            "  end\n"
+            "  return table.concat(out, ' ')\n"
+            "end\n"
+            "local o, why = h:options('moneyctr')\n"
+            "check(o == nil and why == 'no number is pending in moneyctr', 'options(moneyctr) with nothing asked: '"
+            "  .. tostring(why))\n"
+            "local ok, w = h:open('itemctrl')\n"
+            "check(ok == nil and w == \"itemctrl opens only for the game's own event; answer or cancel it instead\","
+            "  'open(itemctrl) refused: ' .. tostring(w))\n"
+            "ok, w = h:close('moneyctr')\n"
+            "check(ok == true, 'close(moneyctr) with nothing asked queues: the game thread refuses it only while it'"
+            "  .. ' asks: ' .. tostring(w))\n"
+            "local raised, err = pcall(h.answer, h, 'moneyctr', true)\n"
+            "check(not raised and tostring(err):find(\"answer('moneyctr', number) takes a number\", 1, true),"
+            "  'answer(moneyctr, true) raises: ' .. tostring(err))\n"
+            "ok, w = h:answer('itemctrl', 3)\n"
+            "check(ok == nil and w == 'no number is pending in itemctrl', 'answer(itemctrl) with nothing asked: '"
+            "  .. tostring(w))\n"
+            "ok, w = h:cancel('moneyctr')\n"
+            "check(ok == nil and w == 'no number is pending in moneyctr', 'cancel(moneyctr) with nothing asked')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h:poll())) do seen[#seen + 1] = e.event .. ':' .. tostring(e.name) end\n"
+            "check(#seen == 0, 'the close of moneyctr asking nothing: no refusal, nothing to close: '"
+            "  .. table.concat(seen, ' '))\n"
+            "return finish()\n");
+
+        // the window up: handover's gil
+        open_on_game_thread("menu    handover");
+        uint8_t* box = static_cast<uint8_t*>(box_ask_on_game_thread(0, 100, 0, g_fake->callbacks[1], NULL));
+        wait_frames(2);
+        check(box && live_menu(kRowMoney) == box && get32(money, 0x24) == 7000 && get32(money, 0x28) == 100
+                && get32(money, 0x2C) == reinterpret_cast<uint32_t>(g_fake->callbacks[1]),
+            "moneyctr's setup, the game's bytes: a max of 0 is the gil record's, the question written, the window"
+            " opened through the hooked open");
+        phase(L,
+            "local o = h:options('moneyctr')\n"
+            "check(o and o.name == 'moneyctr' and type(o.id) == 'number' and o.value == 100 and o.min == 0"
+            "  and o.max == 7000 and o.blocked == false and o.item == nil and o.detail"
+            "  and o.detail.asker == 'handover' and type(o.detail.callback) == 'string',"
+            "  'options(moneyctr): the number shown, 0..the gil, not blocked, handover asking under detail')\n"
+            "local ok, w = h:answer('moneyctr', 1.5)\n"
+            "check(ok == nil and w == \"answer('moneyctr', number): the number is a whole number\", 'a fraction: '"
+            "  .. tostring(w))\n"
+            "ok, w = h:answer('moneyctr', 7001)\n"
+            "check(ok == nil and w == '7001 is outside 0..7000, what moneyctr takes now', 'past the max: ' .. tostring(w))\n"
+            "ok, w = h:answer(o.name, 2500, o.id - 1)\n"
+            "check(ok == nil and w == 'that prompt is gone', 'an earlier open\\'s id: ' .. tostring(w))\n"
+            "box_prompt = o\n"
+            "check(h:close('moneyctr') == true, 'close(moneyctr) while it asks queues')\n"
+            "check(h:answer(o.name, 2500, o.id) == true, 'answer(moneyctr, 2500, its id) queues')\n"
+            "return finish()\n");
+        const int answers = bl->box_answers;
+        wait_frames(3);
+        check(bl->box_answers == answers + 1 && bl->box_value == 2500 && bl->box_who == 1 && bl->box_context == NULL
+                && get32(money, 0x2C) == 0 && !live_menu(kRowMoney),
+            "answer: moneyctr's confirm, the game's bytes, called the asker's callback with 2500, cleared it and"
+            " closed the window by instance");
+        phase(L,
+            "local seen, refused = {}, {}\n"
+            "for _, e in ipairs((h:poll())) do\n"
+            "  if e.event == 'pending' then seen[#seen + 1] = 'pending:' .. e.what .. ':' .. tostring(e.pending)\n"
+            "  elseif e.name == 'moneyctr' then seen[#seen + 1] = e.event .. ':' .. e.name end\n"
+            "  if e.event == 'error' then refused[#refused + 1] = e.verb .. ':' .. e.reason end\n"
+            "end\n"
+            "check(table.concat(seen, ' ') == 'opened:moneyctr error:moneyctr closed:moneyctr'"
+            "  and table.concat(refused, ' ') == \"close:moneyctr is a prompt the game waits on; use cancel('moneyctr')\","
+            "  'a box with its window posts no pending event, its opened event describing it, then its closed (the'"
+            "  .. ' stand-in frees a closed instance at once, and the drain sees it gone); the close while it asked'"
+            "  .. ' refused by the game thread, before the answer: ' .. table.concat(seen, ' ') .. ' / '"
+            "  .. table.concat(refused, ' '))\n"
+            "return finish()\n");
+
+        // hidden: no key reaches it; the reply ends it all the same
+        box = static_cast<uint8_t*>(box_ask_on_game_thread(0, 0, 50, g_fake->callbacks[1], NULL));
+        phase(L,
+            "check(h:hide('moneyctr') == true, 'hide(moneyctr) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        {
+            typedef uint32_t (__fastcall* InputFn)(void* self, void* edx, int code);
+            InputFn route;
+            memcpy(&route, &g_fake->menu_routing, sizeof(route));
+            const int sinks = bl->sink_calls;
+            put32(g_fake->mcb, 0x54, reinterpret_cast<uint32_t>(box));
+            bool dropped = true;
+            for (int code = 1; code <= 0x20; ++code) {
+                dropped = route(g_fake->mcb, NULL, code) == 0 && dropped;
+            }
+            put32(g_fake->mcb, 0x54, 0);
+            check(hidden_in_place(kRowMoney, box) && dropped && bl->sink_calls == sinks,
+                "a hidden moneyctr active at its own layer: no routed code reaches it");
+        }
+        phase(L,
+            "check(h:cancel('moneyctr') == true, 'cancel(moneyctr) queues')\n"
+            "check(h:unhide('moneyctr') == true, 'unhide(moneyctr)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(bl->box_value == -1 && !live_menu(kRowMoney) && get32(money, 0x2C) == 0,
+            "cancel: the confirm with -1, the window's own cancel");
+
+        // a stale callback: the window closed from outside asks nothing
+        box_ask_on_game_thread(0, 0, 50, g_fake->callbacks[1], NULL);
+        {
+            typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+            CloseFn close_by_name;
+            memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, "menu    moneyctr");
+            resume_game();
+        }
+        wait_frames(2);
+        phase(L,
+            "local o, why = h:options('moneyctr')\n"
+            "check(o == nil and why == 'no number is pending in moneyctr', 'a callback a close from outside left set"
+            " asks nothing: ' .. tostring(why))\n"
+            "return finish()\n");
+        check(get32(money, 0x2C) != 0, "the stand-in's callback is still set, as the game leaves it");
+        put32(money, 0x2C, 0);
+
+        // the earlier slots: any window; block8 leaves an open box to its
+        // reply, block5 closes it
+        box = static_cast<uint8_t*>(box_ask_on_game_thread(0, 0, 50, g_fake->callbacks[1], NULL));
+        wait_frames(2);
+        {
+            HuEngineApi api;
+            HuEngineHandle raw = {-1, 0};
+            char why[512] = "";
+            if (record_api(&api)) {
+                api.handle_open("raw", &raw, why, sizeof(why));
+            }
+            const int32_t old = raw.slot >= 0
+                ? api.answer5(&raw, "moneyctr", HU_ANSWER_NUMBER, 5, NULL, 0, 0, why, sizeof(why)) : -2;
+            check(old == 0 && strstr(why, "moneyctr takes no answer; answer() replies to query, link5, arealist,"
+                    " passinpu and prtyjoin") == why
+                    && !sets_field(raw_read(api.options5, &raw, "moneyctr"), "max")
+                    && sets_field(raw_read(api.options8, &raw, "moneyctr"), "max"),
+                "an engine abi 5 slot treats moneyctr as any window; options8 reads its question");
+            const int32_t blocked = raw.slot >= 0 ? api.block8(&raw, "moneyctr", NULL, why, sizeof(why)) : 0;
+            wait_frames(3);
+            const bool kept = blocked == 1 && live_menu(kRowMoney) == box && hidden_in_place(kRowMoney, box);
+            api.unblock3(&raw, "moneyctr", why, sizeof(why));
+            const int32_t old_block = raw.slot >= 0 ? api.block5(&raw, "moneyctr", why, sizeof(why)) : 0;
+            wait_frames(3);
+            check(kept && old_block == 1 && !live_menu(kRowMoney) && get32(money, 0x2C) != 0,
+                "block8 leaves an open moneyctr to its reply; block5 closes it as any window, its callback left set");
+            api.unblock3(&raw, "moneyctr", why, sizeof(why));
+            if (raw.slot >= 0) {
+                api.handle_release(&raw);
+            }
+        }
+        put32(money, 0x2C, 0);
+        wait_frames(2);
+
+        // blocked: trade's item count, its callback the game's bytes
+        uint8_t* trade = static_cast<uint8_t*>(open_on_game_thread("menu    trade"));
+        uint8_t* trade_ctl = controller_named("trade");
+        put32(trade_ctl, 0xC0, 3);
+        put16(trade, 0x4C, 3);
+        static uint8_t picked[8] = {0x34, 0x12, 7, 0, 12, 0, 0, 0};
+        phase(L,
+            "box_events(h) box_events(h2)\n"
+            "check(h:block('itemctrl') == true, 'block(itemctrl) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        void* refused = box_ask_on_game_thread(1, 1, 12, g_fake->callbacks[8], picked);
+        wait_frames(2);
+        check(!refused && !live_menu(kRowItem) && item[0x22] == 12 && item[0x23] == 1
+                && get32(item, 0x24) == reinterpret_cast<uint32_t>(g_fake->callbacks[8])
+                && get32(item, 0x2C) == reinterpret_cast<uint32_t>(picked),
+            "itemctrl blocked: its setup wrote the question and its open was refused");
+        phase(L,
+            "local seen = box_events(h)\n"
+            "check(seen == 'blocked:itemctrl pending:itemctrl:true', 'the refused open: a blocked event, then a pending"
+            " one, what itemctrl: ' .. seen)\n"
+            "local o = h:options('itemctrl')\n"
+            "check(o and o.name == 'itemctrl' and o.value == 1 and o.min == 1 and o.max == 12 and o.blocked == true"
+            "  and o.item == 0x1234 and o.detail and o.detail.asker == 'trade',"
+            "  'options(itemctrl) blocked: the number, 1..12, blocked, the picked item\\'s id')\n"
+            "local p = h:pending()\n"
+            "check(p and p.itemctrl and p.itemctrl.name == 'itemctrl' and p.itemctrl.id == o.id and p.itemctrl.max == 12"
+            "  and p.itemctrl.blocked == true and p.moneyctr == nil, 'pending() lists the blocked count under itemctrl')\n"
+            "item_prompt = p.itemctrl\n"
+            "return finish()\n");
+        put16(trade, 0x4C, 4);
+        phase(L,
+            "local ok, w = h:answer(item_prompt.name, 5, item_prompt.id)\n"
+            "check(ok == nil and w == \"trade's cursor is not on the row the question was asked from\", 'trade\\'s"
+            " cursor moved: ' .. tostring(w))\n"
+            "return finish()\n");
+        put16(trade, 0x4C, 3);
+        pause_game();
+        put16(g_fake->player, 0x9860 + 7 * 0x2C, 0x1234);
+        const uint32_t later = get32(g_fake->clock, 0x0C) + 2;
+        put32(g_fake->clock, 0x0C, later);
+        resume_game();
+        const int commits = bl->commits;
+        phase(L,
+            "check(h:answer(item_prompt.name, 5, item_prompt.id) == true, 'back on its row: answer(itemctrl, 5, the id"
+            " pending() gave) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(bl->commits == commits + 1 && get16(bl->packet, 0) == 0x34 && get32(bl->packet, 4) == 5
+                && get16(bl->packet, 8) == 0x1234 && bl->packet[0x0A] == 7 && bl->packet[0x0B] == 3
+                && bl->focus_menu == trade && get32(item, 0x24) == 0,
+            "the answer: itemctrl's confirm with no window, trade's own callback staging 5 of item 0x1234 from index 7"
+            " on its cursor row's slot 3, the change sent, the focus back to trade");
+        phase(L,
+            "local mine, other = box_events(h), box_events(h2)\n"
+            "check(mine == '', 'the replying handle gets no pending event for its own reply: ' .. mine)\n"
+            "check(other == 'blocked:itemctrl pending:itemctrl:true pending:itemctrl:false', 'another handle reads the"
+            " question start and end: ' .. other)\n"
+            "local p = h:pending()\n"
+            "check(p and p.itemctrl == nil, 'pending() lists it no more')\n"
+            "return finish()\n");
+
+        // the game drops it: trade's window closes
+        box_ask_on_game_thread(1, 1, 12, g_fake->callbacks[8], picked);
+        wait_frames(2);
+        {
+            typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+            CloseFn close_by_name;
+            memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, "menu    trade");
+            resume_game();
+        }
+        wait_frames(3);
+        phase(L,
+            "local seen = box_events(h)\n"
+            "check(seen == 'blocked:itemctrl pending:itemctrl:true pending:itemctrl:false', 'trade\\'s window closing"
+            " ends the question: ' .. seen)\n"
+            "local o, why = h:options('itemctrl')\n"
+            "check(o == nil and why == 'no number is pending in itemctrl', 'nothing pending once trade closed')\n"
+            "box_events(h2)\n"
+            "return finish()\n");
+
+        // an asker the engine does not know: pending, but no reply
+        box_ask_on_game_thread(1, 1, 9, g_fake->text_callback, picked);
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('itemctrl')\n"
+            "check(o and o.blocked == true and o.detail.asker == 'unknown' and o.item == nil, 'options(itemctrl) of an"
+            " unknown asker: blocked, asker unknown')\n"
+            "local ok, w = h:answer(o.name, 2, o.id)\n"
+            "check(ok == nil and w:find(\"itemctrl's question came from a window hideui does not know\", 1, true) == 1,"
+            "  'answer refused: ' .. tostring(w))\n"
+            "ok, w = h:cancel(o.name, o.id)\n"
+            "check(ok == nil and w:find('does not know', 1, true), 'cancel refused: ' .. tostring(w))\n"
+            "check(h:unblock('itemctrl') == true, 'unblock(itemctrl)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        // unblocked, the next ask opens the window, which ends the record
+        box = static_cast<uint8_t*>(box_ask_on_game_thread(1, 1, 9, g_fake->callbacks[8], picked));
+        wait_frames(3);
+        phase(L,
+            "local seen = box_events(h)\n"
+            "check(seen == 'blocked:itemctrl pending:itemctrl:true pending:itemctrl:false opened:itemctrl',"
+            "  'an open of the window ends the blocked question: ' .. seen)\n"
+            "local o = h:options('itemctrl')\n"
+            "check(o and o.blocked == false and o.item == 0x1234, 'the window up: not blocked')\n"
+            "check(h:cancel(o.name, o.id) == true, 'cancel(itemctrl) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(box && !live_menu(kRowItem) && get32(item, 0x24) == 0 && bl->focus_calls > 0,
+            "the cancel: the confirm with -1, trade's callback refocusing, the window closed");
+        {
+            HuEngineApi api;
+            HuEngineHandle raw = {-1, 0};
+            char why[512] = "";
+            if (record_api(&api)) {
+                api.handle_open("raw", &raw, why, sizeof(why));
+            }
+            phase(L,
+                "check(h:block('moneyctr') == true, 'block(moneyctr)')\n"
+                "return finish()\n");
+            wait_frames(3);
+            raw_read(api.poll5, &raw);
+            box_ask_on_game_thread(0, 0, 50, g_fake->callbacks[1], NULL);
+            wait_frames(2);
+            const HuEngineReply& five = raw_read(api.pending5, &raw);
+            const bool old_pending = !sets_field(five, "moneyctr");
+            const bool new_pending = sets_field(raw_read(api.pending8, &raw), "moneyctr");
+            const HuEngineReply& polled = raw_read(api.poll5, &raw);
+            const bool old_poll = has_string(polled, "blocked") && !has_string(polled, "pending");
+            check(raw.slot >= 0 && old_pending && new_pending && old_poll,
+                "pending5 lists no box and poll5 reports no box's pending event; pending8 lists it");
+            if (raw.slot >= 0) {
+                api.handle_release(&raw);
+            }
+            phase(L,
+                "local p = h:pending()\n"
+                "check(p.moneyctr and p.moneyctr.blocked and h:cancel(p.moneyctr.name, p.moneyctr.id) == true,"
+                "  'the blocked gil question pending() lists, canceled with its id')\n"
+                "return finish()\n");
+            wait_frames(3);
+            check(bl->box_value == -1 && get32(money, 0x2C) == 0, "the blocked gil question canceled through its record");
+            phase(L,
+                "check(h:unblock('moneyctr') == true, 'unblock(moneyctr)')\n"
+                "for _, x in ipairs({h, h2}) do x:poll() end\n"
+                "return finish()\n");
+            wait_frames(2);
+        }
+        {
+            typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+            CloseFn close_by_name;
+            memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, "menu    handover");
+            resume_game();
+            wait_frames(2);
+        }
+        phase(L,
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "return finish()\n");
+    }
+
+    // -- the Asked windows (0.11.0): sortyn, evitem01, confyn, bankmenu,
+    //    maplist, gmtell, mp_dead and ok asked on the game thread as the
+    //    game's askers ask, their setups the game's bytes where the engine
+    //    relies on them: options() in plain fields, answer and cancel doing
+    //    what each window's own confirm and cancel do, the refusals, hidden
+    //    prompts taking no routed key, a blocked question announced, listed by
+    //    pending() and pending8, answered with no window, its end a pending
+    //    event every other handle reads; pending5 and poll5 leaving them out
+    {
+        FakeLog* al = g_fake->log;
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        auto game_close = [&](const char* key) {
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, key);
+            resume_game();
+        };
+        phase(L,
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "asked_names = {sortyn = true, evitem01 = true, confyn = true, bankmenu = true, maplist = true,"
+            "  gmtell = true, mp_dead = true, ok = true}\n"
+            "function asked_events(handle)\n"
+            "  local out = {}\n"
+            "  for _, e in ipairs((handle:poll())) do\n"
+            "    if e.event == 'pending' and asked_names[e.what] then\n"
+            "      out[#out + 1] = 'pending:' .. e.what .. ':' .. tostring(e.pending)\n"
+            "    elseif asked_names[e.name] and e.event ~= 'cursor' then out[#out + 1] = e.event .. ':' .. e.name end\n"
+            "  end\n"
+            "  return table.concat(out, ' ')\n"
+            "end\n"
+            "local quiet = {}\n"
+            "for w in pairs(asked_names) do\n"
+            "  local o, why = h:options(w)\n"
+            "  if o == nil and why == 'no question is pending in ' .. w then quiet[#quiet + 1] = w end\n"
+            "end\n"
+            "check(#quiet == 8, 'options() of each Asked window with nothing asked: ' .. table.concat(quiet, ' '))\n"
+            "local ok, w = h:open('sortyn')\n"
+            "check(ok == nil and w == \"sortyn opens only for the game's own event; answer or cancel it instead\","
+            "  'open(sortyn) refused: ' .. tostring(w))\n"
+            "ok, w = h:open('ok')\n"
+            "check(ok == nil and w == \"ok opens only for the game's own event; answer it instead\","
+            "  'open(ok) refused, pointing at answer alone: ' .. tostring(w))\n"
+            "ok, w = h:close('maplist')\n"
+            "check(ok == true, 'close(maplist) with nothing asked queues: ' .. tostring(w))\n"
+            "local raised, err = pcall(h.answer, h, 'sortyn', 1)\n"
+            "check(not raised and tostring(err):find(\"answer('sortyn', yes) takes true for yes or false for no\", 1,"
+            "  true), 'answer(sortyn, 1) raises: ' .. tostring(err))\n"
+            "raised, err = pcall(h.answer, h, 'bankmenu', true)\n"
+            "check(not raised and tostring(err):find(\"answer('bankmenu', container) takes the container\", 1, true),"
+            "  'answer(bankmenu, true) raises: ' .. tostring(err))\n"
+            "raised, err = pcall(h.answer, h, 'ok', 5)\n"
+            "check(not raised and tostring(err):find(\"answer('ok') takes no value, or true\", 1, true),"
+            "  'answer(ok, 5) raises: ' .. tostring(err))\n"
+            "ok, w = h:cancel('confyn')\n"
+            "check(ok == nil and w == \"confyn has no cancel; answer('confyn', false) says no\", 'cancel(confyn): '"
+            "  .. tostring(w))\n"
+            "ok, w = h:cancel('mp_dead')\n"
+            "check(ok == nil and w:find('mp_dead has no cancel', 1, true) == 1, 'cancel(mp_dead): ' .. tostring(w))\n"
+            "ok, w = h:cancel('ok')\n"
+            "check(ok == nil and w == \"ok has no cancel; answer('ok') acknowledges it\", 'cancel(ok): ' .. tostring(w))\n"
+            "ok, w = h:answer('maplist', 1)\n"
+            "check(ok == nil and w == 'no question is pending in maplist', 'answer(maplist) with nothing asked')\n"
+            "return finish()\n");
+
+        // sortyn, asked from iuse: its setup the game's bytes
+        uint8_t* sortyn = controller_named("sortyn");
+        const int kRowSortyn = row_named("sortyn");
+        check(asked_on_game_thread(0, 0) == 1 && live_menu(kRowSortyn) && get16(live_menu(kRowSortyn), 0x4C) == 2,
+            "sortyn's setup, the game's bytes: the question written, the window opened through the hooked open, the"
+            " cursor put on no through select-row");
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('sortyn')\n"
+            "local seg = o and o.segments or {}\n"
+            "check(o and o.name == 'sortyn' and type(o.id) == 'number' and o.text == 'Drop the Rusty Key?'"
+            "  and #seg == 3 and seg[2].text == 'Rusty Key' and o.title and o.title.text == 'Drop'"
+            "  and o.default == false and o.cancellable == true and o.blocked == false and o.detail"
+            "  and type(o.detail.callback) == 'string' and o.detail.asker == nil,"
+            "  'options(sortyn): the question and its title from the game text, no first, cancellable, not blocked')\n"
+            "check(h:answer(o.name, true, o.id) == true, 'answer(sortyn, true, its id) queues')\n"
+            "return finish()\n");
+        const int sortyn_calls = al->asked_calls;
+        const uint32_t sortyn_context = get32(sortyn, 0x18);
+        wait_frames(3);
+        check(al->asked_calls == sortyn_calls + 1 && al->asked_who == 0 && al->asked_value == 1
+                && reinterpret_cast<uint32_t>(al->asked_context) == sortyn_context && get32(sortyn, 0x14) == 0
+                && !live_menu(kRowSortyn) && strcmp(al->last_close, "menu    sortyn  ") == 0,
+            "answer(sortyn, true): the callback with the item record and 1, the callback cleared, sortyn closed by"
+            " name, as its confirm does");
+
+        // hidden: no routed key reaches it
+        phase(L,
+            "asked_events(h) asked_events(h2)\n"
+            "check(h:hide('sortyn') == true, 'hide(sortyn) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        asked_on_game_thread(0, 1);
+        wait_frames(2);
+        {
+            uint8_t* menu = live_menu(kRowSortyn);
+            typedef uint32_t (__fastcall* InputFn)(void* self, void* edx, int code);
+            InputFn route;
+            memcpy(&route, &g_fake->menu_routing, sizeof(route));
+            const int sinks = al->sink_calls;
+            put32(g_fake->mcb, 0x54, reinterpret_cast<uint32_t>(menu));
+            bool dropped = true;
+            for (int code = 1; code <= 0x20; ++code) {
+                dropped = route(g_fake->mcb, NULL, code) == 0 && dropped;
+            }
+            put32(g_fake->mcb, 0x54, 0);
+            check(hidden_in_place(kRowSortyn, menu) && dropped && al->sink_calls == sinks,
+                "a hidden sortyn active at its own layer: no routed code reaches it");
+        }
+        phase(L,
+            "local o = h:options('sortyn')\n"
+            "check(o and o.default == true and o.blocked == false, 'hidden, its question still read: yes first')\n"
+            "check(h:cancel('sortyn') == true and h:unhide('sortyn') == true, 'cancel(sortyn) and unhide queue')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_value == 0 && !live_menu(kRowSortyn) && get32(sortyn, 0x14) == 0,
+            "cancel(sortyn): the callback with 0, the window closed");
+
+        // sortyn blocked: kept with iuse, the window that asked
+        {
+            HuEngineApi api;
+            HuEngineHandle raw = {-1, 0};
+            char why[512] = "";
+            if (record_api(&api)) {
+                api.handle_open("raw", &raw, why, sizeof(why));
+            }
+            phase(L,
+                "asked_events(h) asked_events(h2)\n"
+                "check(h:block('sortyn') == true, 'block(sortyn) queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            raw_read(api.poll5, &raw);
+            asked_on_game_thread(0, 0);
+            wait_frames(2);
+            const bool old_pending = !sets_field(raw_read(api.pending5, &raw), "sortyn");
+            const bool new_pending = sets_field(raw_read(api.pending8, &raw), "sortyn");
+            const HuEngineReply& polled = raw_read(api.poll5, &raw);
+            check(raw.slot >= 0 && !live_menu(kRowSortyn) && get32(sortyn, 0x14) != 0 && old_pending && new_pending
+                    && has_string(polled, "blocked") && !has_string(polled, "pending"),
+                "sortyn blocked: its open refused with the question written; pending8 lists it, pending5 and poll5"
+                " leave it out");
+            if (raw.slot >= 0) {
+                api.handle_release(&raw);
+            }
+        }
+        phase(L,
+            "local seen = asked_events(h)\n"
+            "check(seen == 'blocked:sortyn pending:sortyn:true', 'the refused open: blocked, then pending: ' .. seen)\n"
+            "local o = h:options('sortyn')\n"
+            "check(o and o.blocked == true and o.default == nil and o.text == 'Drop the Rusty Key?'"
+            "  and o.detail.asker == 'iuse', 'options(sortyn) blocked: the question, blocked, iuse asking')\n"
+            "local p = h:pending()\n"
+            "check(p and p.sortyn and p.sortyn.id == o.id and p.sortyn.blocked == true, 'pending() lists sortyn')\n"
+            "check(h:answer(p.sortyn.name, false, p.sortyn.id) == true, 'answer(sortyn, false, its id) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_value == 0 && get32(sortyn, 0x14) == 0 && !live_menu(kRowSortyn),
+            "answered with no window: the callback with 0, the callback cleared");
+        phase(L,
+            "local mine, other = asked_events(h), asked_events(h2)\n"
+            "check(mine == '', 'the replying handle reads no event for its own reply: ' .. mine)\n"
+            "check(other == 'blocked:sortyn pending:sortyn:true pending:sortyn:false', 'another handle reads the start"
+            " and the end: ' .. other)\n"
+            "check(h:pending().sortyn == nil, 'pending() lists it no more')\n"
+            "check(h:unblock('sortyn') == true, 'unblock(sortyn)')\n"
+            "return finish()\n");
+        wait_frames(2);
+        game_close("menu    iuse    ");
+        put32(g_fake->mcb, 0x54, 0);
+
+        // evitem01, asked from the key item list
+        uint8_t* evitem01 = controller_named("evitem01");
+        const int kRowEvitem = row_named("evitem01");
+        const uint32_t evitem_callback = get32(call_target(g_fake->asked_sites[2] + 63), 55);
+        check(asked_on_game_thread(1, 0) == 1 && live_menu(kRowEvitem) && get32(evitem01, 0x64) == evitem_callback,
+            "evitem01 opened, then its setup, the game's bytes, writing the question and the callback it pushes");
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('evitem01')\n"
+            "check(o and o.text == 'Use the Rusty Key?' and o.default == true and o.cancellable == true"
+            "  and o.blocked == false and o.title == nil, 'options(evitem01): the question its setup printed, yes first')\n"
+            "check(h:answer('evitem01', true) == true, 'answer(evitem01, true) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_who == 1 && al->asked_value == 1 && al->asked_extra == 0 && !live_menu(kRowEvitem),
+            "answer(evitem01, true): the callback the setup set, with 1, the key item list under its cursor, then"
+            " the window closed by instance");
+        phase(L,
+            "asked_events(h) asked_events(h2)\n"
+            "check(h:block('evitem01') == true, 'block(evitem01)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(asked_on_game_thread(1, 2) == 0 && !live_menu(kRowEvitem), "evitem01 blocked: its open refused");
+        wait_frames(2);
+        phase(L,
+            "local seen = asked_events(h)\n"
+            "check(seen == 'blocked:evitem01 pending:evitem01:true', 'blocked, then pending: ' .. seen)\n"
+            "local p = h:pending()\n"
+            "check(p.evitem01 and p.evitem01.blocked == true and p.evitem01.text == 'Use the Rusty Key?',"
+            "  'pending() lists evitem01 with its question')\n"
+            "check(h:cancel(p.evitem01.name, p.evitem01.id) == true, 'cancel(evitem01, its id) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_who == 1 && al->asked_value == 0 && al->asked_extra == 2,
+            "canceled with no window: the callback with 0, the key item list still on the item asked about");
+        phase(L,
+            "check(asked_events(h2) == 'blocked:evitem01 pending:evitem01:true pending:evitem01:false',"
+            "  'another handle reads its end')\n"
+            "asked_events(h)\n"
+            "check(h:unblock('evitem01') == true, 'unblock(evitem01)')\n"
+            "return finish()\n");
+        wait_frames(2);
+        game_close("menu    evitem  ");
+        put32(g_fake->mcb, 0x54, 0);
+
+        // confyn: the defaults restored on yes
+        const int kRowConfyn = row_named("confyn");
+        asked_on_game_thread(2, 1);
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('confyn')\n"
+            "check(o and o.default == true and o.blocked == nil and o.cancellable == nil and o.detail.mode == 1,"
+            "  'options(confyn): yes first, mode 1, nothing that blocks or cancels')\n"
+            "check(h:answer('confyn', true) == true, 'answer(confyn, true) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_who == 2 && al->asked_value == 2 && !live_menu(kRowConfyn),
+            "answer(confyn, true) in mode 1: the restore with 2, then the window closed by instance");
+
+        // bankmenu: Mog Safe 2's availability from the player's data
+        uint8_t* bankmenu = controller_named("bankmenu");
+        const int kRowBank = row_named("bankmenu");
+        asked_on_game_thread(3, 0);
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('bankmenu')\n"
+            "local c = o and o.containers or {}\n"
+            "check(o and #c == 2 and c[1].id == 1 and c[1].available == true and c[2].id == 9"
+            "  and c[2].available == false and o.blocked == false, 'options(bankmenu): the Mog Safe, Mog Safe 2'"
+            "  .. ' not open to the player')\n"
+            "local ok, w = h:answer('bankmenu', 9)\n"
+            "check(ok == nil and w == 'Mog Safe 2 is not open to the player', 'answer(bankmenu, 9) refused: '"
+            "  .. tostring(w))\n"
+            "ok, w = h:answer('bankmenu', 2)\n"
+            "check(ok == nil and w == 'bankmenu offers the containers 1 and 9, not 2', 'answer(bankmenu, 2) refused')\n"
+            "return finish()\n");
+        g_fake->player_data[0x21] = 1;
+        phase(L,
+            "check(h:options('bankmenu').containers[2].available == true, 'Mog Safe 2 open')\n"
+            "check(h:answer('bankmenu', 9) == true, 'answer(bankmenu, 9) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_who == 3 && al->asked_value == 9 && al->asked_extra == 0 && !live_menu(kRowBank)
+                && get32(bankmenu, 0x14) == 0,
+            "answer(bankmenu, 9): the callback with 9 and 0, then the window closed, its begin-close clearing the"
+            " callback");
+        phase(L,
+            "asked_events(h) asked_events(h2)\n"
+            "check(h:block('bankmenu') == true, 'block(bankmenu)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(asked_on_game_thread(3, 1) == 1 && !live_menu(kRowBank) && get32(bankmenu, 0x14) != 0,
+            "bankmenu blocked: the callback stays set with no window");
+        wait_frames(2);
+        check(asked_on_game_thread(3, 1) == 0, "while it waits, the next picker's setup refuses, as the game's does");
+        phase(L,
+            "local seen = asked_events(h)\n"
+            "check(seen == 'blocked:bankmenu pending:bankmenu:true', 'blocked, then pending: ' .. seen)\n"
+            "local p = h:pending()\n"
+            "check(p.bankmenu and p.bankmenu.blocked == true and #p.bankmenu.containers == 2,"
+            "  'pending() lists bankmenu')\n"
+            "check(h:answer(p.bankmenu.name, 1, p.bankmenu.id) == true, 'answer(bankmenu, 1, its id) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_value == 1 && al->asked_extra == 0 && get32(bankmenu, 0x14) == 0,
+            "answered with no window: the callback with 1 and 0, the callback cleared as its begin-close does");
+        phase(L,
+            "check(asked_events(h) == '', 'the replying handle reads no event for its reply')\n"
+            "check(asked_events(h2) == 'blocked:bankmenu pending:bankmenu:true pending:bankmenu:false',"
+            "  'another handle reads the refused open, the start and the end')\n"
+            "check(h:unblock('bankmenu') == true, 'unblock(bankmenu)')\n"
+            "return finish()\n");
+        wait_frames(2);
+
+        // maplist, asked from map0
+        uint8_t* maplist = controller_named("maplist");
+        const int kRowMaplist = row_named("maplist");
+        asked_on_game_thread(4, 100);
+        wait_frames(2);
+        const int map_builds = al->map_builds;
+        const int map_answers = al->asked_calls;
+        phase(L,
+            "local o = h:options('maplist')\n"
+            "local r = o and o.rows or {}\n"
+            "check(o and #r == 4 and r[1].text == 'Current Area' and r[1].value == 1 and r[1].kind == 'map'"
+            "  and r[1].zone == 100 and r[1].map == 0 and r[1].label == 'East' and r[2].kind == 'list'"
+            "  and r[2].count == 6 and r[2].zone == nil and r[3].zone == 101 and r[3].map == 2"
+            "  and r[4].kind == 'close' and o.top == true and o.level == 'top' and o.blocked == false,"
+            "  'options(maplist): its rows with their kind, zone and map, label or count; the regions shown, the top"
+            " level')\n"
+            "map_first = o and o.id\n"
+            "check(h:answer('maplist', 2) == true, 'answer(maplist, 2), a region\\'s row, queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(live_menu(kRowMaplist) && al->map_builds == map_builds + 1 && al->map_select_row == 0
+                && al->map_select_flag == 0 && get16(maplist, 0x58) == 2 && get16(maplist, 0x5C) == -1
+                && get16(maplist, 0x5E) == 0 && get32(maplist, 0x54) == 2 && al->asked_calls == map_answers,
+            "answer(maplist, 2): the key handler's step down -- +0x5E 0, +0x58 2, +0x5C -1 -- the rebuild, the game's"
+            " head around the builders' stand-in, and the select of row 0; the window stays, no callback");
+        phase(L,
+            "local o = h:options('maplist')\n"
+            "local r = o and o.rows or {}\n"
+            "check(o and #r == 2 and r[1].text == 'West Ronfaure' and r[1].kind == 'map' and r[1].zone == 100"
+            "  and r[1].map == 1 and r[2].kind == 'list' and r[2].zone == nil and o.top == false"
+            "  and o.level == 'region' and o.id ~= map_first,"
+            "  'options(maplist) after the step: the region\\'s rows, level region, a new id')\n"
+            "local ok, w = h:answer('maplist', 1, map_first)\n"
+            "check(ok == nil and w == 'that prompt is gone', 'an answer naming the first level\\'s id refused: '"
+            "  .. tostring(w))\n"
+            "check(h:answer('maplist', 2, o.id) == true, 'answer(maplist, 2, its id) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(live_menu(kRowMaplist) && al->map_builds == map_builds + 2 && get16(maplist, 0x58) == 192
+                && get16(maplist, 0x5C) == 0 && get16(maplist, 0x5E) == 2 && get16(maplist, 0x5A) == 0
+                && al->asked_calls == map_answers,
+            "answer(maplist, 2) in the region: a zone of several maps, stepped down into: +0x5E 2, +0x58 192, +0x5C 0,"
+            " the row under the cursor (row 0, the select's) kept at +0x5A");
+        phase(L,
+            "local o = h:options('maplist')\n"
+            "local r = o and o.rows or {}\n"
+            "check(o and #r == 2 and r[1].zone == 190 and r[1].map == 1 and r[2].zone == 190 and r[2].map == 2"
+            "  and o.level == 'zone', 'options(maplist): the zone\\'s maps, level zone')\n"
+            "check(h:cancel('maplist', o.id) == true, 'cancel(maplist) inside a zone\\'s maps queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(live_menu(kRowMaplist) && al->map_builds == map_builds + 3 && get16(maplist, 0x58) == 2
+                && get16(maplist, 0x5C) == -1 && al->map_select_row == 0 && al->asked_calls == map_answers,
+            "cancel(maplist) inside a zone's maps: back to the region, +0x58 from +0x5E, +0x5C -1, the select of the"
+            " row kept");
+        phase(L,
+            "local o = h:options('maplist')\n"
+            "check(o and o.level == 'region' and #o.rows == 2, 'back in the region')\n"
+            "check(h:cancel('maplist') == true, 'cancel(maplist) inside a region queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(live_menu(kRowMaplist) && al->map_builds == map_builds + 4 && get16(maplist, 0x58) == 0
+                && get16(maplist, 0x5E) == 0 && get32(maplist, 0x54) == 4 && al->asked_calls == map_answers,
+            "cancel(maplist) inside a region: back to the top, its rows built again");
+        phase(L,
+            "local o = h:options('maplist')\n"
+            "check(o and o.level == 'top' and o.top == true and #o.rows == 4, 'back at the top')\n"
+            "check(h:answer('maplist', 3) == true, 'answer(maplist, 3) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_who == 4 && al->asked_value == 101 && al->asked_extra == 2 && !live_menu(kRowMaplist)
+                && get32(maplist, 0x60) == 0 && get32(maplist, 0x6C) != 0,
+            "answer(maplist, 3): the callback with the row's entry {101, 2}, then close+reset, the game's bytes:"
+            " the window closed, its rows freed, the callback left set");
+        phase(L,
+            "local o, why = h:options('maplist')\n"
+            "check(o == nil and why == 'no question is pending in maplist', 'its callback left set asks nothing')\n"
+            "asked_events(h) asked_events(h2)\n"
+            "check(h:block('maplist') == true, 'block(maplist)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const int map_calls = al->asked_calls;
+        check(asked_on_game_thread(4, 100) == 0 && !live_menu(kRowMaplist), "maplist blocked: its open refused");
+        wait_frames(2);
+        phase(L,
+            "check(asked_events(h) == 'blocked:maplist pending:maplist:true', 'blocked, then pending')\n"
+            "local p = h:pending()\n"
+            "check(p.maplist and p.maplist.blocked == true and #p.maplist.rows == 4, 'pending() lists maplist')\n"
+            "map_first = p.maplist.id\n"
+            "check(h:answer(p.maplist.name, 2, p.maplist.id) == true, 'answer(maplist, 2) with no window queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_calls == map_calls && !live_menu(kRowMaplist) && get16(maplist, 0x58) == 2
+                && get16(maplist, 0x5A) == -1 && get32(maplist, 0x54) == 2,
+            "answered with no window: the step down all the same, the cursor read -1 with no window");
+        phase(L,
+            "check(asked_events(h) == 'pending:maplist:true', 'the replying handle reads the new level\\'s start"
+            " alone')\n"
+            "local p = h:pending()\n"
+            "check(p.maplist and p.maplist.blocked == true and #p.maplist.rows == 2 and p.maplist.level == 'region'"
+            "  and p.maplist.id ~= map_first, 'pending() lists the region as a new prompt')\n"
+            "check(h:cancel(p.maplist.name, p.maplist.id) == true, 'cancel(maplist) inside the region queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_calls == map_calls && get16(maplist, 0x58) == 0 && get32(maplist, 0x54) == 4,
+            "canceled inside the region with no window: back to the top");
+        phase(L,
+            "check(asked_events(h) == 'pending:maplist:true', 'the top again, a new prompt')\n"
+            "local p = h:pending()\n"
+            "check(p.maplist and p.maplist.level == 'top' and #p.maplist.rows == 4, 'pending() lists the top')\n"
+            "check(h:cancel(p.maplist.name, p.maplist.id) == true, 'cancel(maplist, its id) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_calls == map_calls && get32(maplist, 0x60) == 0,
+            "canceled with no window: close+reset alone, no callback");
+        phase(L,
+            "check(asked_events(h2) == 'blocked:maplist pending:maplist:true pending:maplist:false"
+            " pending:maplist:true pending:maplist:false pending:maplist:true pending:maplist:false',"
+            "  'another handle reads each level\\'s start and end')\n"
+            "asked_events(h)\n"
+            "check(h:unblock('maplist') == true, 'unblock(maplist)')\n"
+            "return finish()\n");
+        wait_frames(2);
+        game_close("menu    map0    ");
+        put32(g_fake->mcb, 0x54, 0);
+
+        // gmtell, hide-only: the GM tell poller sends what the result word says
+        const int kRowGm = row_named("gmtell");
+        *g_fake->gm_polls = 1;
+        asked_on_game_thread(5, 2);
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('gmtell')\n"
+            "local opts = o and o.options or {}\n"
+            "check(o and o.gm == 'GM_Test' and o.title.text == 'Are you there?' and #opts == 3"
+            "  and opts[2].text == 'No' and opts[2].value == 2 and o.cancellable == true and o.detail.slot == 2"
+            "  and o.blocked == nil, 'options(gmtell): the GM, the title and the options in plain fields')\n"
+            "local ok, w = h:answer('gmtell', 4)\n"
+            "check(ok == nil and w == \"no option in the list has the value 4 (options('gmtell') lists them)\","
+            "  'an unlisted value refused: ' .. tostring(w))\n"
+            "check(h:answer('gmtell', 2) == true, 'answer(gmtell, 2) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->gm_result == 2 && !live_menu(kRowGm), "answer(gmtell, 2): the poller read 2 and closed the window");
+        asked_on_game_thread(5, 0);
+        wait_frames(2);
+        phase(L,
+            "check(h:cancel('gmtell') == true, 'cancel(gmtell) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->gm_result == 0xFF && !live_menu(kRowGm), "cancel(gmtell): the poller read the decline, 0xFF");
+        *g_fake->gm_polls = 0;
+
+        // mp_dead, hide-only: the choice the KO handler polls
+        uint8_t* mp = controller_named("mp_dead");
+        const int kRowMp = row_named("mp_dead");
+        asked_on_game_thread(6, 30);
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('mp_dead')\n"
+            "local c = o and o.options or {}\n"
+            "check(o and #c == 2 and c[1].text == 'Retry' and c[1].value == 1 and c[2].text == 'Return'"
+            "  and c[2].value == 2 and o.seconds == 30 and o.detail.remaining == 1800,"
+            "  'options(mp_dead): its two rows as the game wrote them, their values, the seconds left')\n"
+            "local ok, w = h:answer('mp_dead', 3)\n"
+            "check(ok == nil and w == 'mp_dead takes 1 or 2, not 3', 'answer(mp_dead, 3) refused')\n"
+            "check(h:answer('mp_dead', 1) == true, 'answer(mp_dead, 1) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(get32(mp, 0x24) == 1 && live_menu(kRowMp), "answer(mp_dead, 1): 1 at +0x24, the window left to the KO"
+            " handler");
+        phase(L,
+            "local o, why = h:options('mp_dead')\n"
+            "check(o == nil and why == 'no question is pending in mp_dead', 'a choice made: nothing pending')\n"
+            "return finish()\n");
+        game_close("menu    mp_dead ");
+
+        // ok: the error screen waits on its acknowledgment
+        const int kRowOk = row_named("ok");
+        uint8_t* okc = controller_named("ok");
+        *g_fake->error_screen = 1;
+        asked_on_game_thread(7, 0);
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('ok')\n"
+            "check(o and o.text == 'Lost connection to the server.' and o.blocked == false and o.default == nil,"
+            "  'options(ok): the notice')\n"
+            "check(h:answer('ok') == true, 'answer(ok) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->ok_seen == 1 && !live_menu(kRowOk), "answer(ok): acknowledged, the error screen closed it");
+        asked_on_game_thread(7, 1);
+        wait_frames(2);
+        phase(L,
+            "check(h:answer('ok', true) == true, 'answer(ok, true) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->asked_who == 7 && al->asked_context != NULL && !live_menu(kRowOk),
+            "a notice with a callback: the callback with its context, the window closed by instance");
+        phase(L,
+            "asked_events(h) asked_events(h2)\n"
+            "check(h:block('ok') == true, 'block(ok)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const int seen_before = al->ok_seen;
+        check(asked_on_game_thread(7, 0) == 0 && !live_menu(kRowOk), "ok blocked: its open refused");
+        wait_frames(2);
+        phase(L,
+            "check(asked_events(h) == 'blocked:ok pending:ok:true', 'blocked, then pending')\n"
+            "local p = h:pending()\n"
+            "check(p.ok and p.ok.blocked == true and p.ok.text == 'Lost connection to the server.',"
+            "  'pending() lists the notice')\n"
+            "check(h:answer(p.ok.name, true, p.ok.id) == true, 'answer(ok, true, its id) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->ok_seen == seen_before + 1, "answered with no window: acknowledged, the error screen moved on");
+        phase(L,
+            "check(asked_events(h2) == 'blocked:ok pending:ok:true pending:ok:false', 'another handle reads its end')\n"
+            "asked_events(h)\n"
+            "check(h:unblock('ok') == true, 'unblock(ok)')\n"
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "return finish()\n");
+        wait_frames(2);
+        *g_fake->error_screen = 0;
+        put32(okc, 0x25C, 0);
+
+        // mogdoor: the door's handler writes the nation, then opens the
+        // window, whose open hook takes the nation's list; options() reads
+        // its rows, answer and cancel run its confirm's gate and its exit or
+        // stay; blocked, the question kept and answered with no window
+        uint8_t* door = controller_named("mogdoor");
+        const int kRowDoor = row_named("mogdoor");
+        auto door_reset = [&]() {
+            memset(g_fake->door_exiting, 0, 3);
+            put32(g_fake->door_actor, 0x880, 0);
+            door[0x15] = 0xEE;
+        };
+        door_reset();
+        phase(L,
+            "function door_errors(handle)\n"
+            "  local out = {}\n"
+            "  for _, e in ipairs((handle:poll())) do\n"
+            "    if e.event == 'error' then out[#out + 1] = e.verb .. ' ' .. e.name .. ': ' .. e.reason end\n"
+            "  end\n"
+            "  return table.concat(out, ' | ')\n"
+            "end\n"
+            "asked_names.mogdoor = true\n"
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "return finish()\n");
+        check(asked_on_game_thread(8, 1) == 1 && live_menu(kRowDoor) && door[0x16] == 4 && door[0x18] == 0,
+            "the door's handler: the nation written, mogdoor opened, its open hook taking the nation's four areas");
+        wait_frames(2);
+        const int gates = al->door_gates;
+        const int opens = al->door_opens;
+        phase(L,
+            "local o = h:options('mogdoor')\n"
+            "local r, a = o and o.options or {}, o and o.areas or {}\n"
+            "check(o and o.title and o.title.text == 'Leave the Mog House?' and o.level == 'top' and #r == 4"
+            "  and r[1].text == 'Stay' and r[1].kind == 'stay' and r[1].value == nil and r[2].text == 'Go out'"
+            "  and r[2].kind == 'back' and r[2].value == 0 and r[3].text == 'Second floor' and r[3].kind == 'floor'"
+            "  and r[3].value == 125 and r[3].enabled == true and r[4].text == 'Other areas' and r[4].kind == 'areas'"
+            "  and #a == 4 and a[1].text == \"Southern San d'Oria\" and a[1].kind == 'area' and a[1].value == 1"
+            "  and a[1].zone == 230 and a[3].value == 3 and a[4].text == 'Mog Garden' and a[4].kind == 'garden'"
+            "  and a[4].value == 127 and a[4].enabled == true and o.blocked == false,"
+            "  'options(mogdoor): the title, the top\\'s rows with the values that answer them, the list of areas, in the"
+            " texts the draw shows')\n"
+            "local ok, w = h:answer('mogdoor', 4)\n"
+            "check(ok == nil and w == \"mogdoor offers no exit 4 (options('mogdoor') lists them)\","
+            "  'answer(mogdoor, 4) refused: ' .. tostring(w))\n"
+            "ok, w = h:answer('mogdoor', 126)\n"
+            "check(ok == nil and w == \"the player is on the other floor: mogdoor's floor row is 125\","
+            "  'the other floor\\'s value refused: ' .. tostring(w))\n"
+            "local raised, err = pcall(h.answer, h, 'mogdoor', true)\n"
+            "check(not raised and tostring(err):find(\"answer('mogdoor', exit) takes the value of an exit\", 1, true),"
+            "  'answer(mogdoor, true) raises: ' .. tostring(err))\n"
+            "check(h:answer('mogdoor', 2) == true, 'answer(mogdoor, 2) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(al->door_gates == gates + 1 && al->door_gate_args[0] == 4 && al->door_gate_args[1] == 0
+                && door[0x15] == 2 && get32(g_fake->door_actor, 0x880)
+                    == static_cast<uint32_t>(reinterpret_cast<uintptr_t>(g_fake->door_opened))
+                && al->door_opens == opens + 1 && al->door_open_actor == g_fake->door_actor && al->door_open_arg == 0
+                && al->door_exit_at_open == 2 && g_fake->door_exiting[0] == 1 && g_fake->door_exiting[1] == 1
+                && g_fake->door_exiting[2] == 1 && live_menu(kRowDoor),
+            "answer(mogdoor, 2): the confirm's gate (4, 0), 2 at +0x15, the door actor given the routine that sends"
+            " it, its door opened, the three bytes set; the window left up");
+        phase(L,
+            "local o, why = h:options('mogdoor')\n"
+            "check(o == nil and why == 'no question is pending in mogdoor', 'an exit under way asks nothing')\n"
+            "return finish()\n");
+        game_close("menu    mogdoor ");
+        door_reset();
+        wait_frames(2);
+
+        // the gate saying no; the Mog Garden and the floor row turned off;
+        // the stay row
+        asked_on_game_thread(8, 1);
+        *g_fake->door_gate_answer = 0xABCD0000u;
+        *g_fake->door_garden_on = 0;
+        *g_fake->door_floor_on = 0;
+        wait_frames(2);
+        phase(L,
+            "door_errors(h)\n"
+            "local o = h:options('mogdoor')\n"
+            "check(o and o.options[3].enabled == false and o.areas[4].enabled == false, 'the floor row and the Mog"
+            " Garden turned off by the tick: enabled false')\n"
+            "local ok, w = h:answer('mogdoor', 127)\n"
+            "check(ok == nil and w == 'the Mog Garden is not open to the player now', 'the Mog Garden refused: '"
+            "  .. tostring(w))\n"
+            "ok, w = h:answer('mogdoor', 125)\n"
+            "check(ok == nil and w == \"mogdoor's floor row is turned off now\", 'the floor row refused: ' .. tostring(w))\n"
+            "check(h:answer('mogdoor', 0) == true, 'answer(mogdoor, 0) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L,
+            "local seen = door_errors(h)\n"
+            "check(seen == 'answer mogdoor: the game refuses an exit now; its own message says why', 'the gate"
+            " saying no: an error event, nothing written: ' .. seen)\n"
+            "return finish()\n");
+        check(door[0x15] == 0xEE && al->door_opens == opens + 1 && !g_fake->door_exiting[0] && live_menu(kRowDoor),
+            "a gate that says no: nothing written, no exit");
+        *g_fake->door_garden_on = 1;
+        *g_fake->door_floor_on = 1;
+        const int closes_before = al->door_gates;
+        pause_game();
+        door[0x18] = 1;
+        resume_game();
+        phase(L,
+            "check(h:cancel('mogdoor') == true, 'cancel(mogdoor) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        *g_fake->door_gate_answer = 0xABCD0001u;
+        check(al->door_gates == closes_before && door[0x15] == 0xEE && !live_menu(kRowDoor)
+                && al->door_opens == opens + 1 && !g_fake->door_exiting[0],
+            "cancel(mogdoor) at the list of areas, the gate saying no: the top level's Escape, the window closed by"
+            " instance, no gate run, nothing written at +0x15, no exit");
+        door_reset();
+
+        // blocked: the door's handler wrote the nation, the open was refused
+        {
+            HuEngineApi api;
+            HuEngineHandle raw = {-1, 0};
+            char why[512] = "";
+            if (record_api(&api)) {
+                api.handle_open("raw", &raw, why, sizeof(why));
+            }
+            phase(L,
+                "asked_events(h) asked_events(h2)\n"
+                "check(h:block('mogdoor') == true, 'block(mogdoor)')\n"
+                "return finish()\n");
+            wait_frames(3);
+            raw_read(api.poll5, &raw);
+            check(asked_on_game_thread(8, 5) == 0 && !live_menu(kRowDoor), "mogdoor blocked: its open refused");
+            wait_frames(2);
+            const bool old_pending = !sets_field(raw_read(api.pending5, &raw), "mogdoor");
+            const bool new_pending = sets_field(raw_read(api.pending8, &raw), "mogdoor");
+            check(raw.slot >= 0 && old_pending && new_pending, "pending8 lists the blocked mogdoor, pending5 not");
+            if (raw.slot >= 0) {
+                api.handle_release(&raw);
+            }
+        }
+        phase(L,
+            "local seen = asked_events(h)\n"
+            "check(seen == 'blocked:mogdoor pending:mogdoor:true', 'blocked, then pending: ' .. seen)\n"
+            "local p = h:pending()\n"
+            "local q = p.mogdoor or {}\n"
+            "local a = q.areas or {}\n"
+            "check(q.blocked == true and q.level == 'top' and #a == 3 and a[1].text == 'Al Zahbi' and a[1].value == 1"
+            "  and a[3].kind == 'garden' and a[3].value == 127 and q.options[2].value == 0,"
+            "  'pending() lists mogdoor: the top, the nation\\'s list from the table')\n"
+            "check(h:answer(q.name, 2, q.id) == true, 'answer(mogdoor, 2, its id) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(door[0x15] == 2 && al->door_opens == opens + 2 && g_fake->door_exiting[0] == 1 && !live_menu(kRowDoor),
+            "answered with no window: the gate, 2 at +0x15, the exit");
+        phase(L,
+            "check(asked_events(h) == '', 'the replying handle reads no event for its reply')\n"
+            "check(asked_events(h2) == 'blocked:mogdoor pending:mogdoor:true pending:mogdoor:false',"
+            "  'another handle reads the refused open, the start and the end')\n"
+            "check(h:unblock('mogdoor') == true, 'unblock(mogdoor)')\n"
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "return finish()\n");
+        wait_frames(2);
+        door_reset();
+
+        // the NPC dialogue boxes: options() reading the page from the box's
+        // own lines, answer() one page on through the text dispatch, cancel()
+        // the box's own cancel, a page event through poll8 alone, and the
+        // left button kept off a hidden box
+        const int kRowTalk1 = row_named("rem4line");
+        const int kRowTalk2 = row_named("rem4li2");
+        *g_fake->query_cancel_allowed = 1;
+        *g_fake->close_frames = 1;
+        {
+            HuEngineApi api;
+            HuEngineHandle raw = {-1, 0};
+            char why[512] = "";
+            if (record_api(&api)) {
+                api.handle_open("raw", &raw, why, sizeof(why));
+            }
+            phase(L,
+                "function talk_events(handle)\n"
+                "  local out = {}\n"
+                "  for _, e in ipairs((handle:poll())) do\n"
+                "    if (e.name == 'rem4line' or e.name == 'rem4li2') and e.event ~= 'cursor' then\n"
+                "      out[#out + 1] = e.event .. ':' .. e.name\n"
+                "    elseif e.event == 'error' then out[#out + 1] = 'error:' .. e.reason end\n"
+                "  end\n"
+                "  return table.concat(out, ' ')\n"
+                "end\n"
+                "talk_events(h) talk_events(h2)\n"
+                "local o, why = h:options('rem4line')\n"
+                "check(o == nil and why == 'no dialogue is shown in rem4line', 'options(rem4line) with no box: '"
+                "  .. tostring(why))\n"
+                "return finish()\n");
+            raw_read(api.poll8, &raw);
+            const int advances = al->advances;
+            check(asked_on_game_thread(9, (1 << 8) | (1 << 16)) == 1 && live_menu(kRowTalk1),
+                "rem4line opened, a message's first page shown, waiting for a key");
+            wait_frames(2);
+            const HuEngineReply& polled8 = raw_read(api.poll8, &raw);
+            const bool page8 = has_string(polled8, "page");
+            check(raw.slot >= 0 && page8, "poll8 carries the page event");
+            phase(L,
+                "local seen = talk_events(h)\n"
+                "check(seen == 'opened:rem4line page:rem4line', 'opened, then the first page: ' .. seen)\n"
+                "local o = h:options('rem4line')\n"
+                "check(o and o.name == 'rem4line' and type(o.id) == 'number' and o.text == 'Moogle : Welcome home,\\nkupo!'"
+                "  and o.waits == 'key' and o.seconds == nil and o.auto == false and o.more == true and o.queued == 0"
+                "  and o.cancellable == true, 'options(rem4line): the page from its lines, joined by a newline, waiting"
+                " for a key, a page after it')\n"
+                "local raised, err = pcall(h.answer, h, 'rem4line', 2)\n"
+                "check(not raised and tostring(err):find(\"answer('rem4line') takes no value, or true\", 1, true),"
+                "  'answer(rem4line, 2) raises: ' .. tostring(err))\n"
+                "check(h:answer('rem4line') == true, 'answer(rem4line) queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            check(al->advances == advances + 1 && al->advance_text == g_fake->texts && live_menu(kRowTalk1),
+                "answer(rem4line): the text dispatch on rem4line's own text object with code 5, its gate's advance once");
+            raw_read(api.poll5, &raw);
+            phase(L,
+                "local seen = talk_events(h)\n"
+                "check(seen == 'page:rem4line', 'the next page: ' .. seen)\n"
+                "local o = h:options('rem4line')\n"
+                "check(o and o.text == 'Rest well.' and o.more == false, 'the second page, the last')\n"
+                "check(h:answer('rem4line', true) == true, 'answer(rem4line, true) queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            const bool page5 = has_string(raw_read(api.poll5, &raw), "page");
+            check(al->advances == advances + 2 && !live_menu(kRowTalk1) && !page5,
+                "the last page answered: the message ends, the box closes; poll5 carries no page event");
+            phase(L,
+                "local seen = talk_events(h)\n"
+                "check(seen == 'closed:rem4line', 'closed at the message\\'s end: ' .. seen)\n"
+                "local ok, w = h:answer('rem4line')\n"
+                "check(ok == nil and w == 'no dialogue is shown in rem4line', 'answer with no box: ' .. tostring(w))\n"
+                "return finish()\n");
+            if (raw.slot >= 0) {
+                api.handle_release(&raw);
+            }
+        }
+
+        // a timed page; a new message replacing the one shown; the cancel
+        asked_on_game_thread(10, (2 << 8) | (1 << 16));
+        wait_frames(2);
+        phase(L,
+            "local seen = talk_events(h)\n"
+            "check(seen == 'opened:rem4li2 page:rem4li2', 'rem4li2 opened, its first page: ' .. seen)\n"
+            "local o = h:options('rem4li2')\n"
+            "check(o and o.waits == 'timer' and o.seconds == 5, 'a timed page: its seconds left')\n"
+            "local ok, w = h:answer('rem4li2')\n"
+            "check(ok == nil and w == 'the page rem4li2 shows does not wait for a key: it goes on by itself',"
+            "  'answer on a timed page refused: ' .. tostring(w))\n"
+            "return finish()\n");
+        asked_on_game_thread(10, 1 | (1 << 8) | (2 << 16));
+        wait_frames(2);
+        *g_fake->query_cancel_allowed = 0;
+        phase(L,
+            "local seen = talk_events(h)\n"
+            "check(seen == 'page:rem4li2', 'a new message with no close: a page event: ' .. seen)\n"
+            "local o = h:options('rem4li2')\n"
+            "check(o and o.text == 'Moogle : One more thing.' and o.queued == 1 and o.cancellable == false,"
+            "  'the new message, one more held behind it, no cancel allowed')\n"
+            "local ok, w = h:cancel('rem4li2')\n"
+            "check(ok == nil and w == 'rem4li2 cannot be canceled now: the event allows no cancel',"
+            "  'cancel refused while the event allows none: ' .. tostring(w))\n"
+            "return finish()\n");
+        *g_fake->query_cancel_allowed = 1;
+        *g_fake->dialogue_wait = 1;
+        const int releases = al->releases;
+        const int clears = al->clears;
+        phase(L,
+            "check(h:cancel('rem4li2') == true, 'cancel(rem4li2) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const uint8_t* log_ctl = reinterpret_cast<const uint8_t*>(get32(controller_named("rem4li2"), 0x64));
+        check(al->releases == releases + 1 && reinterpret_cast<uintptr_t>(al->release_log) == get32(log_ctl, 0x18)
+                && al->release_line == 0x61 && al->clears == clears + 1 && al->clear_text == g_fake->texts + 0x38
+                && al->wait_at_clear == 1 && *g_fake->dialogue_wait == 2 && !live_menu(kRowTalk2),
+            "cancel(rem4li2): its lines handed back to its chat log with +0x50, its own text object cleared, the"
+            " event's wait told 2, the box closed by instance");
+        phase(L,
+            "local seen = talk_events(h)\n"
+            "check(seen == 'closed:rem4li2', 'closed by the cancel: ' .. seen)\n"
+            "return finish()\n");
+
+        // the left button: the tick's test answered no while a hidden box is
+        // the active menu, the key test's other callers untouched
+        *g_fake->dialogue_ticks = 1;
+        asked_on_game_thread(9, (1 << 8) | (1 << 16));
+        wait_frames(2);
+        uint8_t* box = live_menu(kRowTalk1);
+        phase(L,
+            "talk_events(h)\n"
+            "check(h:hide('rem4line') == true, 'hide(rem4line) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        put32(g_fake->mcb, 0x54, static_cast<uint32_t>(reinterpret_cast<uintptr_t>(box)));
+        const int clicks = al->key_clicks;
+        const int seen_clicks = al->dialogue_clicks;
+        const LONG frames = *g_fake->frames;
+        *g_fake->left_click = 1;
+        wait_frames(4);
+        *g_fake->left_click = 0;
+        const bool held_off = al->key_clicks == clicks && al->dialogue_clicks == seen_clicks
+            && *g_fake->frames - frames >= 4 && live_menu(kRowTalk1) == box;
+        put32(g_fake->mcb, 0x54, 0);
+        *g_fake->left_click = 1;
+        wait_frames(2);
+        *g_fake->left_click = 0;
+        const bool inactive = al->key_clicks > clicks && al->dialogue_clicks > seen_clicks;
+        check(box && held_off && inactive,
+            "hidden and active, rem4line's tick asks the key test for the left button and is answered no, the"
+            " original never run, while the UI update's own call still runs the frame; not the active menu, the"
+            " original answers and the click moves the page on");
+        wait_frames(2);
+        phase(L,
+            "talk_events(h)\n"
+            "check(h:unhide('rem4line') == true, 'unhide(rem4line)')\n"
+            "return finish()\n");
+        wait_frames(2);
+        const int shown_clicks = al->dialogue_clicks;
+        asked_on_game_thread(9, (1 << 8) | (1 << 16));
+        wait_frames(2);
+        box = live_menu(kRowTalk1);
+        put32(g_fake->mcb, 0x54, static_cast<uint32_t>(reinterpret_cast<uintptr_t>(box)));
+        *g_fake->left_click = 1;
+        wait_frames(2);
+        *g_fake->left_click = 0;
+        put32(g_fake->mcb, 0x54, 0);
+        check(box && al->dialogue_clicks > shown_clicks, "shown and active, the click reaches it");
+        *g_fake->dialogue_ticks = 0;
+        asked_on_game_thread(9, 0xFF);
+        wait_frames(3);
+
+        // the two boxes one dialogue: a hold on either is one on both,
+        // refused on both alike, each name reporting it; a move or a resize
+        // each box's own; an answer or a cancel through either name reaching
+        // both, under either box's id
+        phase(L,
+            "talk_events(h) talk_events(h2)\n"
+            "local function holds(n)\n"
+            "  local i = h:info(n)\n"
+            "  return (i.hidden and 'H' or '-') .. (i.blocked and 'B' or '-') .. ':' .. table.concat(i.hidden_by, ',')\n"
+            "end\n"
+            "local function pair() return holds('rem4line') .. ' ' .. holds('rem4li2') end\n"
+            "check(pair() == '--: --:', 'neither box held: ' .. pair())\n"
+            "check(h:hide('rem4line') == true and pair() == 'H-:alpha H-:alpha',"
+            "  'hide(rem4line) hides both, each name reporting it: ' .. pair())\n"
+            "local l = h:list()\n"
+            "local listed = {}\n"
+            "for _, nm in ipairs(hu.status().hidden) do listed[nm] = true end\n"
+            "check(l.rem4line.hidden and l.rem4li2.hidden and listed.rem4line and listed.rem4li2"
+            "  and h:info('rem4li2').mine.hidden and h2:info('rem4li2').mine.hidden == false,"
+            "  'list(), status() and mine report both hidden, by alpha alone')\n"
+            "check(h:unhide('rem4li2') == true and pair() == '--: --:', 'unhide(rem4li2) unhides both: ' .. pair())\n"
+            "check(h:hide('rem4li2') == true and h2:hide('rem4line') == true and pair() == 'H-:alpha,beta H-:alpha,beta',"
+            "  'two handles, each hiding one name, each hold both: ' .. pair())\n"
+            "check(h:unhide('rem4line') == true and pair() == 'H-:beta H-:beta',"
+            "  'one handle\\'s unhide leaves the other\\'s hold on both: ' .. pair())\n"
+            "local ok, why = h:block('rem4li2')\n"
+            "local ok2, why2 = h2:block('rem4line')\n"
+            "check(ok == nil and why:find('rem4li2 cannot be blocked or closed', 1, true) == 1 and ok2 == nil"
+            "  and why2:find('rem4line cannot be blocked or closed', 1, true) == 1 and pair() == 'H-:beta H-:beta',"
+            "  'a block refused through either name, neither box changed: ' .. pair())\n"
+            "check(h:unblock('rem4line') == true and h2:unblock('rem4li2') == true and pair() == 'H-:beta H-:beta',"
+            "  'an unblock through either name changes neither: ' .. pair())\n"
+            "check(h2:unhide('rem4li2') == true and pair() == '--: --:',"
+            "  'the last hold dropped through the other name: neither hidden: ' .. pair())\n"
+            "return finish()\n");
+        asked_on_game_thread(9, (1 << 8) | (1 << 16));
+        asked_on_game_thread(10, (1 << 8) | (1 << 16));
+        wait_frames(2);
+        phase(L,
+            "local seen = talk_events(h)\n"
+            "check(seen:find('opened:rem4line', 1, true) and seen:find('opened:rem4li2', 1, true)"
+            "  and seen:find('page:rem4line', 1, true) and seen:find('page:rem4li2', 1, true),"
+            "  'both boxes open on one message: ' .. seen)\n"
+            "talk_placed = {h:info('rem4line'), h:info('rem4li2')}\n"
+            "local a = talk_placed[1]\n"
+            "local up = {}\n"
+            "for _, nm in ipairs(h:opened()) do up[nm] = true end\n"
+            "check(a.open and talk_placed[2].open and up.rem4line and up.rem4li2, 'info() and opened() report each box')\n"
+            "check(h:move('rem4line', a.rect.x + 10, a.rect.y - 20) == true and h:resize('rem4li2', 300, 40) == true,"
+            "  'move(rem4line) and resize(rem4li2) queue')\n"
+            "return finish()\n");
+        wait_frames(3);
+        // with the game paused, a reply through the other name meets the
+        // queued one
+        pause_game();
+        phase(L,
+            "local a, b = talk_placed[1], talk_placed[2]\n"
+            "local a2, b2 = h:info('rem4line'), h:info('rem4li2')\n"
+            "local l = h:list()\n"
+            "check(a2.rect.x == a.rect.x + 10 and a2.rect.y == a.rect.y - 20 and b2.rect.x == b.rect.x"
+            "  and b2.rect.y == b.rect.y and l.rem4line.moved and not l.rem4li2.moved,"
+            "  'move(rem4line) places rem4line alone')\n"
+            "check(l.rem4li2.resized and not l.rem4line.resized and a2.rect.w == a.rect.w and a2.rect.h == a.rect.h,"
+            "  'resize(rem4li2) sizes rem4li2 alone')\n"
+            "check(h:reset('rem4line') == true and h:reset('rem4li2') == true, 'both reset')\n"
+            "local o1, o2 = h:options('rem4line'), h:options('rem4li2')\n"
+            "talk_id = o1.id\n"
+            "check(o1.text == 'Moogle : Welcome home,\\nkupo!' and o2.text == o1.text and o1.id == o2.id,"
+            "  'both show the first page under one id')\n"
+            "check(h:answer('rem4line', true, o2.id) == true, 'answer(rem4line) under the id options(rem4li2) gives"
+            " queues')\n"
+            "local r, w = h2:answer('rem4li2')\n"
+            "local r2, w2 = h:cancel('rem4li2', o2.id)\n"
+            "check(r == nil and w == 'a reply to rem4line is already queued' and r2 == nil and w2 == w,"
+            "  'a reply through rem4li2, from either handle, refused while one through rem4line is queued: '"
+            "  .. tostring(w) .. ' / ' .. tostring(w2))\n"
+            "return finish()\n");
+        const int pair_advances = al->advances;
+        resume_game();
+        wait_frames(3);
+        check(al->advances == pair_advances + 2 && al->advance_text == g_fake->texts + 0x38 && live_menu(kRowTalk1)
+                && live_menu(kRowTalk2),
+            "answer(rem4line): the text dispatch on rem4line's text object, which hands the code on to rem4li2's,"
+            " each gate's advance once");
+        pause_game();
+        phase(L,
+            "local seen = talk_events(h)\n"
+            "local a, b = h:options('rem4line'), h:options('rem4li2')\n"
+            "check(a and b and a.text == 'Rest well.' and b.text == 'Rest well.' and a.more == false and b.more == false"
+            "  and seen:find('page:rem4line', 1, true) and seen:find('page:rem4li2', 1, true),"
+            "  'neither box waits on the page answered: both show the next, each with its page event: ' .. seen)\n"
+            "check(a.id == talk_id and b.id == talk_id, 'the next page under the same id, no box having opened')\n"
+            "check(h:answer('rem4li2', true, a.id) == true, 'answer(rem4li2) under the id options(rem4line) gives"
+            " queues')\n"
+            "local r, w = h:answer('rem4line')\n"
+            "check(r == nil and w == 'a reply to rem4li2 is already queued',"
+            "  'a reply through rem4line refused while one through rem4li2 is queued: ' .. tostring(w))\n"
+            "return finish()\n");
+        resume_game();
+        wait_frames(3);
+        check(al->advances == pair_advances + 4 && !live_menu(kRowTalk1) && !live_menu(kRowTalk2),
+            "answer(rem4li2) on the last page: the message ends in both boxes, and both close");
+        phase(L,
+            "local seen = talk_events(h)\n"
+            "check(seen:find('closed:rem4line', 1, true) and seen:find('closed:rem4li2', 1, true)"
+            "  and h:options('rem4line') == nil and h:options('rem4li2') == nil, 'both closed: ' .. seen)\n"
+            "return finish()\n");
+        asked_on_game_thread(9, 1 | (1 << 8) | (1 << 16));
+        asked_on_game_thread(10, 1 | (1 << 8) | (1 << 16));
+        wait_frames(2);
+        *g_fake->query_cancel_allowed = 0;
+        phase(L,
+            "talk_events(h)\n"
+            "local n1, n2 = h:options('rem4line'), h:options('rem4li2')\n"
+            "check(n1.text == 'Moogle : One more thing.' and n2.text == n1.text and n1.id == n2.id"
+            "  and n1.id == talk_id + 2, 'both open again on a new message under one new id, moved by each box\\'s'"
+            "  .. ' open: ' .. tostring(n1.id) .. ' after ' .. tostring(talk_id))\n"
+            "local gone = {}\n"
+            "for _, id in ipairs({talk_id, talk_id + 1}) do\n"
+            "  for _, nm in ipairs({'rem4line', 'rem4li2'}) do\n"
+            "    local r, w = h:answer(nm, true, id)\n"
+            "    local rc, wc = h:cancel(nm, id)\n"
+            "    gone[#gone + 1] = tostring(r == nil and w) .. ',' .. tostring(rc == nil and wc)\n"
+            "  end\n"
+            "end\n"
+            "check(table.concat(gone, ' / ') == ('that prompt is gone,that prompt is gone / '):rep(3)"
+            "  .. 'that prompt is gone,that prompt is gone', 'the last message\\'s id, and the one current between'"
+            "  .. ' the two boxes\\' opens, refused through either name: ' .. table.concat(gone, ' / '))\n"
+            "local r, w = h:cancel('rem4line')\n"
+            "check(r == nil and w == 'rem4line cannot be canceled now: the event allows no cancel'"
+            "  and h:options('rem4line') and h:options('rem4li2'),"
+            "  'a cancel the event allows not refused, both boxes as they were: ' .. tostring(w))\n"
+            "return finish()\n");
+        *g_fake->query_cancel_allowed = 1;
+        *g_fake->dialogue_wait = 1;
+        const int pair_releases = al->releases;
+        const int pair_clears = al->clears;
+        phase(L,
+            "check(h:cancel('rem4li2') == true, 'cancel(rem4li2) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const uint8_t* log1 = reinterpret_cast<const uint8_t*>(get32(controller_named("rem4line"), 0x64));
+        check(al->releases == pair_releases + 2 && reinterpret_cast<uintptr_t>(al->release_log) == get32(log1, 0x18)
+                && al->clears == pair_clears + 2 && al->clear_text == g_fake->texts && al->wait_at_clear == 2
+                && *g_fake->dialogue_wait == 2 && !live_menu(kRowTalk1) && !live_menu(kRowTalk2),
+            "cancel(rem4li2): rem4li2's own cancel, then rem4line's: its lines handed back to its own chat log and"
+            " its text object cleared after rem4li2's told the wait 2, which it tells again; both boxes closed");
+        phase(L,
+            "local seen = talk_events(h)\n"
+            "check(seen:find('closed:rem4line', 1, true) and seen:find('closed:rem4li2', 1, true)"
+            "  and h:options('rem4line') == nil and h:options('rem4li2') == nil, 'the event ended in both: ' .. seen)\n"
+            "return finish()\n");
+        asked_on_game_thread(9, 1 | (1 << 8) | (1 << 16));
+        asked_on_game_thread(10, 1 | (1 << 8) | (1 << 16));
+        wait_frames(2);
+        *g_fake->dialogue_wait = 1;
+        const int line_releases = al->releases;
+        phase(L,
+            "talk_events(h)\n"
+            "check(h:cancel('rem4line', h:options('rem4li2').id) == true,"
+            "  'cancel(rem4line) under the id options(rem4li2) gives queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const uint8_t* log2 = reinterpret_cast<const uint8_t*>(get32(controller_named("rem4li2"), 0x64));
+        check(al->releases == line_releases + 2 && reinterpret_cast<uintptr_t>(al->release_log) == get32(log2, 0x18)
+                && al->clear_text == g_fake->texts + 0x38 && al->wait_at_clear == 2 && *g_fake->dialogue_wait == 2
+                && !live_menu(kRowTalk1) && !live_menu(kRowTalk2),
+            "cancel(rem4line): rem4line's own cancel, then rem4li2's; both boxes closed");
+        phase(L,
+            "local seen = talk_events(h)\n"
+            "check(seen:find('closed:rem4line', 1, true) and seen:find('closed:rem4li2', 1, true),"
+            "  'the event ended in both: ' .. seen)\n"
+            "return finish()\n");
+        *g_fake->close_frames = 0;
+        phase(L,
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "return finish()\n");
+    }
+
+    // -- the text-entry windows (0.11.0): stringdl, comment, msgline, scname
+    //    and link11, their routines the game's bytes where the engine reads
+    //    and runs them: open, close and block refused as the rules give,
+    //    options() in plain fields, answer and cancel doing what each window's
+    //    own commit and cancel do, a table answer as the binding encodes it;
+    //    the field ended at a hide and at a hidden open, passinpu's started
+    //    again at the show; msgline's message blocked, listed by pending(),
+    //    answered with no window, its end a pending event the other handle
+    //    reads
+    {
+        FakeLog* tl = g_fake->log;
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        auto game_close = [&](const char* key) {
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, key);
+            resume_game();
+            wait_frames(2);
+        };
+        uint8_t* delivery = controller_named("delivery");
+        uint8_t* sd = controller_named("stringdl");
+        uint8_t* cm = controller_named("comment");
+        uint8_t* ml = controller_named("msgline");
+        uint8_t* sc = controller_named("scname");
+        uint8_t* lk = controller_named("link11");
+        uint8_t* pi = controller_named("passinpu");
+        uint8_t* link5 = controller_named("link5");
+        phase(L,
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "function text_errors(handle)\n"
+            "  local out = {}\n"
+            "  for _, e in ipairs((handle:poll())) do\n"
+            "    if e.event == 'error' then out[#out + 1] = e.verb .. ' ' .. e.name .. ': ' .. e.reason end\n"
+            "  end\n"
+            "  return table.concat(out, ' | ')\n"
+            "end\n"
+            "local entry = \"stringdl cannot be blocked or closed: the outgoing box gives up when its name entry\"\n"
+            "  .. \" cannot open, which ends the delivery session; hide it instead, and answer('stringdl') or\"\n"
+            "  .. \" cancel('stringdl')\"\n"
+            "local ok, w = h:block('stringdl')\n"
+            "check(ok == nil and w == entry, 'block(stringdl) refused: ' .. tostring(w))\n"
+            "ok, w = h:close('stringdl')\n"
+            "check(ok == nil and w == \"stringdl is a prompt the game waits on; use cancel('stringdl')\","
+            "  'close(stringdl) refused: ' .. tostring(w))\n"
+            "ok, w = h:close('msgline')\n"
+            "check(ok == true, 'close(msgline) with nothing asked queues: ' .. tostring(w))\n"
+            "ok, w = h:open('comment')\n"
+            "check(ok == nil and w == \"comment opens only for the game's own event; answer it instead\","
+            "  'open(comment) refused: ' .. tostring(w))\n"
+            "ok, w = h:open('scname')\n"
+            "check(ok == nil and w == \"scname opens only for the game's own event; answer or cancel it instead\","
+            "  'open(scname) refused: ' .. tostring(w))\n"
+            "ok, w = h:cancel('comment')\n"
+            "check(ok == nil and w == \"comment has no cancel: closing it sends the text, as the game's Escape does;\""
+            "  .. ' answer it', 'cancel(comment) refused: ' .. tostring(w))\n"
+            "local o, why = h:options('scname')\n"
+            "check(o == nil and why == 'scname is not open, and nothing asks through it until the game opens it',"
+            "  'options(scname) with no window: ' .. tostring(why))\n"
+            "o, why = h:options('msgline')\n"
+            "check(o == nil and why == 'no message is being written in msgline', 'options(msgline) with none: '"
+            "  .. tostring(why))\n"
+            "return finish()\n");
+
+        // stringdl: the name the outgoing box asks for, then a yes or no on
+        // a slot
+        put16(delivery, 0x1B4, 6);
+        open_on_game_thread("menu    delivery");
+        open_on_game_thread("menu    stringdl");
+        sd[0x14] = 1;
+        sd[0x164] = 0;
+        put16(sd, 0x15C, 0);
+        strcpy(reinterpret_cast<char*>(sd + 0x118), "Send to whom?");
+        wait_frames(2);
+        const int focus_before = tl->focus_calls;
+        phase(L,
+            "local o = h:options('stringdl')\n"
+            "check(o and o.mode == 'name' and o.min_length == 3 and o.max_length == 15 and o.prompt == 'Send to"
+            " whom?' and o.name == 'stringdl' and type(o.id) == 'number', 'options(stringdl): the name, its lengths"
+            " and the line over the field')\n"
+            "local ok, w = h:answer('stringdl', 'Ro')\n"
+            "local letters = \"the recipient's name is 3 to 15 letters, A to Z, and nothing else; the game sets their\""
+            "  .. ' case itself'\n"
+            "check(ok == nil and w == letters, 'two letters refused: ' .. tostring(w))\n"
+            "ok, w = h:answer('stringdl', 'Rolan1')\n"
+            "check(ok == nil and w == letters, 'a digit refused: ' .. tostring(w))\n"
+            "local raised, err = pcall(h.answer, h, 'stringdl', 12)\n"
+            "check(not raised and tostring(err):find(\"answer('stringdl', name) takes the recipient's name\", 1, true),"
+            "  'answer(stringdl, 12) raises: ' .. tostring(err))\n"
+            "ok, w = h:answer('stringdl', true)\n"
+            "check(ok == nil and w == \"stringdl asks for the recipient's name now: answer('stringdl', name)\","
+            "  'a yes while it asks the name refused: ' .. tostring(w))\n"
+            "check(h:answer('stringdl', 'rolanberry', o.id) == true, 'answer(stringdl, rolanberry, id) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(memcmp(sd + 0x58, "rolanberry", 11) == 0 && get16(sd, 0x15C) == 1 && tl->focus_calls == focus_before + 2
+                && tl->focus_menu == live_menu(row_named("delivery")),
+            "answer(stringdl, name): the name into +0x58, +0x15C 1, the outgoing box raised twice");
+        put16(sd, 0x15C, 0);
+        sd[0x14] = 2;
+        put16(delivery, 0x1B4, 0x10);
+        phase(L,
+            "local o = h:options('stringdl')\n"
+            "check(o and o.mode == 'confirm' and o.max_length == nil, 'options(stringdl) about a slot: confirm')\n"
+            "local ok, w = h:answer('stringdl', 'Rolanberry')\n"
+            "check(ok == nil and w == \"stringdl asks yes or no about a delivery slot now: answer('stringdl', true or\""
+            "  .. ' false)', 'a name while it asks about a slot refused: ' .. tostring(w))\n"
+            "check(h:answer('stringdl', true) == true, 'answer(stringdl, true) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const bool yes = get16(sd, 0x15C) == 3;
+        put16(sd, 0x15C, 0);
+        phase(L,
+            "check(h:cancel('stringdl') == true, 'cancel(stringdl) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(yes && get16(sd, 0x15C) == 4, "on a slot, yes writes 3 and the cancel 4");
+        put16(sd, 0x15C, 0);
+        put16(delivery, 0x1B4, 0);
+        phase(L,
+            "local o, why = h:options('stringdl')\n"
+            "check(o == nil and why == 'stringdl is not asking anything now', 'between steps it asks nothing: '"
+            "  .. tostring(why))\n"
+            "return finish()\n");
+        game_close("menu    stringdl");
+        game_close("menu    delivery");
+
+        // hidden stringdl, as found live: held while the outgoing box asks
+        // the name through it and until the box has read the name answered;
+        // with the box moved on, stringdl focused again asks nothing, and
+        // the player's Escape and the menu mouse mode reach it as shown
+        {
+            typedef uint32_t (__fastcall* InputFn)(void* self, void* edx, int code);
+            typedef void (__fastcall* MouseFn)(void* mouse, void* edx);
+            InputFn route;
+            MouseFn mouse_mode;
+            memcpy(&route, &g_fake->menu_routing, sizeof(route));
+            memcpy(&mouse_mode, &g_fake->mouse_mode, sizeof(mouse_mode));
+            static uint8_t mouse[0x60];
+            phase(L,
+                "check(h:hide('stringdl') == true, 'hide(stringdl)')\n"
+                "return finish()\n");
+            wait_frames(3);
+            put16(delivery, 0x1B4, 6);
+            sd[0x14] = 1;
+            sd[0x164] = 0;
+            put16(sd, 0x15C, 0);
+            uint8_t* entry = static_cast<uint8_t*>(open_on_game_thread("menu    stringdl"));
+            wait_frames(2);
+            // 1: the routed code reached its sink and the picker's original
+            // ran; 0: the code was dropped and the pre held world mode
+            auto input = [&](int code) {
+                const int sinks = tl->sink_calls;
+                put32(g_fake->mcb, 0x54, reinterpret_cast<uint32_t>(entry));
+                const uint32_t routed = route(g_fake->mcb, NULL, code);
+                mouse[0x4D] = 0;
+                mouse_mode(mouse, NULL);
+                put32(g_fake->mcb, 0x54, 0);
+                if (routed == 1 && tl->sink_calls == sinks + 1 && tl->sink_menu == entry && tl->sink_code == code
+                    && mouse[0x4D] == 2) {
+                    return 1;
+                }
+                return routed == 0 && tl->sink_calls == sinks && mouse[0x4D] == 1 ? 0 : -1;
+            };
+            const bool asks = entry && hidden_in_place(row_named("stringdl"), entry) && input(5) == 0;
+            phase(L,
+                "check(h:answer('stringdl', 'rolanberry') == true, 'answer(stringdl, rolanberry) queues')\n"
+                "return finish()\n");
+            wait_frames(3);
+            const bool unread = get16(sd, 0x15C) == 1 && input(5) == 0;
+            put16(sd, 0x15C, 0);
+            put16(delivery, 0x1B4, 9);
+            wait_frames(2);
+            const bool escape = input(6) == 1;
+            phase(L,
+                "local o, why = h:options('stringdl')\n"
+                "check(o == nil and why == 'stringdl is not asking anything now', 'hidden, the box moved on: '"
+                "  .. tostring(why))\n"
+                "check(h:unhide('stringdl') == true, 'unhide(stringdl)')\n"
+                "return finish()\n");
+            wait_frames(3);
+            check(asks && unread && escape,
+                "hidden stringdl: no routed code while the outgoing box asks the name through it, nor once it is"
+                " answered until the box has read it; with the box moved on, options() finds it asking nothing and"
+                " the player's Escape reaches its sink, the picker's original giving the menu mouse mode");
+            put16(delivery, 0x1B4, 0);
+            sd[0x14] = 0;
+            game_close("menu    stringdl");
+        }
+
+        // comment: opened, its open hook starts line 0's field; a hide ends
+        // it; the lines answered as a table
+        cm[0x16] = 0;
+        memset(cm + 0x1A, 0, 0x29 * 3);
+        strcpy(reinterpret_cast<char*>(cm + 0x1A), "Old line");
+        int attaches = tl->attaches;
+        int deletes = tl->field_deletes;
+        open_on_game_thread("menu    comment ");
+        uint8_t* field = NULL;
+        memcpy(&field, cm + 0x378, 4);
+        const bool started = field != NULL && tl->attaches == attaches + 1 && tl->attached == field;
+        phase(L,
+            "check(h:hide('comment') == true, 'hide(comment)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        memcpy(&field, cm + 0x378, 4);
+        check(started && field == NULL && tl->field_deletes == deletes + 1 && tl->attached == NULL
+                && static_cast<int8_t>(cm[0x14]) == -1,
+            "comment's open hook starts line 0's field; hide(comment) ends it with the window's own end, the field"
+            " deleted and the text entry turned off");
+        const int sends = tl->comment_sends;
+        const int sanitizes = tl->sanitizes;
+        phase(L,
+            "local o = h:options('comment')\n"
+            "check(o and o.mode == 'bazaar' and #o.lines == 3 and o.lines[1].text == 'Old line' and o.lines[2].text"
+            "  == '' and o.category == nil, 'options(comment): the bazaar message and its lines')\n"
+            "local ok, w = h:answer('comment', {'Hello', string.rep('x', 41)})\n"
+            "check(ok == nil and w == 'line 2 is 41 bytes; comment takes at most 40 a line', 'a long line refused: '"
+            "  .. tostring(w))\n"
+            "local raised, err = pcall(h.answer, h, 'comment', 'Hello')\n"
+            "check(not raised and tostring(err):find(\"answer('comment', lines) takes a table of up to 3 strings\", 1,"
+            "  true), 'a string raises: ' .. tostring(err))\n"
+            "raised, err = pcall(h.answer, h, 'comment', {'a', 'b', 'c', 'd'})\n"
+            "check(not raised, 'four lines raise')\n"
+            "raised, err = pcall(h.answer, h, 'comment', {x = 'a'})\n"
+            "check(not raised, 'a named key raises')\n"
+            "check(h:answer('comment', {'Hello', [3] = 'World'}) == true, 'answer(comment, lines) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(tl->comment_sends == sends + 1 && tl->comment_mode == 0 && strcmp(tl->comment_lines[0], "Hello") == 0
+                && tl->comment_lines[1][0] == '\0' && strcmp(tl->comment_lines[2], "World") == 0
+                && tl->sanitizes == sanitizes + 3 && !live_menu(row_named("comment")),
+            "answer(comment, lines): each line of the slot written, sanitized and trimmed, then the window closed"
+            " by instance, its begin-close sending them");
+        phase(L,
+            "check(h:unhide('comment') == true, 'unhide(comment)')\n"
+            "return finish()\n");
+        wait_frames(2);
+
+        // msgline: a message written and sent; blocked, answered with no
+        // window
+        put16(ml, 0x14, 0);
+        put32(ml, 0x198, 0x1111);
+        put32(ml, 0x19C, 0x00051234);
+        strcpy(reinterpret_cast<char*>(ml + 0x188), "Friend");
+        put32(g_fake->pol, 0x80, 0x55);
+        *g_fake->msgline_busy = 0;
+        *g_fake->send_result = 0;
+        open_on_game_thread("menu    msgline ");
+        const int marks = tl->marks;
+        phase(L,
+            "local o = h:options('msgline')\n"
+            "check(o and o.mode == 0 and o.max_length == 299 and o.recipient == 'Friend' and o.blocked == false,"
+            "  'options(msgline): the mode, its length and the recipient')\n"
+            "local ok, w = h:answer('msgline', '')\n"
+            "check(ok == nil and w == \"empty text sends nothing; cancel('msgline') instead\", 'empty refused: '"
+            "  .. tostring(w))\n"
+            "ok, w = h:answer('msgline', string.rep('x', 300))\n"
+            "check(ok == nil and w == '300 bytes; msgline takes at most 299 (15 in its modes 2 and 7)',"
+            "  '300 bytes refused: the game keeps 299: ' .. tostring(w))\n"
+            "check(h:answer('msgline', 'Hello there') == true, 'answer(msgline, text) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(tl->send_mode == 0 && strcmp(tl->send_text, "Hello there") == 0 && tl->send_args[0] == 0x1111
+                && tl->send_args[1] == 0x05341234 && tl->send_args[6] == 0x11 && tl->marks == marks + 1
+                && tl->mark_obj == g_fake->sending_owner + 0x20 && *g_fake->msgline_busy == 1
+                && !live_menu(row_named("msgline")),
+            "answer(msgline): sent through mode 0's sender with +0x198 and the number packed with +0x19C, the"
+            " indicator marked, the busy byte set, msgline closed");
+        phase(L,
+            "check(h:block('msgline') == true, 'block(msgline)')\n"
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "return finish()\n");
+        wait_frames(2);
+        put16(ml, 0x14, 7);
+        const bool refused_open = open_on_game_thread("menu    msgline ") == NULL;
+        wait_frames(2);
+        phase(L,
+            "local seen = {}\n"
+            "for _, e in ipairs((h2:poll())) do\n"
+            "  if e.event == 'pending' or e.name == 'msgline' then\n"
+            "    seen[#seen + 1] = e.event .. ':' .. tostring(e.what or e.name) .. ':' .. tostring(e.pending)\n"
+            "  end\n"
+            "end\n"
+            "check(table.concat(seen, ' ') == 'blocked:msgline:nil pending:msgline:true', 'the refused open:'"
+            "  .. ' blocked, then pending: ' .. table.concat(seen, ' '))\n"
+            "h:poll()\n"
+            "local p = h:pending()\n"
+            "check(p.msgline and p.msgline.mode == 7 and p.msgline.blocked == true and p.msgline.max_length == 15,"
+            "  'pending() lists the blocked message under msgline')\n"
+            "local ok, w = h:answer('msgline', 'Hi')\n"
+            "check(ok == nil and w == 'a message is still on its way; msgline sends the next once it has gone',"
+            "  'refused while the busy byte is set: ' .. tostring(w))\n"
+            "return finish()\n");
+        *g_fake->msgline_busy = 0;
+        phase(L,
+            "local p = h:pending()\n"
+            "local ok, w = h:answer('msgline', 'sixteen bytes!!!')\n"
+            "check(ok == nil and w == \"16 bytes; msgline's mode 7 takes at most 15\", 'past mode 7\\'s field'"
+            "  .. ' refused: ' .. tostring(w))\n"
+            "check(h:answer('msgline', 'Hi', p.msgline.id) == true, 'answer(msgline, text, id) queues with no window')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L,
+            "local own = {}\n"
+            "for _, e in ipairs((h:poll())) do\n"
+            "  if e.event == 'pending' then own[#own + 1] = e.what end\n"
+            "end\n"
+            "local other = {}\n"
+            "for _, e in ipairs((h2:poll())) do\n"
+            "  if e.event == 'pending' then other[#other + 1] = e.what .. ':' .. tostring(e.pending) end\n"
+            "end\n"
+            "check(#own == 0 and table.concat(other, ' ') == 'msgline:false', 'the reply\\'s handle skips the end;'"
+            "  .. ' the other reads it: ' .. table.concat(other, ' '))\n"
+            "check(h:pending().msgline == nil, 'pending() lists it no more')\n"
+            "check(h:unblock('msgline') == true, 'unblock(msgline)')\n"
+            "return finish()\n");
+        check(refused_open && tl->send_mode == 7 && strcmp(tl->send_text, "Hi") == 0 && tl->send_args[8] == 0x15
+                && *g_fake->msgline_busy == 1,
+            "blocked msgline in mode 7: the message sent with no window, through mode 7's sender");
+        *g_fake->msgline_busy = 0;
+        wait_frames(2);
+
+        // scname: the searched name
+        open_on_game_thread("menu    scname  ");
+        const int searches = tl->searches;
+        phase(L,
+            "local o = h:options('scname')\n"
+            "check(o and o.max_length == 15 and type(o.text) == 'string' and o.name == 'scname', 'options(scname)')\n"
+            "local ok, w = h:answer('scname', 'Rolan Berry')\n"
+            "check(ok == nil and w == 'the name to search for is at most 15 letters, A to Z, and nothing else',"
+            "  'a space refused: ' .. tostring(w))\n"
+            "check(h:answer('scname', 'Rolan') == true, 'answer(scname, name) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(tl->searches == searches + 1 && strcmp(tl->criteria_name, "Rolan") == 0
+                && strcmp(reinterpret_cast<const char*>(sc + 0x18), "Rolan") == 0 && tl->search_args[0] == 1
+                && !live_menu(row_named("scname")),
+            "answer(scname, name): the name into +0x18, the criteria named and the search started, scname closed");
+
+        // link11: link5's selected row's new linkshell
+        open_on_game_thread("menu    link5   ");
+        uint8_t* list = live_menu(row_named("link5"));
+        uint8_t saved5[0x60];
+        memcpy(saved5, link5 + 0x10, sizeof(saved5));
+        static uint8_t rows[3][0x54];
+        static uint8_t record[4] = {5, 0, 0, 0};
+        memset(rows, 0, sizeof(rows));
+        uint8_t* rec = record;
+        memcpy(rows[1] + 0x48, &rec, 4);
+        uint8_t* first = rows[0];
+        memcpy(link5 + 0x54, &first, 4);
+        put32(link5, 0x50, 3);
+        put16(link5, 0x1E, 0);
+        put16(list, 0x4C, 2);
+        open_on_game_thread("menu    link11  ");
+        lk[0x30] = 7;
+        lk[0x31] = 7;
+        lk[0x32] = 7;
+        const int creates = tl->creates;
+        phase(L,
+            "local o = h:options('link11')\n"
+            "check(o and o.max_length == 19 and o.color and o.color[1] == 7 and o.color[3] == 7,"
+            "  'options(link11): the name\\'s length and the colors')\n"
+            "local ok, w = h:answer('link11', {name = 'Kupo1'})\n"
+            "check(ok == nil and w == 'the linkshell\\'s name is 1 to 19 letters, A to Z, and nothing else',"
+            "  'a digit refused: ' .. tostring(w))\n"
+            "ok, w = h:answer('link11', {name = 'Kupo', color = {1, 2, 16}})\n"
+            "check(ok == nil and w == 'each color is a whole number from 0 to 15', 'a color past 15 refused: '"
+            "  .. tostring(w))\n"
+            "local raised = pcall(h.answer, h, 'link11', {name = 'Kupo', color = {1, 2}})\n"
+            "check(not raised, 'two colors raise')\n"
+            "raised = pcall(h.answer, h, 'link11', 'Kupo')\n"
+            "check(not raised, 'a string raises')\n"
+            "check(h:answer('link11', {name = 'Kupo', color = {1, 2, 3}}) == true, 'answer(link11, {name, color})"
+            " queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(tl->creates == creates + 1 && tl->create_args[0] == 1 && tl->create_args[2] == 5
+                && strcmp(tl->create_name, "<Kupo>") == 0 && tl->create_args[5] == 1 && tl->create_args[7] == 3
+                && g_fake->made[0] == 1 && g_fake->made[9] == 0x3C && (link5[0x65] & 1)
+                && !live_menu(row_named("link11")) && live_menu(row_named("link6")),
+            "answer(link11, {name, color}): the request for link5's selected row sent with the encoded name and"
+            " the colors, its bytes written, link11 closed and link6 opened");
+        memcpy(link5 + 0x10, saved5, sizeof(saved5));
+        game_close("menu    link6   ");
+        game_close("menu    link5   ");
+
+        // passinpu: a hide ends its field, the show starts it again
+        game_close("menu    passinpu");
+        attaches = tl->attaches;
+        deletes = tl->field_deletes;
+        const int starts = tl->field_starts;
+        phase(L,
+            "check(h:hide('passinpu') == true, 'hide(passinpu)')\n"
+            "return finish()\n");
+        wait_frames(2);
+        open_on_game_thread("menu    passinpu");
+        wait_frames(2);
+        uint8_t* entry = NULL;
+        memcpy(&entry, pi + 0x38, 4);
+        const bool hidden_open = tl->field_starts == starts + 1 && tl->field_deletes == deletes + 1 && !entry;
+        phase(L,
+            "check(h:unhide('passinpu') == true, 'unhide(passinpu)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        memcpy(&entry, pi + 0x38, 4);
+        check(hidden_open && tl->field_starts == starts + 2 && entry != NULL && tl->attached == entry,
+            "passinpu opened hidden: its open hook's field ended at once; the show starts it again");
+        game_close("menu    passinpu");
+
+        // comment and msgline: a hide ends the field each edits, the show
+        // starts it again with the start its open hook calls, comment's on
+        // the line it edited
+        cm[0x16] = 0;
+        put16(ml, 0x14, 0);
+        open_on_game_thread("menu    comment ");
+        open_on_game_thread("menu    msgline ");
+        cm[0x14] = 2;
+        deletes = tl->field_deletes;
+        const int restarts = tl->field_starts;
+        phase(L,
+            "check(h:hide('comment') == true and h:hide('msgline') == true, 'hide(comment), hide(msgline)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        uint8_t* comment_field = NULL;
+        uint8_t* message_field = NULL;
+        memcpy(&comment_field, cm + 0x378, 4);
+        memcpy(&message_field, ml + 0x1C, 4);
+        const bool ended = !comment_field && !message_field && tl->field_deletes == deletes + 2;
+        phase(L,
+            "check(h:unhide('comment') == true and h:unhide('msgline') == true, 'unhide(comment), unhide(msgline)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        memcpy(&comment_field, cm + 0x378, 4);
+        memcpy(&message_field, ml + 0x1C, 4);
+        check(ended && comment_field && message_field && cm[0x14] == 2 && tl->field_starts == restarts + 2
+                && tl->attached == message_field,
+            "comment and msgline: the hide ends each field; the show starts both again with the start each open"
+            " hook calls, comment's on line 2, the one it edited");
+        game_close("menu    comment ");
+        game_close("menu    msgline ");
+        phase(L,
+            "for _, x in ipairs({h, h2}) do x:poll() end\n"
+            "return finish()\n");
+    }
 
     // -- reply calls, resize and info, queued from Lua and carried out by the
     //    stand-in's own routines on the game thread
@@ -2764,17 +8564,23 @@ int main(int argc, char** argv) {
         "check(h:release() == true, 'alpha releases')\n"
         "return finish()\n");
     wait_frames(3);
-    check(registry_row(kRowLog)[0x29] == 0x7F, "logwindo stays hidden while beta holds it");
-    check(registry_row(kRowMenuwind)[0x29] == 2, "alpha's block is gone with alpha");
+    check(hidden_in_place(kRowLog, log), "logwindo stays hidden while beta holds it");
+    check(memcmp(registry_row(kRowMenuwind), g_fake->pristine + kRowMenuwind * 0x2C, 0x2C) == 0,
+        "menuwind's registry row as the table has it, its block held and dropped");
     check(origin(log, 0) == 100 + kRowLog && origin(log, 1) == 50, "alpha's group move is reset with alpha");
     check(origin(equip, 0) == 10 && origin(equip, 1) == 20, "beta's move of equip survives alpha's release");
 
     phase(L,
         "local ok, why, kind = hu.shutdown()\n"
         "check(ok == false and kind == 'handles', 'shutdown refuses while beta is open')\n"
+        "check(not h2:info('menuwind').blocked and not h2:info('menuwind').hidden,"
+        "  'alpha\\'s block is gone with alpha')\n"
         "h2:release()\n"
         "ok, why, kind = hu.shutdown()\n"
         "check(ok == true, 'shutdown after the last release: ' .. tostring(why))\n"
+        "return finish()\n");
+    settle(L);
+    phase(L,
         "local s = hu.status()\n"
         "check(not s.ok and s.state == 'idle' and not s.detail.pinned, 'idle and unpinned after shutdown')\n"
         "local r, why2 = h2:hide('buff')\n"
@@ -2782,10 +8588,10 @@ int main(int argc, char** argv) {
         "return finish()\n");
     check(memcmp(g_fake->registry, g_fake->pristine, 371 * 0x2C) == 0,
         "after shutdown the registry is byte-identical to the expected table");
-    check(log[0x60] == 1 && origin(equip, 0) == 100 + kRowEquip && origin(equip, 1) == 50,
-        "logwindo is visible again and equip is back at its default rect");
+    check(log[0x60] == 1 && walk_of(log) == 'd' && origin(equip, 0) == 100 + kRowEquip && origin(equip, 1) == 50,
+        "logwindo is drawn again and equip is back at its default rect");
     lua.close(L);
-    check(!engine_mapped(), "after shutdown, closing Lua unmaps the engine");
+    check(engine_unmaps(), "after shutdown, closing Lua unmaps the engine");
     {
         const LONG before = *g_fake->frames;
         wait_frames(3);
@@ -2804,17 +8610,30 @@ int main(int argc, char** argv) {
         "local f = s.detail.functions\n"
         "check(f.open_by_name == OPEN and f.ui_update == UPDATE"
         "  and f.staged_close == STAGED and f.show_path == SHOW and f.compass_draw == COMPASS"
-        "  and f.macro_gate == MACROGATE and f.ability_open == ABILITYOPEN, 'at the same addresses')\n"
+        "  and f.macro_gate == MACROGATE and f.ability_open == ABILITYOPEN and f.template_swap == F_template_swap"
+        "  and f.menu_draw == MENUDRAW and f.sprite_draw == SPRITEDRAW and f.primitive_draw == PRIMITIVEDRAW"
+        "  and f.quad_draw == QUADDRAW,"
+        "  'at the same addresses, the template swap and the three draws among them')\n"
         "check(h:hide('buff') == true, 'and hides through them')\n"
         "return finish()\n");
     wait_frames(3);
-    check(registry_row(kRowBuff)[0x29] == 0x7F, "the re-registered drain hid buff");
+    uint8_t* buff_menu = static_cast<uint8_t*>(open_on_game_thread("menu    buff"));
+    check(hidden_in_place(kRowBuff, buff_menu), "the re-registered drain hid buff");
 
     // -- Lua closed with no release and no shutdown
     lua.close(L);
     check(engine_mapped(), "an engine collected without shutdown stays pinned");
     wait_frames(3);
-    check(registry_row(kRowBuff)[0x29] == 0, "and its drain still restores what the collected handle held");
+    check(walk_of(buff_menu) == 'd' && buff_menu[0x77] == 1,
+        "and its drain still restores what the collected handle held: buff drawn, +0x77 1");
+    {
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        pause_game();
+        close_by_name(g_fake->mcb, NULL, "menu    buff    ");
+        resume_game();
+    }
 
     L = fresh(globals);
     phase(L,
@@ -2826,8 +8645,176 @@ int main(int argc, char** argv) {
         "check(ok == true, 'and shuts it down: ' .. tostring(why))\n"
         "return finish()\n");
     lua.close(L);
-    check(!engine_mapped(), "then the engine unmaps");
+    check(engine_unmaps(), "then the engine unmaps");
     check(memcmp(g_fake->registry, g_fake->pristine, 371 * 0x2C) == 0, "and the registry is pristine");
+
+    // -- a shutdown while no frame runs, as two live unloads of six met it on
+    //    2026-10-21 (each waited 1.5 s for the frame, refused with "drain" and
+    //    left the engine installed with no handle): accepted at once and
+    //    closing, a second one starting nothing more; the next frame runs the
+    //    restore, the engine's own thread then takes the hooks out, and the
+    //    image unmaps once Lua lets it go
+    L = fresh(globals);
+    phase(L,
+        "hu = load_engine()\n"
+        "h = hu.new('paused')\n"
+        "check(hu.status().ok and h:move('equip', 300, 200) == true, 'an engine for the paused shutdown moves equip')\n"
+        "return finish()\n");
+    wait_frames(3);
+    check(origin(equip, 0) == 300 && origin(equip, 1) == 200, "equip moved to 300,200");
+    pause_game();
+    phase(L,
+        "check(h:release() == true, 'the handle releases while no frame runs')\n"
+        "return finish()\n");
+    {
+        const DWORD start = GetTickCount();
+        phase(L,
+            "ok, why, kind = hu.shutdown()\n"
+            "return finish()\n");
+        const DWORD took = GetTickCount() - start;
+        char what[128];
+        snprintf(what, sizeof(what), "the shutdown returns at once, not after the 1.5 s the engine waited for a"
+            " frame: %lu ms", static_cast<unsigned long>(took));
+        check(took < 250, what);
+    }
+    phase(L,
+        "check(ok == true, 'and is accepted: ' .. tostring(why) .. ' ' .. tostring(kind))\n"
+        "local s = hu.status()\n"
+        "check(not s.ok and s.state == 'closing' and s.handles == 0 and s.detail.pinned,"
+        "  'status: closing, not ok, still pinned: ' .. tostring(s.state))\n"
+        "return finish()\n");
+    check(engine_threads() == 1, "the engine runs one thread of its own, waiting for the frame");
+    phase(L,
+        "local ok2, why2 = hu.shutdown()\n"
+        "check(ok2 == true and hu.status().state == 'closing',"
+        "  'a second shutdown while closing is accepted too: ' .. tostring(why2))\n"
+        "return finish()\n");
+    check(engine_threads() == 1, "and starts no second thread");
+    check(origin(equip, 0) == 300 && origin(equip, 1) == 200 && record_magic() == HU_ENGINE_MAGIC && claim_held(),
+        "with no frame run, equip stays where the handle moved it, the record published and the claim held");
+    resume_game();
+    settle(L);
+    phase(L,
+        "local s = hu.status()\n"
+        "check(not s.ok and s.state == 'idle' and not s.detail.pinned and not s.detail.busy,"
+        "  'once a frame has run: idle and unpinned: ' .. tostring(s.state))\n"
+        "return finish()\n");
+    check(origin(equip, 0) == 100 + kRowEquip && origin(equip, 1) == 50 && registry_pristine(),
+        "the frame ran the release and the restore: equip at its default rect, the registry pristine");
+    check(record_magic() == 0 && !claim_held(), "and the hooks came out: the record retired, the claim given up");
+    lua.close(L);
+    check(engine_unmaps(), "closing Lua unmaps the engine");
+
+    // -- lua reload: the unload's shutdown, then the load's new() before any
+    //    frame. The handle takes the closing engine back: installed again,
+    //    the queued restore running first and leaving the new handle's work
+    //    alone, the engine's thread leaving without unhooking
+    L = fresh(globals);
+    phase(L,
+        "hu = load_engine()\n"
+        "h = hu.new('unloading')\n"
+        "check(hu.status().ok and h:release() == true, 'an engine for the reload, its handle released')\n"
+        "return finish()\n");
+    pause_game();
+    phase(L,
+        "local ok, why = hu.shutdown()\n"
+        "check(ok == true and hu.status().state == 'closing',"
+        "  'the unload\\'s shutdown with no frame running: closing: ' .. tostring(why))\n"
+        "return finish()\n");
+    lua.close(L);
+    check(engine_mapped() && engine_threads() == 1,
+        "the unloaded addon's Lua state is closed; the engine stays mapped, its thread waiting");
+    L = fresh(globals);
+    phase(L,
+        "hu = load_engine()\n"
+        "h = hu.new('reloaded')\n"
+        "local s = hu.status()\n"
+        "check(h ~= nil and s.ok and s.state == 'installed' and s.role == 'resident' and s.handles == 1,"
+        "  'the load\\'s new(), before any frame, takes the closing engine back: ' .. tostring(s.state))\n"
+        "check(h:hide('logwindo') == true, 'and its handle hides logwindo')\n"
+        "return finish()\n");
+    {
+        const DWORD start = GetTickCount();
+        while (engine_threads() != 0 && GetTickCount() - start < 5000) {
+            Sleep(1);
+        }
+    }
+    check(engine_threads() == 0, "the engine's thread leaves with no frame run, its shutdown canceled");
+    resume_game();
+    wait_frames(3);
+    check(hidden_in_place(kRowLog, log) && engine_mapped() && record_magic() == HU_ENGINE_MAGIC && claim_held(),
+        "after the frame that ran the queued restore, logwindo is hidden all the same; the image, the record and the"
+        " claim are still the engine's");
+    phase(L,
+        "local s = hu.status()\n"
+        "check(s.ok and s.state == 'installed' and s.handles == 1 and s.detail.pinned,"
+        "  'the engine is still installed and pinned: ' .. tostring(s.state))\n"
+        "check(h:release() == true and hu.shutdown() == true, 'then the handle releases and the engine shuts down')\n"
+        "return finish()\n");
+    settle(L);
+    check(record_magic() == 0 && !claim_held() && registry_pristine() && walk_of(log) == 'd',
+        "which unhooks: the record retired, the claim given up, the registry pristine, logwindo drawn");
+    lua.close(L);
+    check(engine_unmaps(), "and the engine unmaps");
+
+    // -- a hooked call still running when the engine's thread clears the
+    //    handlers: the template swap parked in its pre on a page it cannot
+    //    read. The engine stays idle and pinned for the session; once the
+    //    call has returned, the next shutdown clears what is left
+    L = fresh(globals);
+    phase(L,
+        "hu = load_engine()\n"
+        "h = hu.new('busy')\n"
+        "check(hu.status().ok, 'an engine for the busy shutdown: ' .. tostring(hu.status().detail.error))\n"
+        "return finish()\n");
+    {
+        g_trap = static_cast<uint8_t*>(VirtualAlloc(NULL, 4096, MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS));
+        g_trap_entered = CreateEventA(NULL, TRUE, FALSE, NULL);
+        g_trap_release = CreateEventA(NULL, TRUE, FALSE, NULL);
+        PVOID handler = AddVectoredExceptionHandler(1, &trap_handler);
+        HANDLE swapper = g_trap && handler ? CreateThread(NULL, 0, &swap_into_trap, NULL, 0, NULL) : NULL;
+        check(swapper && WaitForSingleObject(g_trap_entered, 5000) == WAIT_OBJECT_0,
+            "a thread parked inside the hooked template swap's pre");
+        phase(L,
+            "check(h:release() == true and hu.shutdown() == true, 'the handle releases and the shutdown is accepted')\n"
+            "return finish()\n");
+        settle(L);
+        phase(L,
+            "local s = hu.status()\n"
+            "check(not s.ok and s.state == 'idle' and s.detail.busy and s.detail.pinned,"
+            "  'the swap\\'s handlers could not be cleared: idle, busy and pinned: ' .. tostring(s.state))\n"
+            "return finish()\n");
+        check(record_magic() == HU_ENGINE_MAGIC && claim_held(),
+            "the record and the claim stay with the pinned engine");
+        lua.close(L);
+        check(engine_mapped(), "closing Lua leaves the engine mapped: the parked call is still inside it");
+        SetEvent(g_trap_release);
+        check(swapper && WaitForSingleObject(swapper, 5000) == WAIT_OBJECT_0, "let go, the parked call returns");
+        if (swapper) {
+            CloseHandle(swapper);
+        }
+        if (handler) {
+            RemoveVectoredExceptionHandler(handler);
+        }
+        CloseHandle(g_trap_entered);
+        CloseHandle(g_trap_release);
+        if (g_trap) {
+            VirtualFree(g_trap, 0, MEM_RELEASE);
+        }
+        g_trap = NULL;
+    }
+    L = fresh(globals);
+    phase(L,
+        "hu = load_engine()\n"
+        "local ok, why = hu.shutdown()\n"
+        "local s = hu.status()\n"
+        "check(ok == true and s.state == 'idle' and not s.detail.busy and not s.detail.pinned,"
+        "  'the next shutdown clears the handlers: idle, no longer busy or pinned: ' .. tostring(why))\n"
+        "return finish()\n");
+    check(record_magic() == 0 && !claim_held() && registry_pristine(),
+        "the record retired, the claim given up, the registry pristine");
+    lua.close(L);
+    check(engine_unmaps(), "and the engine unmaps");
 
     // -- remembered sizes: both forms put back at every open, restored by a
     //    reset and by the last writer's release, owned apart from positions
@@ -2925,6 +8912,7 @@ int main(int argc, char** argv) {
         "local ok, why = hu.shutdown()\n"
         "check(ok == true, 'and the engine shuts down: ' .. tostring(why))\n"
         "return finish()\n");
+    settle(L);
     check(fl->frame_menu == menuwind && fl->frame[0] == 100 + kRowMenuwind && fl->frame[1] == 50
             && fl->frame[2] == 120 && fl->frame[3] == 40,
         "A's release, as the last writer of the size of menuwind, restores its own: the 120x40 its frame had at"
@@ -2932,7 +8920,782 @@ int main(int argc, char** argv) {
     check(origin(pmode, 0) == 100 + row_pmode && origin(pmode, 1) == 50 && registry_pristine(),
         "and puts playermo back at its default; the registry is pristine");
     lua.close(L);
-    check(!engine_mapped(), "the engine of the sizes unmaps");
+    check(engine_unmaps(), "the engine of the sizes unmaps");
+
+    // -- the template swap (0.11.0): an owner's swap through the stand-in's
+    //    hooked entry, with the frame snapped to the template's spot, puts
+    //    back the position a handle gave the window and nothing else: the
+    //    party list by its bottom edge, the swap's size standing; playermo's
+    //    rows the owner's
+    L = fresh(globals);
+    phase(L,
+        "hu = load_engine()\n"
+        "h = hu.new('swapper')\n"
+        "check(hu.status().ok, 'an engine for the template swap: ' .. tostring(hu.status().detail.error))\n"
+        "return finish()\n");
+    {
+        const int prow = row_named("partywin");
+        const int arow = row_named("playermo");
+        const bool party_was_open = live_menu(prow) != NULL;
+        const bool actions_were_open = live_menu(arow) != NULL;
+        if (!party_was_open) {
+            open_on_game_thread("menu    partywin");
+        }
+        if (!actions_were_open) {
+            open_on_game_thread("menu    playermo");
+        }
+        phase(L,
+            "check(h:move('partywin', 600, 300) == true and h:resize('playermo', 4) == true,"
+            "  'move partywin by its frame; playermo four rows')\n"
+            "return finish()\n");
+        wait_frames(3);
+        uint8_t* party = live_menu(prow);
+        pause_game();
+        const int bottom = get16(party, 0x40);
+        fl->swaps[0] = '\0';
+        resume_game();
+        InterlockedExchange(g_fake->party_swap, 5);
+        wait_frames(3);
+        pause_game();
+        const bool roster = strcmp(fl->swaps, "ptw5    |") == 0 && get16(party, 0x3A) == 600
+            && get16(party, 0x40) == bottom && get16(party, 0x3C) == 7;
+        fl->swaps[0] = '\0';
+        resume_game();
+        InterlockedExchange(g_fake->action_swap, 6);
+        wait_frames(3);
+        pause_game();
+        const bool rows = strcmp(fl->swaps, "actionm6|") == 0;
+        resume_game();
+        check(roster && rows,
+            "partywin's owner swaps to ptw5: its frame goes back to the move's left, 600, on the bottom edge the"
+            " move gave it, the swap's taller frame standing; playermo's owner swaps to actionm6 and the engine"
+            " swaps nothing back");
+        char reads[512];
+        snprintf(reads, sizeof(reads),
+            "local p = h:info('partywin')\n"
+            "check(p.rect.x == 600 and p.rect.bottom == %d and h:remembered().playermo.size.rows == 4,"
+            "  'info(partywin): the frame at x 600 on its bottom edge; playermo four rows still remembered for its"
+            " next open')\n"
+            "check(h:reset('partywin') == true and h:reset('playermo') == true, 'reset both')\n"
+            "return finish()\n", bottom);
+        phase(L, reads);
+        wait_frames(3);
+        char closes[256];
+        snprintf(closes, sizeof(closes), "%s%sreturn finish()\n",
+            party_was_open ? "" : "check(h:close('partywin') == true, 'close(partywin)')\n",
+            actions_were_open ? "" : "check(h:close('playermo') == true, 'close(playermo)')\n");
+        phase(L, closes);
+        wait_frames(3);
+        phase(L,
+            "check(h:release() == true and hu.shutdown() == true, 'swapper releases, and the engine shuts down')\n"
+            "return finish()\n");
+        settle(L);
+        check(registry_pristine(), "after the template swap's engine, the registry is pristine");
+    }
+    lua.close(L);
+    check(engine_unmaps(), "the engine of the template swap unmaps");
+
+    // -- the trade windows (0.11.0): offer, withdraw, the OK and the cancel
+    //    through the game's own stage, OK, cancel and close, the game's bytes
+    //    over the stand-in's player data, packet queue and clock; the
+    //    trade's offers on their way until the acknowledgment writes them;
+    //    one change a second; the gray test run as the change is made; the
+    //    NPC trade's offer sent whole at its OK, then closed; a blocked NPC
+    //    trade refusing every reply
+    L = fresh(globals);
+    phase(L,
+        "hu = load_engine()\n"
+        "h = hu.new('trader')\n"
+        "check(hu.status().ok, 'an engine for the trade windows: ' .. tostring(hu.status().detail.error))\n"
+        "function trade_errors(handle)\n"
+        "  local out = {}\n"
+        "  for _, e in ipairs((handle:poll())) do\n"
+        "    if e.event == 'error' then out[#out + 1] = e.verb .. ' ' .. e.name .. ': ' .. e.reason end\n"
+        "  end\n"
+        "  return table.concat(out, ' | ')\n"
+        "end\n"
+        "local f = hu.status().detail.functions.offer or {}\n"
+        "check(f.trade_input == TRADEINPUT and f.trade_open == TRADEOPEN and f.handover_input == HANDOVERINPUT"
+        "  and f.rows == INVENTORROWS and f.trade_stage == TRADESTAGE and f.own == 0x194B8 and f.theirs == 0x19300"
+        "  and f.inventory == 0x9860 and f.last_send == 0x41B4 and f.interval == 0x43E2C and f.lock == 0x1AF"
+        "  and f.actor_titled == 0x210 and f.actor_title == 0x214 and f.actor_name == 0x7C,"
+        "  'the trade windows\\' sites, routines and offsets resolved to the stand-in\\'s')\n"
+        "return finish()\n");
+    {
+        FakeLog* tl = g_fake->log;
+        uint8_t* pd = g_fake->player;
+        uint8_t* ctl = controller_named("trade");
+        const int kRowTrade = row_named("trade");
+        const int kRowHandover = row_named("handover");
+        auto item = [&](int index, int id, uint32_t count) {
+            uint8_t* r = pd + 0x9860 + index * 0x2C;
+            memset(r, 0, 0x2C);
+            put16(r, 0, id);
+            r[2] = static_cast<uint8_t>(index);
+            put32(r, 4, count);
+        };
+        auto tick = [&]() {
+            pause_game();
+            put32(g_fake->clock, 0x0C, get32(g_fake->clock, 0x0C) + 2);
+            resume_game();
+        };
+        pause_game();
+        item(1, 4096, 12);
+        item(2, 4097, 3);
+        item(3, 4096, 5);
+        put32(g_fake->gil_record, 4, 1000);
+        memset(pd + 0x194B8, 0, 10 * 8);
+        memset(pd + 0x19300, 0, 10 * 0x2C);
+        resume_game();
+        uint8_t* menu = static_cast<uint8_t*>(open_on_game_thread("menu    trade"));
+        pause_game();
+        put16(menu, 0x58, 11);
+        put32(ctl, 0x6C, 3);
+        put32(ctl, 0x70, 0x01000003);
+        put32(ctl, 0xC0, 3);
+        put32(ctl, 0xC4, 3);
+        put16(pd + 0x19300 + 2 * 0x2C, 0, 640);
+        put32(pd + 0x19300 + 2 * 0x2C, 4, 12);
+        resume_game();
+        tick();
+        const int grays = tl->grays;
+        wait_frames(2);
+        const bool tested = tl->grays > grays && tl->gray_lock == 1 && tl->gray_mode;
+        int commits = tl->commits;
+        phase(L,
+            "trade_errors(h)\n"
+            "local o = h:options('trade')\n"
+            "check(o and o.name == 'trade' and o.partner == 'Zaldon' and o.mine.gil == 0 and #o.mine.items == 0"
+            "  and o.theirs.items[1].slot == 2 and o.theirs.items[1].id == 640 and o.theirs.items[1].count == 12"
+            "  and o.theirs.items[1].item == nil and o.ok_mine == false and o.ok_theirs == false and o.next_change == 0"
+            "  and type(o.gray) == 'table' and #o.gray == 0,"
+            "  'options(trade): the partner\\'s name through the actor table, the partner\\'s offer, nothing of mine,'"
+            "  .. ' a change allowed now, nothing grayed')\n"
+            "check(h:offer('trade', 1, 4) == true, 'offer(trade, 1, 4) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(tested && tl->commits == commits + 1 && get16(tl->packet, 0) == 0x34 && get32(tl->packet, 4) == 4
+                && get16(tl->packet, 8) == 4096 && tl->packet[0x0A] == 1 && tl->packet[0x0B] == 1
+                && get16(menu, 0x4C) == 1 && tl->gray_lock == 1 && get32(ctl, 0xC0) == 3,
+            "the gray test run each frame with the trade open, the item's data locked; the offer: row 1 selected, the"
+            " game's stage sending 4 of item 4096 from index 1 into slot 1");
+        phase(L,
+            "local ok, why = h:offer('trade', 2, 1)\n"
+            "check(ok == nil and tostring(why):find('the game sends one trade change per second; try again in ', 1, true)"
+            "  == 1, 'a second change within the second refused with the wait: ' .. tostring(why))\n"
+            "local o = h:options('trade')\n"
+            "local it = o.mine.items[1]\n"
+            "check(#o.mine.items == 1 and it.pending == true and it.item == 1 and it.slot == 1 and it.id == 4096"
+            "  and it.count == 4 and o.next_change > 0 and o.next_change < 1.1,"
+            "  'options(trade): the item on its way, pending, the next change within the second')\n"
+            "return finish()\n");
+        tick();
+        phase(L,
+            "local ok, why = h:offer('trade', 1, 2)\n"
+            "check(ok == nil and why == 'that item is already offered; withdraw it first', 'the item on its way offered"
+            " again: ' .. tostring(why))\n"
+            "ok, why = h:withdraw('trade', 1)\n"
+            "check(ok == nil and tostring(why):find('the server has not acknowledged that item', 1, true) == 1,"
+            "  'withdraw of the item on its way: ' .. tostring(why))\n"
+            "ok, why = h:offer('trade', 2, 4)\n"
+            "check(ok == nil and why == 'inventory slot 2 holds 3 of that item, fewer than 4', 'more than the slot"
+            " holds: ' .. tostring(why))\n"
+            "ok, why = h:offer('trade', 'gil', 1001)\n"
+            "check(ok == nil and why == 'the player holds 1000 gil', 'more gil than held: ' .. tostring(why))\n"
+            "ok, why = h:offer('trade', 9, 1)\n"
+            "check(ok == nil and why == 'inventory slot 9 holds no item', 'an empty inventory slot: ' .. tostring(why))\n"
+            "ok, why = h:offer('equip', 1, 1)\n"
+            "check(ok == nil and why == 'equip takes no offer; offer() takes trade and handover', 'a window that takes"
+            " no offer: ' .. tostring(why))\n"
+            "local raised, err = pcall(h.offer, h, 'trade', 1.5, 1)\n"
+            "check(not raised and tostring(err):find('whole number', 1, true), 'a fractional index raises: '"
+            "  .. tostring(err))\n"
+            "raised, err = pcall(h.offer, h, 'trade', 2, 0.5)\n"
+            "check(not raised and tostring(err):find('the count is a whole number', 1, true), 'a fractional count"
+            " raises: ' .. tostring(err))\n"
+            "return finish()\n");
+        // the acknowledgment writes the item into the acknowledged offer
+        pause_game();
+        put32(pd + 0x194B8 + 8, 0, 4);
+        put16(pd + 0x194B8 + 8, 4, 4096);
+        pd[0x194B8 + 8 + 6] = 1;
+        resume_game();
+        wait_frames(2);
+        commits = tl->commits;
+        phase(L,
+            "local o = h:options('trade')\n"
+            "local it = o.mine.items[1]\n"
+            "check(#o.mine.items == 1 and it.pending == nil and it.item == 1 and it.slot == 1,"
+            "  'acknowledged: the item in the offer, no longer pending')\n"
+            "check(h:withdraw('trade', 1) == true, 'withdraw(trade, 1) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(tl->commits == commits + 1 && get32(tl->packet, 4) == 0 && tl->packet[0x0A] == 1
+                && tl->packet[0x0B] == 1 && get16(menu, 0x4C) == 1,
+            "the withdrawal: row 1 selected, the game's stage sending a count of 0 for index 1 in slot 1, its removal");
+        tick();
+        commits = tl->commits;
+        phase(L,
+            "check(h:offer('trade', 'gil', 250) == true, 'offer(trade, gil, 250) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(tl->commits == commits + 1 && get32(tl->packet, 4) == 250 && tl->packet[0x0A] == 0
+                && tl->packet[0x0B] == 0 && get16(menu, 0x4C) == 11,
+            "the gil: row 11 selected, the game's stage sending 250 gil into slot 0");
+        tick();
+        commits = tl->commits;
+        // the game grays index 2 out: refused up front by the drain's rows
+        pause_game();
+        *g_fake->gray_answer = 0x80404040u;
+        *g_fake->gray_index = 2;
+        resume_game();
+        wait_frames(2);
+        phase(L,
+            "trade_errors(h)\n"
+            "local o = h:options('trade')\n"
+            "check(#o.gray == 1 and o.gray[1] == 2, 'options(trade).gray: the index the game grays out')\n"
+            "local ok, why = h:offer('trade', 2, 1)\n"
+            "check(ok == nil and why == 'that item cannot be traded', 'an item the game grays out refused up front: '"
+            "  .. tostring(why))\n"
+            "return finish()\n");
+        wait_frames(3);
+        const bool up_front = tl->commits == commits;
+        // grayed between the Lua thread's check and the drain: the game
+        // thread's test refuses it by an error event
+        pause_game();
+        *g_fake->gray_answer = 0x80808080u;
+        *g_fake->gray_index = 0;
+        resume_game();
+        wait_frames(2);
+        pause_game();
+        *g_fake->gray_answer = 0x80404040u;
+        *g_fake->gray_index = 2;
+        phase(L,
+            "trade_errors(h)\n"
+            "check(#h:options('trade').gray == 0, 'the drain\\'s rows from before the change: nothing grayed')\n"
+            "check(h:offer('trade', 2, 1) == true, 'so an offer of the item queues')\n"
+            "return finish()\n");
+        resume_game();
+        wait_frames(3);
+        pause_game();
+        *g_fake->gray_answer = 0x80808080u;
+        *g_fake->gray_index = 0;
+        resume_game();
+        wait_frames(2);
+        check(up_front && tl->commits == commits, "an item the game grays out: no change sent, refused up front or by"
+            " the game thread");
+        phase(L,
+            "local seen = trade_errors(h)\n"
+            "check(seen == 'offer trade: that item cannot be traded',"
+            "  'the game\\'s gray test refuses it on the game thread: ' .. seen)\n"
+            "check(#h:options('trade').gray == 0, 'listed again: nothing grayed')\n"
+            "check(h:answer('trade') == true, 'answer(trade), the OK, queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const bool okd = tl->commits == commits && tl->trade_sends[0] >= 1 && get32(ctl, 0xC0) == 4;
+        tick();
+        phase(L,
+            "local ok, why = h:offer('trade', 2, 1)\n"
+            "check(ok == nil and why == 'your OK is in: the trade takes no more changes', 'a change after the OK: '"
+            "  .. tostring(why))\n"
+            "ok, why = h:answer('trade', true)\n"
+            "check(ok == nil and why == 'your OK is already in', 'the OK again: ' .. tostring(why))\n"
+            "local o = h:options('trade')\n"
+            "check(o.ok_mine == true, 'options(trade): ok_mine')\n"
+            "check(h:cancel('trade') == true, 'cancel(trade) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(okd && tl->trade_sends[1] >= 1 && !live_menu(kRowTrade),
+            "the OK through the game's OK, its state then 4; the cancel through the game's cancel, the trade's windows"
+            " closed by its close");
+        phase(L,
+            "local ok, why = h:offer('trade', 2, 1)\n"
+            "check(ok == nil and why == 'trade is not open', 'with the trade closed: ' .. tostring(why))\n"
+            "return finish()\n");
+
+        // the NPC trade
+        uint8_t* hctl = controller_named("handover");
+        uint8_t* hmenu = static_cast<uint8_t*>(open_on_game_thread("menu    handover"));
+        pause_game();
+        memset(hctl + 0x14, 0, 0x28);
+        put32(hctl, 0x3C, 0);
+        put32(hctl, 0x44, 5);
+        put32(hctl, 0x48, 0x01000005);
+        resume_game();
+        tick();
+        phase(L,
+            "local o = h:options('handover')\n"
+            "check(o and o.name == 'handover' and o.npc == 'Moogle' and #o.items == 0 and o.gil == 0 and o.next_ok == 0"
+            "  and #o.gray == 0 and o.next_change == nil,"
+            "  'options(handover): the NPC\\'s titled name through the actor table, nothing offered, the NPC trade'"
+            "  .. ' allowed now, nothing grayed')\n"
+            "local ok, why = h:answer('handover')\n"
+            "check(ok == nil and why == 'nothing is offered; offer an item or gil first', 'the OK with nothing offered: '"
+            "  .. tostring(why))\n"
+            "check(h:offer('handover', 1, 12) == true, 'offer(handover, 1, 12) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L,
+            "check(h:offer('handover', 2, 3) == true, 'offer(handover, 2, 3) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const bool two = hmenu && get16(hctl, 0x18) == 4096 && hctl[0x1A] == 1 && hctl[0x1B] == 12
+            && get16(hctl, 0x1C) == 4097 && hctl[0x1E] == 2 && hctl[0x1F] == 3 && hctl[0x40] == 2;
+        phase(L,
+            "check(h:withdraw('handover', 1) == true, 'withdraw(handover, 1) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L,
+            "check(h:offer('handover', 'gil', 300) == true, 'offer(handover, gil, 300) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const bool staged = get16(hctl, 0x18) == 0 && hctl[0x1B] == 0 && get32(hctl, 0x3C) == 300
+            && hctl[0x40] == 1;
+        commits = tl->commits;
+        phase(L,
+            "local o = h:options('handover')\n"
+            "check(#o.items == 1 and o.items[1].slot == 2 and o.items[1].item == 2 and o.items[1].count == 3"
+            "  and o.gil == 300, 'options(handover): the item left in slot 2 and the gil')\n"
+            "check(h:answer('handover') == true, 'answer(handover), its OK, queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(two && staged && tl->commits == commits + 1 && get16(tl->packet, 0) == 0x36 && !live_menu(kRowHandover)
+                && get32(hctl, 0x44) == 0,
+            "the NPC trade: items into slots 1 and 2 through +0x40 and the game's stage, the first taken back out by"
+            " staging it again, the gil through the stage's index 0; the OK sending its packet, then the window"
+            " closed");
+        // the next NPC trade within the second: its OK refused up front with
+        // the wait; an item the game grays out for it refused up front
+        hmenu = static_cast<uint8_t*>(open_on_game_thread("menu    handover"));
+        pause_game();
+        memset(hctl + 0x14, 0, 0x28);
+        put32(hctl, 0x3C, 0);
+        put32(hctl, 0x44, 5);
+        put32(hctl, 0x48, 0x01000005);
+        *g_fake->gray_answer = 0x80404040u;
+        *g_fake->gray_index = 3;
+        resume_game();
+        wait_frames(2);
+        commits = tl->commits;
+        phase(L,
+            "local o = h:options('handover')\n"
+            "check(o.next_ok > 0 and o.next_ok < 1.1 and #o.gray == 1 and o.gray[1] == 3, 'options(handover): the NPC"
+            " trade within the second, next_ok ' .. tostring(o.next_ok) .. '; the index the game grays out')\n"
+            "local ok, why = h:offer('handover', 3, 1)\n"
+            "check(ok == nil and why == 'that item cannot be handed to an NPC', 'an item the game grays out for the"
+            " NPC refused up front: ' .. tostring(why))\n"
+            "check(h:offer('handover', 2, 1) == true, 'offer(handover, 2, 1) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L,
+            "local ok, why = h:answer('handover', true)\n"
+            "check(ok == nil and tostring(why):find('the game sends one NPC trade per second; try again in ', 1, true)"
+            "  == 1, 'the OK within the second refused up front with the wait: ' .. tostring(why))\n"
+            "return finish()\n");
+        const bool held_back = tl->commits == commits && live_menu(kRowHandover) && hctl[0x1A] == 2;
+        tick();
+        pause_game();
+        *g_fake->gray_answer = 0x80808080u;
+        *g_fake->gray_index = 0;
+        resume_game();
+        wait_frames(2);
+        phase(L,
+            "local o = h:options('handover')\n"
+            "check(o.next_ok == 0 and #o.gray == 0, 'options(handover) a second on: next_ok 0, nothing grayed')\n"
+            "check(h:cancel('handover') == true, 'cancel(handover) queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(hmenu && held_back && tl->commits == commits && !live_menu(kRowHandover),
+            "the next NPC trade: nothing sent within the second, the window up with the item in slot 1; canceled,"
+            " closed");
+        phase(L,
+            "check(h:block('handover') == true, 'block(handover)')\n"
+            "return finish()\n");
+        wait_frames(2);
+        const bool refused = open_on_game_thread("menu    handover") == NULL;
+        wait_frames(2);
+        phase(L,
+            "local ok, why = h:offer('handover', 2, 1)\n"
+            "check(ok == nil and why == 'handover is blocked and never opens: the NPC trade does not start, and"
+            " nothing waits on a reply', 'a blocked handover takes no offer: ' .. tostring(why))\n"
+            "ok, why = h:answer('handover')\n"
+            "check(ok == nil and tostring(why):find('handover is blocked and never opens', 1, true) == 1, 'nor its OK: '"
+            "  .. tostring(why))\n"
+            "ok, why = h:cancel('handover')\n"
+            "check(ok == nil and tostring(why):find('handover is blocked and never opens', 1, true) == 1, 'nor its"
+            " cancel: ' .. tostring(why))\n"
+            "check(h:unblock('handover') == true, 'unblock(handover)')\n"
+            "return finish()\n");
+        wait_frames(2);
+        check(refused, "a blocked handover never opens");
+        phase(L,
+            "check(h:release() == true and hu.shutdown() == true, 'trader releases, and the engine shuts down')\n"
+            "return finish()\n");
+        settle(L);
+        check(registry_pristine(), "after the trade windows' engine, the registry is pristine");
+    }
+    lua.close(L);
+    check(engine_unmaps(), "the engine of the trade windows unmaps");
+
+    // -- the settings (0.11.0): settings() in the Config menu's order with
+    //    each kind's fields, read from the stand-in's store, the game's
+    //    object and entries; setting(); set_setting() of each kind through
+    //    the game's own set and its subscribers, a bit or a chat filter row
+    //    composed with every other bit kept, the inverted bools and a choice
+    //    on a bit, the equipment lock, auto_disconnect and
+    //    character_information through their routines; misuse raising, every
+    //    refusal, and a page that writes its copy back as it closes refusing
+    //    by an error event
+    {
+        FakeSettings* fs = g_fake->settings;
+        auto entry = [&](int id) { return fs->entries + id * 0x2C; };
+        auto word = [&](int id) { return static_cast<int32_t>(get32(entry(id), 8)); };
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        auto game_close = [&](const char* key) {
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, key);
+            resume_game();
+        };
+        char addresses[5][16];
+        const void* const fns[5] = {fs->set, fs->store_ptr, fs->lock, fs->idle, fs->flag};
+        for (int i = 0; i < 5; ++i) {
+            snprintf(addresses[i], sizeof(addresses[i]), "0x%08X",
+                static_cast<unsigned>(reinterpret_cast<uintptr_t>(fns[i])));
+        }
+        const char* sg[] = {"S_SET", addresses[0], "S_STORE", addresses[1], "S_LOCK", addresses[2], "S_IDLE",
+                            addresses[3], "S_FLAG", addresses[4], NULL};
+        L = fresh(sg);
+        phase(L,
+            "hu = load_engine()\n"
+            "h = hu.new('settings')\n"
+            "local s = hu.status()\n"
+            "local d = s.detail.functions.settings\n"
+            "check(s.ok and d.set == S_SET and d.store == S_STORE and d.lock == S_LOCK and d.idle == S_IDLE"
+            "  and d.flag == S_FLAG and d.loaded == true and d.flags == 0x30 and d.anonymous == 4,"
+            "  'the settings resolve on the stand-in: the store\\'s set and global, the lock\\'s request, the idle'"
+            "  .. ' timer, the flag\\'s request, the player flags at +0x30 bit 2; the store loaded')\n"
+            "return finish()\n");
+        wait_frames(2);
+        put32(entry(0x92), 8, 0x20006);
+        phase(L,
+            "local list = h:settings()\n"
+            "local by = {}\n"
+            "for i, e in ipairs(list) do by[e.name] = e; e.index = i end\n"
+            "check(#list == 268 and list[1].name == 'auto_target' and list[2].name == 'sound_effects_volume'"
+            "  and list[9].name == 'filter_say' and list[268].name == 'term_filter',"
+            "  'settings(): all 268, in the Config menu\\'s order')\n"
+            "local m = by.music_volume\n"
+            "check(m.page == 'conf2win' and m.kind == 'number' and m.value == 100 and m.default == 100 and m.min == 0"
+            "  and m.max == 100 and m.label == nil and m.choices == nil,"
+            "  'a number: its value, default, min and max from its store entry; no label where the game has none')\n"
+            "local sh = by.shadows\n"
+            "check(sh.kind == 'choice' and sh.value == 'normal' and sh.default == 'normal' and sh.min == nil"
+            "  and table.concat(sh.choices, ' ') == 'high normal off', 'a choice: its value by name, its choices in'"
+            "  .. ' its page\\'s row order')\n"
+            "local c = by.color_say\n"
+            "check(c.kind == 'color' and c.value.r == 128 and c.value.g == 128 and c.value.b == 128 and c.default.r"
+            "  == 128 and c.min == 0 and c.max == 255 and c.page == 'conftxtc' and c.label == 'Immediate vicinity'"
+            "  .. ' (\"Say\")', 'a color: {r, g, b}, each channel 0..255, and the game\\'s label')\n"
+            "local f = by.footstep_effects\n"
+            "check(f.kind == 'bool' and f.value == true and f.default == true and f.min == nil,"
+            "  'a bool: true while its word is 0, for a setting whose 0 is on')\n"
+            "local k = by.key1_move_up\n"
+            "check(k.kind == 'key' and k.value == 44 and k.min == 0 and k.max == 255 and k.label == 'Move Up'"
+            "  and k.page == 'k1assign', 'a key: its DirectInput code, 0..255, and its action\\'s label')\n"
+            "local t = by.filter_tell\n"
+            "check(t.kind == 'number' and t.value == 2 and t.default == 2 and t.min == 0 and t.max == 3"
+            "  and t.label == 'Tell' and by.filter_say.max == 2 and by.filter_say.label == 'Say'"
+            "  and by.filter_tell_messages_deemed_spam.value == true and by.filter_yell.value == false,"
+            "  'the chat filter rows: Tell\\'s four states, its flag on by default; Say\\'s three; the spam filters'"
+            "  .. ' on by default')\n"
+            "check(by.log1_say.value == false and by.log2_say.value == true and by.log1_battle_messages.value == true"
+            "  and by.log1_battle_messages.label == 'Battle Messages' and by.effect_filter_you_to_you.value == true"
+            "  and by.effect_filter_all_effects_during_battle.label == 'All effects during battle',"
+            "  'the routing\\'s and the battle effects filter\\'s bits')\n"
+            "local a = by.character_information\n"
+            "check(a.kind == 'choice' and a.value == 'show' and a.default == nil"
+            "  and table.concat(a.choices, ' ') == 'show hide' and by.auto_disconnect.value == -1"
+            "  and by.auto_disconnect.min == -1 and by.auto_disconnect.max == 60,"
+            "  'character_information from the player\\'s flags, which the game keeps no default of; auto_disconnect\\'s'"
+            "  .. ' -1..60')\n"
+            "local i = by.icon_type\n"
+            "check(i.kind == 'choice' and i.value == 'type2' and i.default == 'type2' and i.min == nil"
+            "  and table.concat(i.choices, ' ') == 'type1 type2' and by.auto_target.kind == 'bool'"
+            "  and by.auto_target.value == true and by.style_lock.value == 'normal'"
+            "  and table.concat(by.style_lock.choices, ' ') == 'normal static',"
+            "  'a choice on a bit, its bit clear type2; auto_target on while its word is 0; style_lock a choice')\n"
+            "check(h:setting('MUSIC_Volume') == 100 and h:setting('shadows') == 'normal'"
+            "  and h:setting('color_say').b == 128, 'setting(name): the value, by a name in any case')\n"
+            "local v, why = h:setting('nosuch')\n"
+            "check(v == nil and why == 'no such setting: nosuch (settings() lists them)', 'setting(nosuch)')\n"
+            "local raised, err = pcall(h.setting, h, 42)\n"
+            "check(not raised and tostring(err):find('string expected', 1, true), 'setting(42) raises')\n"
+            "local function misuse(name, value, text)\n"
+            "  local ok, e = pcall(h.set_setting, h, name, value)\n"
+            "  check(not ok and tostring(e):find(text, 1, true), 'set_setting(' .. name .. ', ' .. tostring(value)"
+            "    .. ') raises: ' .. tostring(e))\n"
+            "end\n"
+            "misuse('music_volume', 'loud', \"set_setting('music_volume', value): music_volume takes a whole number,\")\n"
+            "misuse('footstep_effects', 1, 'footstep_effects takes true or false')\n"
+            "misuse('shadows', 2, \"shadows takes one of its choices' names, a string\")\n"
+            "misuse('color_say', 5, 'color_say takes a color, {r = red, g = green, b = blue}')\n"
+            "misuse('color_say', {r = 1, g = 2}, 'color_say takes a color')\n"
+            "misuse('color_say', {1, 2, 3}, 'color_say takes a color')\n"
+            "misuse('color_say', {r = 1, g = 2, b = 3, a = 4}, 'color_say takes a color')\n"
+            "misuse('key1_move_up', true, 'key1_move_up takes a DirectInput key code, a number')\n"
+            "local function refused(name, value, text)\n"
+            "  local ok, e = h:set_setting(name, value)\n"
+            "  check(ok == nil and e == text, 'set_setting(' .. name .. ', ' .. tostring(value) .. ') refused: '"
+            "    .. tostring(e))\n"
+            "end\n"
+            "refused('nosuch', 1, 'no such setting: nosuch (settings() lists them)')\n"
+            "refused('music_volume', 101, 'music_volume takes a whole number from 0 to 100')\n"
+            "refused('music_volume', 50.5, 'music_volume takes a whole number from 0 to 100')\n"
+            "refused('shadows', 'ultra', 'no such choice of shadows: ultra (high, normal or off)')\n"
+            "refused('color_say', {r = 256, g = 0, b = 0}, 'each of r, g and b is a whole number from 0 to 255')\n"
+            "refused('color_say', {r = 1.5, g = 0, b = 0}, 'each of r, g and b is a whole number from 0 to 255')\n"
+            "refused('key1_move_up', 256, 'key1_move_up takes a whole number from 0 to 255')\n"
+            "refused('auto_disconnect', 61, 'auto_disconnect takes a whole number from -1 to 60')\n"
+            "refused('icon_type', 'type3', 'no such choice of icon_type: type3 (type1 or type2)')\n"
+            "refused('filter_say', 3, 'filter_say takes a whole number from 0 to 2')\n"
+            "return finish()\n");
+
+        // Each kind through the game's set, its subscriber called with what it
+        // stores.
+        InterlockedExchange(&fs->notifies, 0);
+        phase(L,
+            "check(h:set_setting('music_volume', 40) == true and h:set_setting('shadows', 'high') == true"
+            "  and h:set_setting('footstep_effects', false) == true"
+            "  and h:set_setting('color_say', {r = 160, g = 64, b = 160}) == true"
+            "  and h:set_setting('key1_move_up', 0x11) == true, 'a number, a choice, a bool, a color and a key queue')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(word(0x0A) == 40 && word(0x3A) == 2 && word(0x3F) == 1 && static_cast<uint32_t>(word(0x1B)) == 0x80A040A0u
+                && word(0x4A) == 0x11 && fs->notifies == 5 && fs->notified[0][0] == 0x0A && fs->notified[0][1] == 40
+                && fs->notified[3][0] == 0x1B && static_cast<uint32_t>(fs->notified[3][1]) == 0x80A040A0u,
+            "set_setting through the game's set: music_volume 40, shadows high (2), footstep_effects off (1),"
+            " color_say 0x80A040A0, key1_move_up 0x11 (W), each id's subscriber run with the value stored");
+        InterlockedExchange(&fs->notifies, 0);
+        phase(L,
+            "check(h:setting('music_volume') == 40 and h:setting('color_say').r == 160 and h:setting('shadows') =="
+            "  'high' and h:setting('footstep_effects') == false, 'setting() reads what the sets stored')\n"
+            "check(h:set_setting('music_volume', 40) == true, 'a set to the value already stored queues')\n"
+            "check(h:set_setting('effect_filter_you_to_you', false) == true"
+            "  and h:set_setting('log2_hp_mp_you_recover', true) == true"
+            "  and h:set_setting('target_expressions', false) == true, 'three bits queue')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(word(0x0A) == 40 && fs->notifies == 3 && word(0x92) == 0x20004 && word(0xBC) == 2 && word(0xBB) == -1
+                && word(0x99) == 0x80,
+            "a set to the stored value changes nothing and runs no subscriber; bits composed into their words as they"
+            " are, every other bit kept: 0x92's bit 1 cleared beside bits 2 and 17, log window 2's bit 33 0xBC's bit"
+            " 1 (0xBB untouched), 0x99's bit 7 set for target_expressions off");
+        // The bools whose page's ON is a stored 0, and two whose ON is a 1.
+        InterlockedExchange(&fs->notifies, 0);
+        static const char kInvertedNames[] =
+            "{'auto_target', 'window_effect', 'log_window1_reactive_sizing', 'log_window2_reactive_sizing',"
+            " 'screen_edge_panning', 'chat_language_filter', 'weapon_effect'}";
+        static const uint8_t kInvertedIds[] = {0x07, 0xA4, 0x0E, 0xB6, 0x8F, 0x18, 0xBE};
+        char inverted_chunk[1024];
+        snprintf(inverted_chunk, sizeof(inverted_chunk),
+            "for _, n in ipairs(%s) do check(h:set_setting(n, false) == true, n .. ' off queues') end\n"
+            "check(h:set_setting('inventory_sort', true) == true and h:set_setting('weather_effects', false) == true,"
+            "  'inventory_sort on and weather_effects off queue')\n"
+            "return finish()\n", kInvertedNames);
+        phase(L, inverted_chunk);
+        wait_frames(3);
+        bool off_one = word(0x9A) == 1 && word(0x3B) == 0;
+        for (size_t k = 0; k < sizeof(kInvertedIds); ++k) {
+            off_one = off_one && word(kInvertedIds[k]) == 1;
+        }
+        snprintf(inverted_chunk, sizeof(inverted_chunk),
+            "for _, n in ipairs(%s) do\n"
+            "  check(h:setting(n) == false and h:set_setting(n, true) == true, n .. ' reads off, and on queues')\n"
+            "end\n"
+            "return finish()\n", kInvertedNames);
+        phase(L, inverted_chunk);
+        wait_frames(3);
+        bool on_zero = true;
+        for (size_t k = 0; k < sizeof(kInvertedIds); ++k) {
+            on_zero = on_zero && word(kInvertedIds[k]) == 0;
+        }
+        check(off_one && on_zero,
+            "each bool whose page's ON is a stored 0 (auto_target, window_effect, both log windows' reactive sizing,"
+            " screen_edge_panning, chat_language_filter, weapon_effect) stores 1 for false and 0 for true;"
+            " inventory_sort's true a 1 and weather_effects' false a 0");
+        // A choice on a bit: icon_type's type1 sets 0x99's bit 2.
+        phase(L,
+            "check(h:set_setting('icon_type', 'TYPE1') == true, 'icon_type type1 queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const bool icon_one = word(0x99) == 0x84;
+        phase(L,
+            "check(h:setting('icon_type') == 'type1' and h:set_setting('icon_type', 'type2') == true,"
+            "  'icon_type reads type1, and type2 queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(icon_one && word(0x99) == 0x80,
+            "a choice on a bit: icon_type's type1 (in any case) sets 0x99's bit 2, type2 clears it, bit 7 kept");
+        InterlockedExchange(&fs->notifies, 0);
+        phase(L,
+            "check(h:set_setting('filter_say', 2) == true and h:set_setting('filter_say', 1) == true"
+            "  and h:set_setting('filter_tell', 1) == true, 'chat filter rows queue')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(word(0x32) == 1 && word(0x34) == 4 && word(0x47) == 0 && word(0x33) == 0x1800 && fs->notifies == 5
+                && fs->notified[0][0] == 0x34 && fs->notified[0][1] == 1 && fs->notified[1][0] == 0x32
+                && fs->notified[2][0] == 0x34 && fs->notified[2][1] == 0 && fs->notified[3][0] == 0x34
+                && fs->notified[3][1] == 4 && fs->notified[4][0] == 0x47 && fs->notified[4][1] == 0,
+            "a chat filter row: Say's second state, then its mask bit (0x32, then 0x34 cleared, as the page writes"
+            " them), Tell's second state with its flag cleared; the spam filters' bits kept");
+        // The equipment lock: the game's request through its own bytes, its
+        // wait 9000 ms on the clock from its stamp, which starts at 0.
+        auto lock_set = [&](const char* value, const char* reason) {
+            char chunk[768];
+            snprintf(chunk, sizeof(chunk),
+                "h:poll()\n"
+                "check(h:set_setting('style_lock', '%s') == true, 'style_lock %s queues')\n"
+                "return finish()\n", value, value);
+            phase(L, chunk);
+            wait_frames(3);
+            snprintf(chunk, sizeof(chunk),
+                "local errors = {}\n"
+                "for _, e in ipairs((h:poll())) do\n"
+                "  if e.event == 'error' then errors[#errors + 1] = e end\n"
+                "end\n"
+                "local want = %s%s%s\n"
+                "local e = errors[1] or {}\n"
+                "check(want == nil and #errors == 0 or #errors == 1 and e.verb == 'set_setting' and e.name == 'style_lock'"
+                "  and e.reason == want, 'style_lock %s: ' .. (want and 'the error event ' .. want or 'no error event')"
+                "  .. ', got ' .. tostring(e.reason))\n"
+                "return finish()\n", reason ? "'" : "", reason ? reason : "nil", reason ? "'" : "", value);
+            phase(L, chunk);
+        };
+        InterlockedExchange(&fs->notifies, 0);
+        fs->lock_clock = 100000;
+        lock_set("static", NULL);
+        const bool locked = word(0xBF) == 1 && fs->lock_requests == 1 && fs->lock_args[0] == 4 && fs->lock_args[1] == 0
+            && *fs->lock_stamp == 100000 && fs->notifies == 1 && fs->notified[0][0] == 0xBF && fs->notified[0][1] == 1;
+        InterlockedExchange(&fs->notifies, 0);
+        fs->lock_clock = 104500;
+        lock_set("normal", "the game allows one style lock change every 9 seconds; 5 s left");
+        const bool waited = word(0xBF) == 1 && fs->lock_requests == 1 && fs->lock_messages == 1
+            && *fs->lock_stamp == 100000 && fs->notifies == 0;
+        fs->lock_busy = 1;
+        lock_set("normal", "the game is not accepting style lock changes right now");
+        const bool gated = word(0xBF) == 1 && fs->lock_requests == 1 && fs->lock_messages == 1
+            && *fs->lock_stamp == 100000 && fs->notifies == 0;
+        fs->lock_busy = 0;
+        fs->lock_ok = 0;
+        fs->lock_clock = 120000;
+        lock_set("normal", "the game could not send the request");
+        const bool unsent = word(0xBF) == 1 && fs->lock_requests == 2 && fs->lock_args[0] == 0
+            && *fs->lock_stamp == 120000 && fs->notifies == 0;
+        fs->lock_ok = 1;
+        fs->lock_clock = 140000;
+        lock_set("normal", NULL);
+        check(locked && waited && gated && unsent && word(0xBF) == 0 && fs->lock_requests == 3 && fs->lock_args[0] == 0
+                && *fs->lock_stamp == 140000 && fs->notifies == 1 && fs->notified[0][1] == 0,
+            "style_lock, a choice, through the game's request alone, its own bytes: static (mode 4) and normal (mode"
+            " 0) written by the"
+            " game as its request goes; its wait's refusal (its message, 5 of its 9 seconds left on its clock and"
+            " stamp), its gate's and a failed send each an error event, 0xBF untouched");
+        phase(L,
+            "check(h:set_setting('auto_disconnect', 30) == true, 'auto_disconnect 30 queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const bool idle_on = word(0x41) == 30 && fs->idle_ms == 1800000 && fs->idle_on == 1;
+        phase(L,
+            "check(h:set_setting('auto_disconnect', -1) == true and h:set_setting('character_information', 'hide')"
+            "  == true, 'auto_disconnect off and character_information hide queue')\n"
+            "return finish()\n");
+        wait_frames(3);
+        check(idle_on && word(0x41) == -1 && fs->idle_on == 0 && fs->idle_ms_calls == 1 && fs->flag_sets == 1
+                && fs->flag_args[0] == 0 && fs->flag_args[1] == 1,
+            "auto_disconnect through the game's timer: 30 minutes stored and 1800000 ms handed on, -1 off;"
+            " character_information's hide through the player flag's request, flag 0 on");
+        fs->player_flags[0] = 4;
+        phase(L,
+            "check(h:setting('character_information') == 'hide', 'character_information read from the player\\'s"
+            " flags')\n"
+            "return finish()\n");
+        fs->player_flags[0] = 0;
+
+        // A page that writes its own copy back as it closes, open.
+        open_on_game_thread("menu    cfilter ");
+        open_on_game_thread("menu    conf2win");
+        wait_frames(2);
+        InterlockedExchange(&fs->notifies, 0);
+        phase(L,
+            "h:poll()\n"
+            "check(h:set_setting('filter_say', 0) == true and h:set_setting('music_volume', 60) == true"
+            "  and h:set_setting('filter_others_synthesis_and_fishing_results', true) == true,"
+            "  'sets with cfilter and conf2win open queue')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L,
+            "local errors = {}\n"
+            "for _, e in ipairs((h:poll())) do\n"
+            "  if e.event == 'error' then errors[#errors + 1] = e end\n"
+            "end\n"
+            "local e = errors[1] or {}\n"
+            "local long = errors[2] or {}\n"
+            "check(#errors == 2 and e.verb == 'set_setting' and e.name == 'filter_say' and e.reason == 'cfilter is open:'"
+            "  .. ' it writes its own copy back as it closes, over this; set it once cfilter has closed',"
+            "  'a set while cfilter is open: an error event: ' .. tostring(e.reason))\n"
+            "check(long.verb == 'set_setting' and long.name == 'filter_others_synthesis_and_fishing_results',"
+            "  'the error event for a 43-character setting name carries the whole name: ' .. tostring(long.name))\n"
+            "check(h:setting('music_volume') == 60, 'a page that writes at once takes a set while it is open')\n"
+            "return finish()\n");
+        check(word(0x32) == 1 && fs->notifies == 1, "the refused set stores nothing");
+        game_close("menu    cfilter ");
+        game_close("menu    conf2win");
+
+        // The key pages as one: a key2_ set while k1assign is open.
+        open_on_game_thread("menu    k1assign");
+        wait_frames(2);
+        InterlockedExchange(&fs->notifies, 0);
+        phase(L,
+            "h:poll()\n"
+            "check(h:set_setting('key2_attack', 0x20) == true, 'key2_attack with k1assign open queues')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L,
+            "local errors = {}\n"
+            "for _, e in ipairs((h:poll())) do\n"
+            "  if e.event == 'error' then errors[#errors + 1] = e end\n"
+            "end\n"
+            "local e = errors[1] or {}\n"
+            "check(#errors == 1 and e.name == 'key2_attack' and e.reason == 'k1assign is open: the two key pages share'"
+            "  .. ' one copy of the keys, and a set now would apply it in the middle of the page\\'s edit; set it once'"
+            "  .. ' k1assign has closed', 'a key2_ set while k1assign is open: an error event: ' .. tostring(e.reason))\n"
+            "return finish()\n");
+        check(fs->notifies == 0 && word(0x6A) != 0x20, "the refused key set stores nothing");
+        game_close("menu    k1assign");
+
+        // The player not in the game.
+        pause_game();
+        fs->store[9] = 0;
+        resume_game();
+        phase(L,
+            "local ok, why = h:set_setting('music_volume', 10)\n"
+            "local list, why2 = h:settings()\n"
+            "local v, why3 = h:setting('music_volume')\n"
+            "local text = \"the game's settings are not loaded: the player is not in the game\"\n"
+            "check(ok == nil and why == text and list == nil and why2 == text and v == nil and why3 == text,"
+            "  'with the store not loaded: set_setting, settings() and setting() refused: ' .. tostring(why))\n"
+            "check(h:release() == true and hu.shutdown() == true, 'the settings\\' handle releases, the engine shuts down')\n"
+            "return finish()\n");
+        pause_game();
+        fs->store[9] = 1;
+        resume_game();
+        settle(L);
+        check(registry_pristine(), "after the settings' engine, the registry is pristine");
+    }
+    lua.close(L);
+    check(engine_unmaps(), "the engine of the settings unmaps");
 
     // -- the chat log by its bottom edge, as measured on the 2026-09-10 client
     //    (origin 16,930, default rect 16,930..382,1064, the player's log
@@ -3112,11 +9875,12 @@ int main(int argc, char** argv) {
             "local ok, why = hu.shutdown()\n"
             "check(ok == true, 'and the engine shuts down: ' .. tostring(why))\n"
             "return finish()\n");
+        settle(L);
         check(origin(party2, 1) == party_y && get16(party2, 0x3C) == 1030 && get16(party2, 0x40) == 1064 && target
                 && origin(target, 1) == target_y && registry_pristine(),
             "the release puts partywin (frame 1030..1064) and targetwi back; the registry is pristine");
         lua.close(L);
-        check(!engine_mapped(), "the engine of the chat log unmaps");
+        check(engine_unmaps(), "the engine of the chat log unmaps");
     }
 
     // -- partywin with six members: its frame exactly its default rect
@@ -3138,7 +9902,7 @@ int main(int argc, char** argv) {
         phase(L,
             "hu = load_engine()\n"
             "h = hu.new('six')\n"
-            "check(hu.status().ok and hu.status().engine == '0.10.0', 'a fresh engine for the six-member party list: '"
+            "check(hu.status().ok and hu.status().engine == '0.11.0', 'a fresh engine for the six-member party list: '"
             "  .. tostring(hu.status().detail.error))\n"
             "local p, e = h:info('partywin'), h:info('equip')\n"
             "check(p.detail.layout == 'bottom' and p.rect.y == p.default.y and p.rect.bottom == p.default.bottom"
@@ -3174,10 +9938,11 @@ int main(int argc, char** argv) {
             "local ok, why = hu.shutdown()\n"
             "check(ok == true, 'and the engine shuts down: ' .. tostring(why))\n"
             "return finish()\n");
+        settle(L);
         check(origin(equip, 0) == 100 + kRowEquip && origin(equip, 1) == 50 && registry_pristine(),
             "the release puts equip back at its default rect; the registry is pristine");
         lua.close(L);
-        check(!engine_mapped(), "the engine of the six-member party list unmaps");
+        check(engine_unmaps(), "the engine of the six-member party list unmaps");
     }
 
     // -- a group move whose anchor is closed waits for the game to open it:
@@ -3817,11 +10582,12 @@ int main(int argc, char** argv) {
             "local ok, why = hu.shutdown()\n"
             "check(ok == true, 'and the engine shuts down: ' .. tostring(why))\n"
             "return finish()\n");
+        settle(L);
         check(origin(target, 0) == 100 + row_target && origin(target, 1) == 50 && origin(sub, 0) == sx
                 && origin(sub, 1) == sy && registry_pristine(),
             "the release puts targetwi and subwindo back where the game had them; the registry is pristine");
         lua.close(L);
-        check(!engine_mapped(), "the engine of the waiting group move unmaps");
+        check(engine_unmaps(), "the engine of the waiting group move unmaps");
     }
 
     // -- hideui.lua itself over copy A, Windower stubbed: per-window
@@ -3838,7 +10604,7 @@ int main(int argc, char** argv) {
             "_addon = {name = 'layout'}\n"
             "hideui = dofile(HIDEUI)\n"
             "ui = hideui.new()\n"
-            "check(ui ~= nil and ui.name == 'layout' and hideui.version() == 'hideui 0.10.0' and hideui.status().handles == 1,"
+            "check(ui ~= nil and ui.name == 'layout' and hideui.version() == 'hideui 0.11.0' and hideui.status().handles == 1,"
             "  'hideui.lua loads copy A beside it and makes a handle, named after _addon.name')\n"
             "seen = {}\n"
             "ui:on('opened', 'ability', function(e) seen[#seen + 1] = e.event .. ':' .. e.name end)\n"
@@ -3908,10 +10674,12 @@ int main(int argc, char** argv) {
             "check(not ok and tostring(err):find('category filters apply to ability only', 1, true) ~= nil,"
             "  'on(opened, equip, pet_commands, fn) raises: ' .. tostring(err))\n"
             "check(ui:block('ability', 'job_traits') == true, 'block(ability, job_traits) through hideui.lua')\n"
+            "check(ui:close('ability') == true, 'close(ability), so that each list below is an open')\n"
             "return finish()\n");
-        ability_open_on_game_thread(2, 0, 1);
-        ability_open_on_game_thread(1, 0, 1);
-        ability_open_on_game_thread(4, 0, 1);
+        wait_frames(3);
+        ability_open_on_game_thread(2, 0, 0);
+        ability_open_on_game_thread(1, 0, 0);
+        ability_open_on_game_thread(4, 0, 0);
         wait_frames(3);
         phase(L,
             "handlers.prerender()\n"
@@ -3943,9 +10711,9 @@ int main(int argc, char** argv) {
         wait_frames(3);
         uint8_t* dbdel = live_menu(kRowDbdelsel);
         check(dbdel && strcmp(g_fake->log->last_open, "tkdebug dbdelsel") == 0
-                && registry_row(kRowDbdelsel)[0x29] == 0x7F && dbdel[0x60] == 0x7F,
-            "open('dbdelsel') reached the open routine as \"tkdebug dbdelsel\"; hide put 0x7F on row 327's draw"
-            " layer and the live menu's");
+                && hidden_in_place(kRowDbdelsel, dbdel),
+            "open('dbdelsel') reached the open routine as \"tkdebug dbdelsel\"; its draw paints nothing, row 327"
+            " and the live menu at their layer");
         phase(L,
             "handlers.prerender()\n"
             "local plain_status, plain_info, plain_list = hideui.status(), ui:info('dbdelsel'), ui:list().dbdelsel\n"
@@ -3969,6 +10737,28 @@ int main(int argc, char** argv) {
                 && memcmp(registry_row(kRowDbdelsel), g_fake->pristine + kRowDbdelsel * 0x2C, 0x2C) == 0,
             "unhide put row 327's draw layer back, the row byte-identical to the table; close('dbdelsel') reached"
             " the game's close as \"tkdebug dbdelsel\"");
+        phase(L,
+            "local list = ui:settings()\n"
+            "local by = {}\n"
+            "for _, e in ipairs(list) do by[e.name] = e end\n"
+            "local fx = by.effect_filter_you_to_you\n"
+            "check(#list == 268 and fx.label == 'You \\227\\129\\130 you' and fx.label_raw == 'You \\130\\160 you'"
+            "  and by.music_volume.label == nil and by.music_volume.label_raw == nil,"
+            "  'settings() through hideui.lua: each label as UTF-8, its bytes in label_raw')\n"
+            "check(ui:setting('shadows') == by.shadows.value, 'setting() through hideui.lua')\n"
+            "local ok, e = pcall(ui.set_setting, ui, 'music_volume', 'loud')\n"
+            "check(not ok and tostring(e):find('music_volume takes a whole number', 1, true),"
+            "  'set_setting of a value of the wrong type raises through hideui.lua: ' .. tostring(e))\n"
+            "ok, e = pcall(ui.setting, ui, 42)\n"
+            "check(not ok and tostring(e):find('setting(name): name must be a string', 1, true),"
+            "  'setting(42) raises: ' .. tostring(e))\n"
+            "ok, e = pcall(ui.set_setting, 'music_volume', 1)\n"
+            "check(not ok and tostring(e):find('use ui:set_setting(...)', 1, true), 'ui.set_setting(...) raises: '"
+            "  .. tostring(e))\n"
+            "local done, why = ui:set_setting('music_volume', 101)\n"
+            "check(done == nil and why == 'music_volume takes a whole number from 0 to 100',"
+            "  'a value out of range comes back as nil and the reason: ' .. tostring(why))\n"
+            "return finish()\n");
         phase(L,
             "local again = ui:layout()\n"
             "local function same(a, b)\n"
@@ -4006,10 +10796,11 @@ int main(int argc, char** argv) {
             "  'after unload, the released handle\\'s layout() is the one it held at its release, for the addon\\'s own'"
             "  .. ' unload handler to save')\n"
             "return finish()\n");
+        settle(L, "hideui");
         check(record_magic() == 0 && registry_pristine() && origin(log, 1) == 930 && origin(equip, 0) == 100 + kRowEquip,
             "unload through hideui.lua released the handle and shut the engine down: everything back, no resident");
         lua.close(L);
-        check(!engine_mapped(), "the engine hideui.lua loaded unmaps");
+        check(engine_unmaps(), "the engine hideui.lua loaded unmaps");
     }
 
     // -- several addons: copy A from build/a and copy B from build/b, one
@@ -4022,11 +10813,16 @@ int main(int argc, char** argv) {
     const char* const dll_e = argv[8];
     const char* const dll_f = argv[9];
     const char* const dll_g = argv[10];
+    const char* const dll_h = argv[11];
+    const char* const dll_i = argv[12];
     char daemon_b[MAX_PATH];
     char daemon_c[MAX_PATH];
     beside(dll_b, "hideui_daemon.dll", daemon_b, sizeof(daemon_b));
     beside(dll_c, "hideui_daemon.dll", daemon_c, sizeof(daemon_c));
     check(record_magic() == 0, "no resident is published before the several-addons phase");
+    // buff, open before any handle of this phase: a hide of it shows in the
+    // walk, and no handle sees its open
+    uint8_t* buff_open = static_cast<uint8_t*>(open_on_game_thread("menu    buff"));
 
     lua_State* LA = fresh_from(dll_a, globals);
     phase(LA,
@@ -4035,15 +10831,16 @@ int main(int argc, char** argv) {
         "local s = hu.status()\n"
         "local d = s.detail\n"
         "check(s.ok and s.role == 'resident' and copy_of(d.image.path) == 'a' and d.resident"
-        "  and copy_of(d.resident.path) == 'a' and d.resident.abi == 7 and d.resident.build == s.engine,"
+        "  and copy_of(d.resident.path) == 'a' and d.resident.abi == 9 and d.resident.build == s.engine,"
         "  'copy A installs and is resident: ' .. tostring(d.error))\n"
         "check(ha:hide('buff') == true and ha:block('menuwind') == true and ha:move('equip', 300, 200) == true,"
         "  'A hides buff, blocks menuwind and moves equip')\n"
         "return finish()\n");
     wait_frames(3);
-    check(registry_row(kRowBuff)[0x29] == 0x7F && registry_row(kRowMenuwind)[0x29] == 0x7F
+    check(hidden_in_place(kRowBuff, buff_open)
+            && memcmp(registry_row(kRowMenuwind), g_fake->pristine + kRowMenuwind * 0x2C, 0x2C) == 0
             && origin(equip, 0) == 300 && origin(equip, 1) == 200,
-        "A's hide, block and move reach the game");
+        "A's hide, block and move reach the game; the block of the closed menuwind leaves its row as it is");
     check(record_magic() == HU_ENGINE_MAGIC, "A published the resident record");
 
     lua_State* LB = fresh_from(dll_b, globals);
@@ -4056,7 +10853,7 @@ int main(int argc, char** argv) {
         "  and copy_of(d.resident.path) == 'a' and d.resident.build == s.engine,"
         "  'copy B forwards; its status names A as resident: ' .. tostring(d.resident and d.resident.path))\n"
         "check(s.handles == 2, 'one handle table in the client: B counts the handle of A and its own')\n"
-        "check(hu.version() == 'hideui 0.10.0', 'the version of B is its own: ' .. hu.version())\n"
+        "check(hu.version() == 'hideui 0.11.0', 'the version of B is its own: ' .. hu.version())\n"
         "check(hb:hide('buff') == true and hb:move('equip', 10, 20) == true, 'B hides buff and moves equip after A')\n"
         "return finish()\n");
     check(!mapped(daemon_b), "B loaded no daemon: it installs nothing of its own");
@@ -4079,7 +10876,7 @@ int main(int argc, char** argv) {
         "  'info() through B reads the live menu')\n"
         "local n = 0\n"
         "for _ in pairs(hb:list()) do n = n + 1 end\n"
-        "check(n == 370, 'list() through B: all ' .. n .. ' names, the compass among them')\n"
+        "check(n == 368, 'list() through B: all ' .. n .. ' names, the compass and the target arrows among them')\n"
         "local q = hb:options('query')\n"
         "local s = q and q.options[1] and q.options[1].segments or {}\n"
         "check(q and q.title.text == 'Will you lend a hand?' and #q.options == 3 and q.options[2].value == 4"
@@ -4093,18 +10890,21 @@ int main(int argc, char** argv) {
         "check(ok == false and kind == 'handles', 'A refuses to shut down while B holds a handle: ' .. tostring(why))\n"
         "return finish()\n");
     wait_frames(3);
-    check(registry_row(kRowBuff)[0x29] == 0x7F, "a hide held by B survives the release of A's handle");
-    check(registry_row(kRowMenuwind)[0x29] == 2, "the block held by A alone went with it");
+    check(hidden_in_place(kRowBuff, buff_open), "a hide held by B survives the release of A's handle");
+    check(memcmp(registry_row(kRowMenuwind), g_fake->pristine + kRowMenuwind * 0x2C, 0x2C) == 0,
+        "menuwind's registry row as the table has it");
     check(origin(equip, 0) == 10 && origin(equip, 1) == 20, "B's move survives A's release: B wrote it last");
     lua.close(LA);
     check(mapped(dll_a), "A's Lua state is closed; A stays mapped and pinned while B holds a handle");
     phase(LB,
+        "check(not hb:info('menuwind').blocked and not hb:info('menuwind').hidden,"
+        "  'the block held by A alone went with it')\n"
         "check(hb:hide('logwindo') == true, 'B keeps working through A after A unloaded')\n"
         "local s = hu.status()\n"
         "check(s.ok and s.handles == 1 and copy_of(s.detail.resident.path) == 'a', 'A still serves, with one handle open')\n"
         "return finish()\n");
     wait_frames(3);
-    check(registry_row(kRowLog)[0x29] == 0x7F, "B's hide of logwindo reached the game through A");
+    check(hidden_in_place(kRowLog, live_menu(kRowLog)), "B's hide of logwindo reached the game through A");
 
     lua_State* LC = fresh_from(dll_c, globals);
     phase(LC,
@@ -4129,6 +10929,9 @@ int main(int argc, char** argv) {
         "check(hb:release() == true, 'B releases its handle')\n"
         "local ok, why = hu.shutdown()\n"
         "check(ok == true, 'with every handle released, the shutdown of B reaches A and succeeds: ' .. tostring(why))\n"
+        "return finish()\n");
+    settle(LB);
+    phase(LB,
         "local s = hu.status()\n"
         "check(s.role == 'none' and s.state == 'idle' and not s.detail.resident, 'afterwards B finds no resident')\n"
         "return finish()\n");
@@ -4136,7 +10939,7 @@ int main(int argc, char** argv) {
     check(registry_pristine(), "and the registry is byte-identical to the expected table");
     check(mapped(dll_a), "A stays mapped while B, which forwarded to it, is loaded");
     lua.close(LB);
-    check(!mapped(dll_a) && !mapped(dll_b), "with both Lua states closed, neither copy stays mapped");
+    check(unmaps(dll_a) && unmaps(dll_b), "with both Lua states closed, neither copy stays mapped");
 
     LB = fresh_from(dll_b, globals);
     phase(LB,
@@ -4159,7 +10962,7 @@ int main(int argc, char** argv) {
         "  'A hides logwindo and moves ability through B')\n"
         "return finish()\n");
     wait_frames(3);
-    check(registry_row(kRowBuff)[0x29] == 0x7F && registry_row(kRowLog)[0x29] == 0x7F,
+    check(hidden_in_place(kRowBuff, buff_open) && hidden_in_place(kRowLog, live_menu(kRowLog)),
         "both hides reach the game through B");
 
     // -- the slots of engine abi 1 and 2, called as a copy built against them
@@ -4177,14 +10980,18 @@ int main(int argc, char** argv) {
         const bool group_name = read && old.slot >= 0 && api.hide(&old, "target_window", why, sizeof(why)) == 1;
         const bool delta = read && api.move_group(&old, "party_list", 0, -5, why, sizeof(why)) == 1;
         wait_frames(3);
-        check(read && api.size == sizeof(HuEngineApi) && api.abi_version == HU_ENGINE_ABI && group_name
-                && registry_row(row_named("targetwi"))[0x29] == 0x7F && delta && origin(party2, 1) == party_y - 5,
+        const bool hidden = read && field_true(raw_read(api.info3, &old, "targetwi"), "hidden");
+        check(read && api.size == sizeof(HuEngineApi) && api.abi_version == HU_ENGINE_ABI && group_name && hidden
+                && registry_row(row_named("targetwi"))[0x29] == 2 && delta && origin(party2, 1) == party_y - 5,
             "B's table, read out of the record: hide('target_window') through abi 2's slot hides its anchor"
-            " targetwi, and move_group through it still shifts by dx, dy");
+            " targetwi, which keeps its layer, and move_group through it still shifts by dx, dy");
         HuEngineEvent events[16];
         uint32_t count = 0;
         uint32_t lost = 0;
         if (read) {
+            // equip closed first, since an open of an open window posts nothing
+            api.close(&old, "equip", why, sizeof(why));
+            wait_frames(3);
             api.poll(&old, events, 16, &count, &lost, why, sizeof(why));
             open_on_game_thread("menu    equip");
             api.poll(&old, events, 16, &count, &lost, why, sizeof(why));
@@ -4260,8 +11067,8 @@ int main(int argc, char** argv) {
             api.handle_release(&old);
         }
         wait_frames(3);
-        check(origin(party2, 1) == party_y && registry_row(row_named("targetwi"))[0x29] != 0x7F,
-            "the older handle's release takes its hide and its group move back");
+        check(origin(party2, 1) == party_y && registry_row(row_named("targetwi"))[0x29] == 2,
+            "the older handle's release takes its group move back");
     }
     lua.close(LA);
     wait_frames(3);
@@ -4271,12 +11078,24 @@ int main(int argc, char** argv) {
         "local p = hb:info('ability')\n"
         "check(p.open and p.origin.x == p.default.x and p.origin.y == p.default.y and not p.memory,"
         "  'and the window A moved is back at its default')\n"
-        "check(not hb:info('logwindo').hidden and hb:info('buff').hidden, 'the hide of A is gone, the one of B stays')\n"
+        "check(not hb:info('logwindo').hidden and hb:info('buff').hidden and not hb:info('targetwi').hidden,"
+        "  'the hide of A is gone, the one of B stays, the older handle\\'s of targetwi gone with it')\n"
         "check(hb:release() == true and hu.shutdown() == true, 'B releases and shuts down as the resident')\n"
         "return finish()\n");
+    settle(LB);
     check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine again");
+    check(walk_of(buff_open) == 'd' && buff_open[0x77] == 1 && walk_of(live_menu(kRowLog)) == 'd',
+        "the shutdown gives every hidden window back: buff and logwindo drawn, buff's +0x77 1");
+    {
+        typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+        CloseFn close_by_name;
+        memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+        pause_game();
+        close_by_name(g_fake->mcb, NULL, "menu    buff    ");
+        resume_game();
+    }
     lua.close(LB);
-    check(!mapped(dll_a) && !mapped(dll_b), "and neither copy stays mapped");
+    check(unmaps(dll_a) && unmaps(dll_b), "and neither copy stays mapped");
 
     // -- C resident: its table is engine abi 2's, as an older resident's is;
     //    A forwards to it, and a call whose slot is past C's table says so
@@ -4293,12 +11112,12 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.11.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'c', 'new() through A to C: ' .. tostring(why))\n"
         "local s, why2 = hu.status()\n"
         "check(s == nil and tostring(why2):find('status needs hideui 0.5.1 or newer; the resident copy is ', 1, true) == 1,"
         "  'status() through A to C: ' .. tostring(why2))\n"
-        "check(hu.version() == 'hideui 0.10.0', 'A\\'s version is its own')\n"
+        "check(hu.version() == 'hideui 0.11.0', 'A\\'s version is its own')\n"
         "local ok, why3, kind = hu.shutdown()\n"
         "check(ok == false and kind == 'handles', 'A\\'s shutdown, an engine abi 1 slot, reaches C: ' .. tostring(why3))\n"
         "return finish()\n");
@@ -4307,9 +11126,10 @@ int main(int argc, char** argv) {
         "check(hc:hide('buff') == true and hc:release() == true and hu.shutdown() == true,"
         "  'C serves itself, releases and shuts down')\n"
         "return finish()\n");
+    settle(LC);
     check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
     lua.close(LC);
-    check(!mapped(dll_a) && !mapped(dll_c), "and neither copy stays mapped");
+    check(unmaps(dll_a) && unmaps(dll_c), "and neither copy stays mapped");
 
     // -- D resident: its table is engine abi 3's, as a 0.5.0 resident's is;
     //    a 0.5.1 copy makes no handle through it, and names the copy to update
@@ -4326,7 +11146,7 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.11.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'd', 'new() through A to D, a 0.5.0 resident: no handle at all: ' .. tostring(why))\n"
         "local ok, why2, kind = hu.shutdown()\n"
         "check(ok == false and kind == 'handles', 'A\\'s shutdown reaches D, which refuses while D holds a handle')\n"
@@ -4336,9 +11156,10 @@ int main(int argc, char** argv) {
         "check(hd:hide('buff') == true and hd:release() == true and hu.shutdown() == true,"
         "  'D serves itself, releases and shuts down')\n"
         "return finish()\n");
+    settle(LD);
     check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
     lua.close(LD);
-    check(!mapped(dll_a) && !mapped(dll_d), "and neither copy stays mapped");
+    check(unmaps(dll_a) && unmaps(dll_d), "and neither copy stays mapped");
 
     // -- E resident: its table is engine abi 4's, as a 0.5.1 to 0.6.3
     //    resident's is; a 0.7.0 copy makes no handle through it, and names the
@@ -4356,7 +11177,7 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.11.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'e', 'new() through A to E, a 0.6.3 resident: no handle, and the copy to update: '"
         "  .. tostring(why))\n"
         "local s = hu.status()\n"
@@ -4370,12 +11191,13 @@ int main(int argc, char** argv) {
         "check(he:hide('buff') == true and he:release() == true and hu.shutdown() == true,"
         "  'E serves itself, releases and shuts down')\n"
         "return finish()\n");
+    settle(LE);
     check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
     lua.close(LE);
-    check(!mapped(dll_a) && !mapped(dll_e), "and neither copy stays mapped");
+    check(unmaps(dll_a) && unmaps(dll_e), "and neither copy stays mapped");
 
     // -- F resident: its table is engine abi 5's, as a 0.7.0 to 0.8.0
-    //    resident's is; a 0.10.0 copy makes no handle through it, the macro
+    //    resident's is; this copy makes no handle through it, the macro
     //    slots past its table, and names the copy to update, while the calls
     //    whose slots F has still reach it; F's own handle blocks the keys
     lua_State* LF = fresh_from(dll_f, globals);
@@ -4393,7 +11215,7 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.11.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'f', 'new() through A to F, a 0.8.0 resident: no handle, and the copy to update: '"
         "  .. tostring(why))\n"
         "local s = hu.status()\n"
@@ -4407,12 +11229,13 @@ int main(int argc, char** argv) {
         "check(hf:unblock_macros() == true and hu.status().macros_blocked == false and hf:release() == true"
         "  and hu.shutdown() == true, 'F unblocks, releases and shuts down')\n"
         "return finish()\n");
+    settle(LF);
     check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
     lua.close(LF);
-    check(!mapped(dll_a) && !mapped(dll_f), "and neither copy stays mapped");
+    check(unmaps(dll_a) && unmaps(dll_f), "and neither copy stays mapped");
 
     // -- G resident: its table is engine abi 6's, as a 0.9.0 resident's is;
-    //    a 0.10.0 copy makes no handle through it, the category slots past
+    //    this copy makes no handle through it, the category slots past
     //    its table, and names the copy to update, while the calls whose
     //    slots G has still reach it; G's own handle blocks a list of ability
     lua_State* LG = fresh_from(dll_g, globals);
@@ -4430,7 +11253,7 @@ int main(int argc, char** argv) {
         "hu = load_engine()\n"
         "local h, why = hu.new('addon_a')\n"
         "local path = tostring(why):match('; the resident copy is (.+)$')\n"
-        "check(h == nil and tostring(why):find('new needs hideui 0.10.0 or newer; the resident copy is ', 1, true) == 1"
+        "check(h == nil and tostring(why):find('new needs hideui 0.11.0 or newer; the resident copy is ', 1, true) == 1"
         "  and copy_of(path) == 'g', 'new() through A to G, a 0.9.0 resident: no handle, and the copy to update: '"
         "  .. tostring(why))\n"
         "local s = hu.status()\n"
@@ -4444,9 +11267,389 @@ int main(int argc, char** argv) {
         "check(hg:unblock('ability', 'pet_commands') == true and hg:unblock_macros() == true and hg:release() == true"
         "  and hu.shutdown() == true, 'G unblocks, releases and shuts down')\n"
         "return finish()\n");
+    settle(LG);
     check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
     lua.close(LG);
-    check(!mapped(dll_a) && !mapped(dll_g), "and neither copy stays mapped");
+    check(unmaps(dll_a) && unmaps(dll_g), "and neither copy stays mapped");
+
+    // -- H resident: its table is engine abi 7's, as a 0.10.0 resident's is;
+    //    this copy makes no handle through it, the yes/no slots past its
+    //    table, and names the copy to update, while the calls whose slots H
+    //    has still reach it
+    lua_State* LH = fresh_from(dll_h, globals);
+    phase(LH,
+        "hu = load_engine()\n"
+        "hh = hu.new('addon_h')\n"
+        "local s = hu.status()\n"
+        "check(hh ~= nil and s.ok and s.role == 'resident' and copy_of(s.detail.resident.path) == 'h'"
+        "  and s.detail.resident.abi == 7, 'H installs and is resident, publishing engine abi 7\\'s table')\n"
+        "check(hh:block_macros() == true, 'H\\'s own handle, on its own full table, blocks the macro keys')\n"
+        "return finish()\n");
+    {
+        HuEngineApi api;
+        check(record_api(&api) && api.abi_version == 7 && api.size == offsetof(HuEngineApi, open8),
+            "H's record holds engine abi 7's table, ending at unblock7");
+    }
+    LA = fresh_from(dll_a, globals);
+    phase(LA,
+        "hu = load_engine()\n"
+        "local h, why = hu.new('addon_a')\n"
+        "local path = tostring(why):match('; the resident copy is (.+)$')\n"
+        "check(h == nil and tostring(why):find('new needs hideui 0.11.0 or newer; the resident copy is ', 1, true) == 1"
+        "  and copy_of(path) == 'h', 'new() through A to H, a 0.10.0 resident: no handle, and the copy to update: '"
+        "  .. tostring(why))\n"
+        "local s = hu.status()\n"
+        "check(s and s.ok and s.role == 'forwarder' and copy_of(s.detail.resident.path) == 'h' and s.handles == 1"
+        "  and s.macros_blocked == true, 'status() through A to H, a slot H has, still answers')\n"
+        "local ok, why2, kind = hu.shutdown()\n"
+        "check(ok == false and kind == 'handles', 'A\\'s shutdown reaches H, which refuses while H holds a handle')\n"
+        "return finish()\n");
+    lua.close(LA);
+    phase(LH,
+        "check(hh:unblock_macros() == true and hh:release() == true and hu.shutdown() == true,"
+        "  'H unblocks, releases and shuts down')\n"
+        "return finish()\n");
+    settle(LH);
+    check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
+    lua.close(LH);
+    check(unmaps(dll_a) && unmaps(dll_h), "and neither copy stays mapped");
+
+    // -- I resident: its table is engine abi 8's, as an earlier 0.11.0
+    //    build's is; this copy makes no handle through it, open9 and
+    //    open_set9 past its table, and names the copy to update, while the
+    //    calls whose slots I has still reach it; I's own open8 refuses
+    //    inventor, whose open alone can crash the client, as every open slot
+    //    does
+    lua_State* LI = fresh_from(dll_i, globals);
+    phase(LI,
+        "hu = load_engine()\n"
+        "hi = hu.new('addon_i')\n"
+        "local s = hu.status()\n"
+        "check(hi ~= nil and s.ok and s.role == 'resident' and copy_of(s.detail.resident.path) == 'i'"
+        "  and s.detail.resident.abi == 8, 'I installs and is resident, publishing engine abi 8\\'s table')\n"
+        "check(hi:block_macros() == true, 'I\\'s own handle, on its own full table, blocks the macro keys')\n"
+        "return finish()\n");
+    {
+        HuEngineApi api;
+        check(record_api(&api) && api.abi_version == 8 && api.size == offsetof(HuEngineApi, open9),
+            "I's record holds engine abi 8's table, ending at withdraw8");
+        HuEngineHandle raw = {-1, 0};
+        char why[512] = "";
+        if (record_api(&api)) {
+            api.handle_open("raw_i", &raw, why, sizeof(why));
+        }
+        const bool refused = raw.slot >= 0 && api.open8(&raw, "inventor", why, sizeof(why)) == 0
+            && strstr(why, "inventor cannot be opened alone") == why;
+        if (raw.slot >= 0) {
+            api.handle_release(&raw);
+        }
+        check(refused, "I's own open8 refuses inventor with its reason, as every open slot does");
+    }
+    LA = fresh_from(dll_a, globals);
+    phase(LA,
+        "hu = load_engine()\n"
+        "local h, why = hu.new('addon_a')\n"
+        "local path = tostring(why):match('; the resident copy is (.+)$')\n"
+        "check(h == nil and tostring(why):find('new needs hideui 0.11.0 or newer; the resident copy is ', 1, true) == 1"
+        "  and copy_of(path) == 'i', 'new() through A to I, an earlier 0.11.0 build: no handle, and the copy to update: '"
+        "  .. tostring(why))\n"
+        "local s = hu.status()\n"
+        "check(s and s.ok and s.role == 'forwarder' and copy_of(s.detail.resident.path) == 'i' and s.handles == 1"
+        "  and s.macros_blocked == true, 'status() through A to I, a slot I has, still answers')\n"
+        "local ok, why2, kind = hu.shutdown()\n"
+        "check(ok == false and kind == 'handles', 'A\\'s shutdown reaches I, which refuses while I holds a handle')\n"
+        "return finish()\n");
+    lua.close(LA);
+    phase(LI,
+        "check(hi:unblock_macros() == true and hi:release() == true and hu.shutdown() == true,"
+        "  'I unblocks, releases and shuts down')\n"
+        "return finish()\n");
+    settle(LI);
+    check(record_magic() == 0 && registry_pristine(), "the record is cleared and the registry pristine");
+    lua.close(LI);
+    check(unmaps(dll_a) && unmaps(dll_i), "and neither copy stays mapped");
+
+    // -- a zone change (0.11.0): partywin moved by its frame while one member
+    //    tall, then closed, opened again at its template's height (40 on the
+    //    stand-in) and swapped to its roster through the stand-in's hooked
+    //    entry, keeps the bottom edge the move gave it at each step
+    L = fresh(globals);
+    phase(L,
+        "hu = load_engine()\n"
+        "h = hu.new('zoner')\n"
+        "check(hu.status().ok, 'an engine for the zone change: ' .. tostring(hu.status().detail.error))\n"
+        "return finish()\n");
+    {
+        const int prow = row_named("partywin");
+        if (live_menu(prow)) {
+            phase(L,
+                "check(h:close('partywin') == true, 'close(partywin), for an instance at its template')\n"
+                "return finish()\n");
+            wait_frames(3);
+        }
+        uint8_t* party = static_cast<uint8_t*>(open_on_game_thread("menu    partywin"));
+        pause_game();
+        const bool fresh_party = party && get16(party, 0x3C) == 50 && get16(party, 0x40) == 90;
+        if (party) {
+            put16(party, 0x3C, 70);
+        }
+        resume_game();
+        phase(L,
+            "check(h:move('partywin', 600, 300) == true, 'move partywin by its frame, one member tall (20 of 40)')\n"
+            "return finish()\n");
+        wait_frames(3);
+        pause_game();
+        const bool moved = party && origin(party, 0) == 600 && origin(party, 1) == 280 && get16(party, 0x3A) == 600
+            && get16(party, 0x3C) == 300 && get16(party, 0x40) == 320;
+        resume_game();
+        phase(L,
+            "check(h:close('partywin') == true, 'the zone change closes partywin')\n"
+            "return finish()\n");
+        wait_frames(3);
+        const bool closed = live_menu(prow) == NULL;
+        uint8_t* reopened = static_cast<uint8_t*>(open_on_game_thread("menu    partywin"));
+        pause_game();
+        const bool on_bottom = reopened && origin(reopened, 0) == 600 && origin(reopened, 1) == 280
+            && get16(reopened, 0x3C) == 280 && get16(reopened, 0x40) == 320;
+        fl->swaps[0] = '\0';
+        resume_game();
+        check(fresh_party && moved && closed && on_bottom,
+            "partywin one member tall (70..90 on its template's 50..90) moved by its frame to 600,300: origin 280,"
+            " frame 300..320; closed and opened again at its template's 40: on the origin 280 the move pinned, its"
+            " bottom at 320 where the move put it, not converted again to 300..340");
+        InterlockedExchange(g_fake->party_swap, 1);
+        wait_frames(3);
+        pause_game();
+        const bool roster = reopened && strcmp(fl->swaps, "ptw1    |") == 0 && get16(reopened, 0x3A) == 600
+            && get16(reopened, 0x3C) == 7 && get16(reopened, 0x40) == 320 && origin(reopened, 1) == 280;
+        resume_game();
+        check(roster,
+            "its roster's swap to ptw1 (the stand-in's frame snapped up to 7): hung from the same bottom 320, the top"
+            " moving up, its left back at 600");
+        phase(L,
+            "local p = h:info('partywin')\n"
+            "local r = h:remembered().partywin.position\n"
+            "check(p.rect.x == 600 and p.rect.y == 7 and p.rect.bottom == 320 and r.x == 600 and r.y == 300,"
+            "  'info(partywin): the frame 7..320 at x 600; remembered(): the frame top-left as given, 600,300')\n"
+            "check(h:reset('partywin') == true, 'reset partywin')\n"
+            "return finish()\n");
+        wait_frames(3);
+        phase(L,
+            "check(h:release() == true and hu.shutdown() == true, 'zoner releases, and the engine shuts down')\n"
+            "return finish()\n");
+        settle(L);
+        check(registry_pristine(), "after the zone change's engine, the registry is pristine");
+    }
+    lua.close(L);
+    check(engine_unmaps(), "the engine of the zone change unmaps");
+
+    // -- the 2026-10-21 20:09 freeze (7ae7e9da) as near as the stand-in plays
+    //    it: the demo itself through hideui.lua, Windower stubbed, debug and
+    //    events on (each page event reads options()), the dialogue pair
+    //    hidden by one name before either box exists, map0 open and then
+    //    closed, the target window drawing its arrow closing as both boxes
+    //    open hidden on one message, the boxes' ticks asking the key test
+    //    for a held left button; prerender run between frames on this thread
+    //    and inside the game thread's frame. A step that does not come back
+    //    fails as hung.
+    {
+        char demo[MAX_PATH];
+        snprintf(demo, sizeof(demo), "%s", argv[6]);
+        char* tests = strstr(demo, "\\engine\\tests\\");
+        if (tests) {
+            snprintf(tests, sizeof(demo) - static_cast<size_t>(tests - demo), "\\examples\\hideuidemo\\hideuidemo.lua");
+        }
+        g_watch_done = CreateEventA(NULL, TRUE, FALSE, NULL);
+        HANDLE dog = CreateThread(NULL, 0, &watchdog, reinterpret_cast<LPVOID>(static_cast<uintptr_t>(60000)), 0, NULL);
+        FakeLog* fl = g_fake->log;
+        const int talk1 = row_named("rem4line");
+        const int talk2 = row_named("rem4li2");
+        uint8_t* tctl = controller_named("targetwi");
+        const uint32_t close_frames = *g_fake->close_frames;
+        *g_fake->close_frames = 1;
+        *g_fake->query_cancel_allowed = 1;
+        InterlockedExchange(g_fake->draw_walk, 1);
+        InterlockedExchange(g_fake->dialogue_ticks, 1);
+        g_step = "map0's open";
+        open_on_game_thread("menu    map0    ");
+        wait_frames(2);
+        const char* g[] = {"HIDEUI", argv[6], "DEMO", demo, NULL};
+        lua_State* LT = fresh(g);
+        g_step = "the demo's load and its commands";
+        phase(LT,
+            "chat, handlers = {}, {}\n"
+            "windower = {add_to_chat = function(color, text) chat[#chat + 1] = text end,"
+            "  register_event = function(name, fn) handlers[name] = handlers[name] or {} table.insert(handlers[name], fn) end,"
+            "  from_shift_jis = function(text) return text end, to_shift_jis = function(text) return text end,"
+            "  ffxi = {get_items = function() return nil end}}\n"
+            "function fire(name, ...) for _, fn in ipairs(handlers[name] or {}) do fn(...) end end\n"
+            "function command(line)\n"
+            "  local args = {}\n"
+            "  for word in line:gmatch('%S+') do args[#args + 1] = word end\n"
+            "  fire('addon command', unpack(args))\n"
+            "end\n"
+            "said_up_to = 0\n"
+            "function said()\n"
+            "  local out = {}\n"
+            "  for i = said_up_to + 1, #chat do out[#out + 1] = chat[i] end\n"
+            "  said_up_to = #chat\n"
+            "  return table.concat(out, ' | ')\n"
+            "end\n"
+            "heard = ''\n"
+            "_addon = {}\n"
+            "package.preload['libs.hideui'] = function() return dofile(HIDEUI) end\n"
+            "package.preload['config'] = function() return {load = function(t) return t end,"
+            "  save = function() return true end} end\n"
+            "dofile(DEMO)\n"
+            "library = require('libs.hideui')\n"
+            "check(_addon.name == 'hideuidemo' and handlers['addon command'] and handlers.prerender and handlers.unload"
+            "  and library.status().handles == 1, 'the demo loads through hideui.lua with its handle, Windower stubbed')\n"
+            "said()\n"
+            "command('debug on') command('events on') command('hide rem4line') command('info rem4li2')\n"
+            "local text = said()\n"
+            "check(text:find('events on: every window, and pending', 1, true) and text:find('hide rem4line', 1, true)"
+            "  and text:find('rem4li2: hidden hide-only', 1, true) and text:find('hidden by hideuidemo', 1, true)"
+            "  and text:find('not open', 1, true), 'debug on, events on, hide rem4line, info rem4li2: ' .. text)\n"
+            "return finish()\n");
+        for (int i = 0; i < 4; ++i) {
+            wait_frames(1);
+            phase(LT, "fire('prerender') heard = heard .. ' | ' .. said() return finish()\n");
+        }
+        g_step = "targetwi's open, its arrow drawn";
+        if (live_menu(row_named("targetwi"))) {
+            // closed first: an open of a window already open posts nothing
+            typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+            CloseFn close_first;
+            memcpy(&close_first, &g_fake->close, sizeof(close_first));
+            pause_game();
+            close_first(g_fake->mcb, NULL, "menu    targetwi");
+            resume_game();
+            wait_frames(2);
+        }
+        tctl[0x65] = 0;
+        tctl[0xB8] = 0;
+        put16(tctl, 0xBC, 640);
+        put16(tctl, 0xBE, 300);
+        open_on_game_thread("menu    targetwi");
+        wait_frames(2);
+        {
+            typedef int (__fastcall* CloseFn)(void* mcb, void* edx, const char* key);
+            CloseFn close_by_name;
+            memcpy(&close_by_name, &g_fake->close, sizeof(close_by_name));
+            g_step = "map0's close";
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, "menu    map0    ");
+            resume_game();
+            for (int i = 0; i < 4; ++i) {
+                wait_frames(1);
+                phase(LT, "fire('prerender') heard = heard .. ' | ' .. said() return finish()\n");
+            }
+            phase(LT,
+                "check(heard:find('closed map0', 1, true) and heard:find('opened targetwi', 1, true)"
+                "  and heard:find('opened targetarrow', 1, true), 'map0 closed, targetwi and its arrow opened: ' .. heard)\n"
+                "heard = ''\n"
+                "return finish()\n");
+            // the conversation: the target window closes and both boxes open
+            // on one message, waiting for a key, as the player clicks
+            g_step = "the conversation's start";
+            const int advances = fl->advances;
+            const int clicks = fl->dialogue_clicks;
+            pause_game();
+            close_by_name(g_fake->mcb, NULL, "menu    targetwi");
+            resume_game();
+            asked_on_game_thread(9, (1 << 8) | (1 << 16));
+            asked_on_game_thread(10, (1 << 8) | (1 << 16));
+            uint8_t* box1 = live_menu(talk1);
+            uint8_t* box2 = live_menu(talk2);
+            put32(g_fake->mcb, 0x54, static_cast<uint32_t>(reinterpret_cast<uintptr_t>(box1)));
+            *g_fake->left_click = 1;
+            bool back = true;
+            for (int i = 0; i < 20; ++i) {
+                g_step = "prerender between frames, the boxes up";
+                wait_frames(1);
+                phase(LT, "fire('prerender') heard = heard .. ' | ' .. said() return finish()\n");
+                g_step = "prerender inside the game thread's frame, the boxes up";
+                back = phase_on_game_thread(LT, "fire('prerender') heard = heard .. ' | ' .. said() return finish()\n")
+                    && back;
+            }
+            *g_fake->left_click = 0;
+            const LONG frames = *g_fake->frames;
+            wait_frames(3);
+            check(back && *g_fake->frames - frames >= 3,
+                "prerender came back every time, on either thread, and the game kept running frames");
+            g_step = "the boxes' walk";
+            check(box1 && box2 && walk_of(box1) == 'h' && walk_of(box2) == 'h' && fl->advances == advances
+                    && fl->dialogue_clicks == clicks,
+                "both boxes open hidden: their draws run and paint nothing; the held left button moves no page on");
+            g_step = "the events' check";
+            phase(LT,
+                "check(heard:find('closed targetwi', 1, true) and heard:find('opened rem4line', 1, true)"
+                "  and heard:find('opened rem4li2', 1, true)"
+                "  and heard:find('page rem4line: \"Moogle : Welcome home, / kupo!\"', 1, true)"
+                "  and heard:find('page rem4li2: \"Moogle : Welcome home, / kupo!\"', 1, true)"
+                "  and not heard:find('failed', 1, true) and not heard:find('error', 1, true),"
+                "  'the demo printed the close, both opens and each box\\'s page, read through options(): ' .. heard)\n"
+                "heard = ''\n"
+                "command('answer rem4line')\n"
+                "return finish()\n");
+            for (int i = 0; i < 4; ++i) {
+                g_step = "prerender inside the game thread's frame, the page answered";
+                back = phase_on_game_thread(LT, "fire('prerender') heard = heard .. ' | ' .. said() return finish()\n")
+                    && back;
+            }
+            phase(LT,
+                "check(heard:find('page rem4line: \"Rest well.\"', 1, true)"
+                "  and heard:find('page rem4li2: \"Rest well.\"', 1, true),"
+                "  'answer rem4line moved both boxes on to the next page: ' .. heard)\n"
+                "heard = ''\n"
+                "command('answer rem4li2')\n"
+                "return finish()\n");
+            for (int i = 0; i < 4; ++i) {
+                g_step = "prerender inside the game thread's frame, the last page answered";
+                back = phase_on_game_thread(LT, "fire('prerender') heard = heard .. ' | ' .. said() return finish()\n")
+                    && back;
+            }
+            check(back && !live_menu(talk1) && !live_menu(talk2) && fl->advances == advances + 4,
+                "answer rem4li2 on the last page ended the message in both boxes, and both closed");
+            phase(LT,
+                "check(heard:find('closed rem4line', 1, true) and heard:find('closed rem4li2', 1, true),"
+                "  'the demo printed both closes: ' .. heard)\n"
+                "return finish()\n");
+        }
+        put32(g_fake->mcb, 0x54, 0);
+        put16(tctl, 0xBC, 0);
+        put16(tctl, 0xBE, 0);
+        InterlockedExchange(g_fake->dialogue_ticks, 0);
+        InterlockedExchange(g_fake->draw_walk, 0);
+        *g_fake->close_frames = close_frames;
+        g_step = "the demo's unload";
+        phase(LT,
+            "fire('unload')\n"
+            "return finish()\n");
+        settle(LT, "library");
+        check(record_magic() == 0 && registry_pristine(),
+            "the demo's unload released its handle and shut the engine down: no resident, the registry pristine");
+        lua.close(LT);
+        check(engine_unmaps(), "the engine the demo loaded unmaps");
+        SetEvent(g_watch_done);
+        WaitForSingleObject(dog, 5000);
+        CloseHandle(dog);
+        CloseHandle(g_watch_done);
+    }
+
+    // -- the heap check, in an engine built with -DHU_HEAPCHECK alone
+    {
+        HMODULE probe = LoadLibraryA(g_dll);
+        const bool built = probe && GetProcAddress(probe, "hideui_heapcheck");
+        if (probe) {
+            FreeLibrary(probe);
+        }
+        if (built) {
+            heap_checks(globals);
+        } else {
+            std::printf("SKIP  the heap check: this engine is not built with -DHU_HEAPCHECK\n");
+        }
+    }
 
     InterlockedExchange(&g_stop, 1);
     WaitForSingleObject(game, 5000);

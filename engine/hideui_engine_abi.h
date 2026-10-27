@@ -16,11 +16,11 @@
 #include "../daemon/hideui_abi.h"
 
 // Bumped only when fields are appended to HuEngineApi: the table's version.
-#define HU_ENGINE_ABI 7u
+#define HU_ENGINE_ABI 9u
 
 // Bumped whenever the engine binary changes, ABI or not: two addons can ship
 // different builds at one ABI, and status names the one serving.
-#define HU_ENGINE_BUILD "0.10.0"
+#define HU_ENGINE_BUILD "0.11.0"
 
 // Written into the record last, behind a barrier. Any other value, zero
 // included, means no resident: a copy that died mid-publish or a resident
@@ -132,19 +132,36 @@ typedef int32_t (__stdcall* HuEngineReset5)(const HuEngineHandle*, const char* n
 
 // Engine abi 7's block and unblock: `category` NULL or empty for the whole
 // window, as block5 and unblock3 take it; else one list of the ability
-// window, by name (job_abilities, pet_commands, weapon_skills, job_traits)
-// or by number 1..31. A category on any other name is refused.
+// window, by name (job_abilities, pet_commands and the others the engine
+// names) or by number 1..31. A category on any other name is refused.
+// Engine abi 9's open and open_set take the same shape: a window or a set's
+// name, and a list of ability or magic, NULL or empty for none.
 typedef int32_t (__stdcall* HuEngineCategoryVerb)(const HuEngineHandle*, const char* name, const char* category,
                                                   char* why, uint32_t why_size);
 
+// Engine abi 8's offer and withdraw: the item by its index in the
+// inventory, a number in `item`, or the gil, `item_text` "gil" (NULL for an
+// item, the string given else); `count` the number of the item, or the gil.
+typedef int32_t (__stdcall* HuEngineOffer8)(const HuEngineHandle*, const char* name, double item,
+                                            const char* item_text, double count, char* why, uint32_t why_size);
+typedef int32_t (__stdcall* HuEngineWithdraw8)(const HuEngineHandle*, const char* name, double item,
+                                               char* why, uint32_t why_size);
+
 // The Lua type of answer()'s value: a number or boolean (1/0) in `number`,
-// a string in `text`.
+// a string in `text`, and from engine abi 8 on a table in `text`, encoded:
+// one `key=value;` per entry, the key a key of the table, or one and a key
+// of the table under it joined by '/', each a whole number as '#' and its
+// decimal digits or a name of letters, digits and '_', any other key '?';
+// the value 's' and the string's bytes in lowercase hex, 'n' and the number
+// as %.17g, 'b0' or 'b1', 't' for a table deeper than that, 'o' for any
+// other value. A table too large to encode is '!' alone.
 enum {
     HU_ANSWER_NONE = 0,
     HU_ANSWER_NUMBER = 1,
     HU_ANSWER_STRING = 2,
     HU_ANSWER_BOOLEAN = 3,
-    HU_ANSWER_OTHER = 4
+    HU_ANSWER_OTHER = 4,
+    HU_ANSWER_TABLE = 5
 };
 
 // Append-only, never reordered. Every call takes the resident's own lock;
@@ -276,6 +293,105 @@ typedef struct HuEngineApi {
        ability lists blocked_categories. */
     HuEngineCategoryVerb block7;
     HuEngineCategoryVerb unblock7;
+
+    /* engine abi 8, the 0.11.0 API: the yes/no windows (comyn, merityn,
+       the resyn family, shopbuy and shopsell), the KO window (dead), the
+       number boxes (moneyctr and itemctrl), sortyn, evitem01, confyn,
+       bankmenu, maplist, gmtell, mp_dead, ok, the Mog House exit (mogdoor)
+       and the NPC dialogue boxes (rem4line and rem4li2) are prompts. open8
+       refuses them as the earlier prompts, and close8 those cancel8 ends
+       (confyn it closes as any window); block8 leaves an open one to its
+       reply, and takes block7's category, or none for the whole window;
+       answer8, cancel8 and options8 answer, cancel and read them, answer8
+       on dead, ok and the dialogue boxes taking no value and cancel8
+       refusing dead, confyn, mp_dead and ok, and on a number box, sortyn,
+       evitem01, bankmenu, maplist, ok and mogdoor answering a question its
+       block kept from opening as well. poll8 adds a pending event for such
+       a question, `what` the window's name, as it starts and as it ends but
+       by this handle's reply, and a page event as a dialogue box shows a new
+       page; pending8 lists such a question under the window's name. The
+       text-entry windows stringdl, comment, msgline, scname and link11 are
+       prompts too: answer8 takes the text the player would type, comment's
+       lines and link11's name and colors as a table, and on msgline a
+       message its block kept from opening as well; cancel8 refuses comment.
+       The earlier slots treat them as any other window. Every block and
+       close slot, of every abi, refuses gmtell, comyn, the resyn family,
+       dead, mp_dead, the dialogue boxes and stringdl as it refuses query,
+       and every close slot ok. Every slot takes targetarrow, the arrows
+       the target window draws over the target, as a name as it takes the
+       compass, and a hide of targetwi leaves them drawn. The trade windows
+       trade and handover are prompts too: offer8 puts an item, or the gil,
+       into the offer, withdraw8 takes an item back out, answer8 with true
+       is the OK and cancel8 the cancel. */
+    HuEngineNameVerb open8;
+    HuEngineNameVerb close8;
+    HuEngineCategoryVerb block8;
+    HuEngineAnswer4 answer8;
+    HuEngineCancel4 cancel8;
+    HuEngineNamedRead options8;
+    HuEngineRead poll8;
+    HuEngineRead pending8;
+    HuEngineOffer8 offer8;
+    HuEngineWithdraw8 withdraw8;
+
+    /* engine abi 9, also the 0.11.0 API: open9 opens exactly the window
+       named, and refuses, with what to use instead, a window that cannot
+       work alone: a set's main window, one that opens empty or with what
+       the game left in it, and ability and magic without a list. Its last
+       argument is NULL, a list of ability or magic, or the argument of a
+       window core.h's kRoutes names: a word (a name, or a whole number in
+       digits) or a table's fields as "key=value;key=value". Each of those
+       windows opens through the game's own route to it, with its default
+       when no argument is given or, without one, refused; a window that
+       route opens along with the named one is held off. Every open slot
+       passes the open routine the last argument the game's own openers
+       pass: 1 for gaugewin, targetwi, playermo and mp_pmode, 0 for every
+       other window. open_set9 opens a set of windows through the game's own
+       opener of them, as the player's menu row, command or item use runs
+       it: equipment (equip, inventor, persona, money and iteminfo); ability
+       or magic with its list, sort window and detail pane; map (mapframe
+       and map0); set_spells (the blue magic set: persona, bluehelp,
+       bluinven, bluepoin and bluequip); attachments (the automaton's:
+       bluehelp, bluinven, statpup and automato); linkshell (link5 and
+       link6); instincts (Monstrosity's: mp_stat, level, mp_cstm and
+       mp_mncst); synthesis with a crystal's inventory index (the main
+       menu's Items row, then inventor, iteminfo and tskill1); tabula with a
+       Maze Tabula's inventory index (prvdungp, bluehelp and bluinven);
+       macros (the macro editor: mcrbedit, mcr1edit and mcr2edit); friend
+       (friend and titlehan); mail (msglist and titlehan); mount (mount,
+       abisortw and subwindo); compare with an item (itemxinf and itemyinf);
+       status (persona, level and statcom2, or mp_stat in Monstrosity);
+       region with a kind (cnqframe and that kind's points window);
+       text_colors with a category (textcol2 and textcol1). Every open slot,
+       of every abi, refuses the windows whose open alone can crash the
+       client, opens only for the server or an NPC or sends a request made
+       of what only the game's own route sets (core.h's kOpenRefused from
+       abi 1), any window whose controller slot holds none, and a window
+       that acts on another's selection while none of the windows it opens
+       from is open (kChildren); the plain open of a kRoutes window with a
+       default runs its route in every slot, and every slot refuses one with
+       none. Every close slot refuses gift while trade is open, and closes
+       mcr1edit and mcr2edit as a palette's Escape does, persona and mp_stat
+       while statcom2 is up as the Status screen's Escape does, and textcol1,
+       mp_mncst and cnqframe as their Escapes do; every close and block slot
+       closes a parent's kChildren children no other parent keeps, before it
+       where the parent's own close leaves them (core.h's kParentCloses names
+       the rest); every block slot refuses gift. The close slots of abi 4 and
+       8 refuse a prompt their abi counts that cancel ends, but for one that
+       can never be closed, only while it asks: the refusal comes as an
+       error event from the game's thread, and a prompt asking nothing,
+       link5 showing the linkshell list among them, closes as any window.
+       settings9 lists every setting of the game's Config menu (core.h's
+       kSettings) in the menu's order, each {name, page, kind, value,
+       default, min, max, choices, label}; setting9 answers one's value;
+       set_setting9 sets one as its page does, on the game's thread, its
+       value as answer's (a number, a boolean, a string, or a color's
+       table), a value of another type than its kind takes being misuse. */
+    HuEngineCategoryVerb open9;
+    HuEngineCategoryVerb open_set9;
+    HuEngineRead settings9;
+    HuEngineNamedRead setting9;
+    HuEngineAnswer set_setting9;
 } HuEngineApi;
 
 // What the resident publishes into the pid-scoped mapping. `module` is its
@@ -308,7 +424,7 @@ HU_STATIC_ASSERT(offsetof(HuEngineEvent4, pending) == 268, "HuEngineEvent4 layou
 HU_STATIC_ASSERT(sizeof(HuEngineReply) == 16, "HuEngineReply size is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineReply, used) == 12, "HuEngineReply layout is ABI");
 
-HU_STATIC_ASSERT(sizeof(HuEngineApi) == 348, "HuEngineApi size is ABI");
+HU_STATIC_ASSERT(sizeof(HuEngineApi) == 408, "HuEngineApi size is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, handle_new) == 8, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, hide) == 16, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, move) == 32, "HuEngineApi layout is ABI");
@@ -334,12 +450,23 @@ HU_STATIC_ASSERT(offsetof(HuEngineApi, unblock_macros) == 332, "HuEngineApi layo
 HU_STATIC_ASSERT(offsetof(HuEngineApi, macros) == 336, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, block7) == 340, "HuEngineApi layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineApi, unblock7) == 344, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, open8) == 348, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, block8) == 356, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, options8) == 368, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, poll8) == 372, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, pending8) == 376, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, offer8) == 380, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, withdraw8) == 384, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, open9) == 388, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, open_set9) == 392, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, settings9) == 396, "HuEngineApi layout is ABI");
+HU_STATIC_ASSERT(offsetof(HuEngineApi, set_setting9) == 404, "HuEngineApi layout is ABI");
 
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, module) == 12, "HuEngineRecord layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, resident_path) == 16, "HuEngineRecord layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, resident_build) == 276, "HuEngineRecord layout is ABI");
 HU_STATIC_ASSERT(offsetof(HuEngineRecord, api) == 340, "the api comes last so appending to it moves nothing");
-HU_STATIC_ASSERT(sizeof(HuEngineRecord) == 688, "HuEngineRecord size is ABI");
+HU_STATIC_ASSERT(sizeof(HuEngineRecord) == 748, "HuEngineRecord size is ABI");
 HU_STATIC_ASSERT(sizeof(HU_ENGINE_BUILD) <= HU_BUILD_MAX, "the build string must fit the record");
 HU_STATIC_ASSERT(sizeof(HuEngineRecord) <= HU_ENGINE_MAPPING_BYTES, "the record must fit the fixed section");
 HU_STATIC_ASSERT(sizeof(HU_ENGINE_MAPPING_NAME_FORMAT) + 8 <= HU_NAME_MAX, "the mapping name must fit for every pid");
