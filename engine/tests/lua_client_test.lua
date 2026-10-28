@@ -97,7 +97,20 @@ end
 local windows = {'logwindo', 'logwin2', 'equip', 'menuwind', 'buff', 'ability', 'query', 'partywin', 'targetwi',
                  'subwindo', 'passinpu', 'prtyjoin', 'link5', 'arealist', 'delivery', 'post1', 'post2',
                  'playermo', 'persona', 'compass', 'targetarrow', 'rem4line', 'rem4li2', 'mogdoor', 'trade',
-                 'handover'}
+                 'handover', 'jobcselu', 'mcr1edit', 'mcr2edit'}
+local window_set = {}
+for _, name in ipairs(windows) do window_set[name] = true end
+
+-- The second names the engine takes for a window, and the first it reports.
+local aliases = {jobcsel = 'jobcselu', mcr1edlo = 'mcr1edit', mcr2edlo = 'mcr2edit'}
+
+-- The groups as the engine lists them: each anchor, and the windows its
+-- move carries, the anchors of the groups it carries among them.
+local group_table = {
+    chat_log = {anchor = 'logwindo', members = {'partywin', 'targetwi'}},
+    party_list = {anchor = 'partywin', members = {'targetwi', 'subwindo'}},
+    target_window = {anchor = 'targetwi', members = {'subwindo'}},
+}
 
 -- The settings as the engine lists them, one of each kind; color_say's
 -- label in Shift-JIS.
@@ -146,6 +159,19 @@ local function make_native()
         return true
     end
     function Handle:info(name)
+        local first = aliases[name:lower()]
+        if not first and not window_set[name:lower()] then
+            return nil, 'no such window: ' .. name
+        end
+        name = first or name
+        if name == 'compass' or name == 'targetarrow' then
+            local open = native_state.arrows_open or name == 'compass'
+            local box = name == 'compass' and open and {x = 1, y = 2, w = 3, h = 4, right = 4, bottom = 6} or nil
+            return {name = name, open = open, hidden = false, blocked = false, blockable = true, hidden_by = {},
+                    blocked_by = {}, mine = {hidden = false, blocked = false}, docked = false, covered = false,
+                    focused = false, resize = {holds = 'none'}, rect = box, default = box,
+                    origin = box and {x = 1, y = 2} or nil, detail = {policy = 0}}
+        end
         return {name = name, open = true, hidden = true, blocked = false, blockable = true, layer = 2,
                 hidden_by = {'hideuidemo', 'other'}, blocked_by = {}, mine = {hidden = true, blocked = false},
                 docked = false, covered = false, focused = true,
@@ -226,8 +252,8 @@ local function make_native()
     end
     function Handle:groups()
         local g = {}
-        for _, n in ipairs({'chat_log', 'party_list', 'target_window'}) do
-            g[n] = {anchor = 'x', anchor_open = true, origin = {x = 16, y = 930}, members = {'a', 'b'}}
+        for n, spec in pairs(group_table) do
+            g[n] = {anchor = spec.anchor, anchor_open = true, origin = {x = 16, y = 930}, members = copy(spec.members)}
         end
         g.party_list.anchor_open, g.party_list.origin = false, nil
         g.party_list.waiting = {x = 1700, y = 800, owner = 'hideuidemo', mine = true}
@@ -406,9 +432,10 @@ local ok2, err2 = pcall(ui.on, ui, 'covered', 'Chat_Log', function() end)
 local ok3 = pcall(ui.on, ui, 'opened', 'EQUIP', function() end)
 ui:off('opened', 'equip')
 check(not ok and tostring(err):find('no such window: nosuch', 1, true) and not ok2
-        and tostring(err2):find('no such window: Chat_Log', 1, true) and ok3 and native_state.lists == listed_before + 1,
+        and tostring(err2):find('no such window: Chat_Log', 1, true) and ok3 and listed_before >= 1
+        and native_state.lists == listed_before,
     'on: an unknown window name raises, a group\'s too, a window\'s in any case does not; the names are read'
-        .. ' from the engine once: ' .. tostring(err))
+        .. ' from the engine once, by the first call that needed them, and not again: ' .. tostring(err))
 ok, err = pcall(ui.on, ui, 'pending', 'prtyjoin', function() end)
 ok2, err2 = pcall(ui.off, ui, 'resync', 'equip')
 check(not ok and tostring(err):find('pending events name no window', 1, true) and not ok2
@@ -516,6 +543,72 @@ fire('prerender')
 check(#seen == 0, 'off(event) removes every callback for the event')
 ok = pcall(ui.off, ui, 'shown')
 check(not ok, 'off: an unknown event raises')
+
+-- a window's second name: on and off take it, in any case, and match the
+-- events, which carry the first name the engine's info() gives
+do
+    local got = {}
+    local ok_second = pcall(ui.on, ui, 'opened', 'JobCSel', function(e) got[#got + 1] = 'second:' .. e.name end)
+    ui:on('opened', 'jobcselu', function(e) got[#got + 1] = 'first:' .. e.name end)
+    first_native.queue = {{event = 'opened', name = 'jobcselu'}, {event = 'opened', name = 'buff'}}
+    fire('prerender')
+    local both = table.concat(got, ' ')
+    ui:off('opened', 'jobcsel')
+    got = {}
+    first_native.queue = {{event = 'opened', name = 'jobcselu'}}
+    fire('prerender')
+    local ok_unknown, err_unknown = pcall(ui.on, ui, 'opened', 'jobcselx', function() end)
+    check(ok_second and both == 'second:jobcselu first:jobcselu' and #got == 0 and not ok_unknown
+            and tostring(err_unknown):find('no such window: jobcselx', 1, true),
+        'on(event, second name, fn) fires for the window\'s events, which carry its first name; off by the second'
+            .. ' name removes the callbacks of either; a name the engine has no window of still raises: ' .. both)
+end
+
+-- a callback that fails on an event naming no window posts its error with
+-- name ''; a callback off() removes while an event is delivered does not
+-- run for it; a release in a callback ends that frame's events for the handle
+do
+    local named = {}
+    local function error_name(e) named[#named + 1] = e.verb .. ':' .. tostring(e.name) end
+    local function fails() error('no window') end
+    ui:on('error', error_name)
+    ui:on('pending', fails)
+    ui:on('resync', fails)
+    first_native.queue = {{event = 'pending', what = 'invite', pending = true}, {event = 'resync', dropped = 1}}
+    fire('prerender')
+    ui:off('error', error_name)
+    ui:off('pending', fails)
+    ui:off('resync', fails)
+    check(table.concat(named, ' ') == 'callback: callback:',
+        'a failing pending or resync callback: its error event\'s name is \'\', as for any call that names none: '
+            .. table.concat(named, ' '))
+
+    local order = {}
+    local later
+    local function removes(e) order[#order + 1] = 'removes'; ui:off('uncovered', later) end
+    later = function(e) order[#order + 1] = 'later' end
+    ui:on('uncovered', removes)
+    ui:on('uncovered', later)
+    first_native.queue = {{event = 'uncovered', name = 'buff'}}
+    fire('prerender')
+    ui:off('uncovered')
+    check(table.concat(order, ' ') == 'removes',
+        'a callback removed by off() during the delivery of an event does not run for it: ' .. table.concat(order, ' '))
+
+    local short = hideui.new('short')
+    local short_native = native_state.handles[#native_state.handles]
+    local after = {}
+    short:on('opened', function(e)
+        after[#after + 1] = e.name
+        if e.name == 'buff' then short:release() end
+    end)
+    short:on('opened', function(e) after[#after + 1] = 'also:' .. e.name end)
+    short_native.queue = {{event = 'opened', name = 'buff'}, {event = 'opened', name = 'equip'}}
+    fire('prerender')
+    check(short_native.released and table.concat(after, ' ') == 'buff',
+        'a release in a callback: no other callback runs for that handle, nor the frame\'s later events: '
+            .. table.concat(after, ' '))
+end
 
 -- debug on: the library may print
 hideui.debug(true)
@@ -1132,6 +1225,33 @@ check(ui:reset('equip') == true and ui:layout().positions.equip == nil and last_
 check(ui:move_group('target_window', 1500, 600) == true and ui:reset_group('target_window') == true
         and ui:layout().groups.target_window == nil and last_call('reset_group').args[1] == 'target_window',
     'reset_group(group) reaches the engine and forgets the group\'s move')
+do
+    ui:move_group('target_window', 1500, 600)
+    ui:move_group('party_list', 1700, 800)
+    local g = ui:layout().groups
+    local party_carries = g.party_list and g.party_list.x == 1700 and g.target_window == nil
+    ui:move_group('target_window', 1500, 600)
+    ui:move_group('chat_log', 16, 830)
+    g = ui:layout().groups
+    check(party_carries and g.chat_log and g.chat_log.y == 830 and g.party_list == nil and g.target_window == nil,
+        'a group move takes over the entries of every group whose anchor groups() lists among its members: party_list'
+            .. ' target_window\'s, chat_log both, so apply() puts no carried group back where it was')
+    ui:reset_group('chat_log')
+end
+do
+    check(ui:move('mcr1edlo', 1, 2) == true and ui:move('MCR1EDIT', 3, 4) == true and ui:resize('jobcsel', 2) == true,
+        'a move by each of mcr1edit\'s names, a size by jobcsel\'s')
+    local lay = ui:layout()
+    local first_keys = lay.positions.mcr1edit and lay.positions.mcr1edit.x == 3 and lay.positions.mcr1edlo == nil
+        and lay.sizes.jobcselu and lay.sizes.jobcselu.rows == 2 and lay.sizes.jobcsel == nil
+    ui:apply({positions = {mcr1edlo = {x = 5, y = 6}}})
+    lay = ui:layout()
+    local applied_first = lay.positions.mcr1edit.x == 5 and lay.positions.mcr1edlo == nil
+    check(first_keys and applied_first and ui:reset('mcr1edlo') == true and ui:reset('JobCSel') == true
+            and ui:layout().positions.mcr1edit == nil and ui:layout().sizes.jobcselu == nil,
+        'layout(): a window\'s entries under its first name, by either name, the last one kept; apply() and reset()'
+            .. ' by the second name reach the same entry')
+end
 native_state.results.resize = {nil, 'no template for 3 rows'}
 ui:apply({sizes = {equip = {rows = 3}}, groups = {party_list = {x = 1700, y = 800}}})
 native_state.results.resize = nil
@@ -1386,8 +1506,8 @@ check(chat_has('slot 3: Shell One') and chat_has('arealist mode 0 level 0: 3 row
         and chat_has('prtyjoin: alliance invite from Zaldon') and chat_has('options failed: equip has no options'),
     'hideuidemo options prints link5\'s slots, arealist\'s rows with their label or count, id and kind, passinpu\'s'
         .. ' limit, prtyjoin\'s invite, and why a window has none')
-check(chat_has('chat_log: x (open at 16,930), 2 windows move with it')
-        and chat_has('party_list: x (closed), 2 windows')
+check(chat_has('chat_log: logwindo (open at 16,930), 2 windows move with it')
+        and chat_has('party_list: partywin (closed), 2 windows')
         and chat_has('a move to 1700,800 waits for it to open, owner hideuidemo (mine)'),
     'hideuidemo groups prints each anchor\'s origin while it is open, and a move waiting for a closed one')
 check(chat_has('party invite from Zaldon') and chat_has('post-box session open: delivery')
@@ -2022,6 +2142,71 @@ do
     end
     check(hidden and shown and named, 'hideuidemo hide and unhide targetarrow reach the engine; help names it with'
         .. ' the compass under hide|unhide')
+end
+
+-- hideuidemo's info of the compass and the target arrows, which have no
+-- elements and, for the arrows, no rect; closeon of an unknown name; answer
+-- with a color that is no number, or a bare comment, is a usage error
+do
+    chat = {}
+    native_state.arrows_open = true
+    local compass_ok, compass_err = pcall(command, 'info', 'compass')
+    local arrows_ok, arrows_err = pcall(command, 'info', 'targetarrow')
+    native_state.arrows_open = nil
+    check(compass_ok and arrows_ok and chat_has('compass: open') and chat_has('  rect 1,2 3x4')
+            and chat_has('targetarrow: open') and not chat_has('elements'),
+        'hideuidemo info compass and info targetarrow print what they have, open, no elements and no rect for the'
+            .. ' arrows: ' .. tostring(compass_err or arrows_err))
+    chat = {}
+    local closeon_ok, closeon_err = pcall(command, 'closeon', 'nosuch', 'on')
+    check(closeon_ok and chat_has('closeon failed: ') and chat_has('no such window: nosuch'),
+        'hideuidemo closeon of an unknown name says why in chat rather than raising: ' .. tostring(closeon_err))
+    chat = {}
+    native_state.calls = {}
+    command('closeon', 'JobCSel', 'on')
+    addon_handle.queue = {{event = 'opened', name = 'jobcselu'}}
+    fire('prerender')
+    local closed = last_call('close')
+    command('closeon', 'jobcsel', 'off')
+    native_state.calls = {}
+    addon_handle.queue = {{event = 'opened', name = 'jobcselu'}}
+    fire('prerender')
+    check(closed and closed.args[1] == 'jobcselu' and chat_has('closed jobcselu on its opened event')
+            and last_call('close') == nil,
+        'hideuidemo closeon by a second name closes the window on its event, which carries the first name; off by'
+            .. ' either name stops it')
+    chat = {}
+    native_state.calls = {}
+    native_state.prompts = copy(prompts)
+    native_state.prompts.link11 = {name = 'link11', id = 65, max_length = 19, text = '', color = {7, 7, 7}}
+    native_state.prompts.comment = {name = 'comment', id = 62, mode = 'bazaar', lines = {{text = 'Hi'}}}
+    command('options', 'link11')
+    command('options', 'comment')
+    local color_ok, color_err = pcall(command, 'answer', 'link11', 'Kupo', 'red', '2', '3')
+    local short_ok = pcall(command, 'answer', 'link11', 'Kupo', '1', '2')
+    local bare_ok = pcall(command, 'answer', 'comment')
+    local answered = 0
+    for _, c in ipairs(native_state.calls) do
+        if c.verb == 'answer' then answered = answered + 1 end
+    end
+    local usages = 0
+    for _, l in ipairs(chat) do
+        if l.text:find('usage: //hideuidemo answer', 1, true) then usages = usages + 1 end
+    end
+    native_state.prompts = prompts
+    check(color_ok and short_ok and bare_ok and answered == 0 and usages == 3,
+        'hideuidemo answer link11 with a color word that is no number or a color left short, and a bare answer'
+            .. ' comment, give the usage and send nothing: ' .. tostring(color_err))
+end
+
+-- the shipped data/settings.xml holds no layout, so apply() works at any UI
+-- size, and keeps the folder in the addon
+do
+    local f = io.open(addon_dir .. '/data/settings.xml', 'rb')
+    local text = f and f:read('*a') or ''
+    if f then f:close() end
+    check(text:find('<settings>', 1, true) and text:find('<layout>%s*</layout>') and not text:find('<ui>', 1, true),
+        'data/settings.xml ships with an empty layout: no UI size, no entries')
 end
 
 -- hideuidemo with the engine down

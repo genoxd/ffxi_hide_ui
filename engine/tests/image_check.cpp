@@ -22,8 +22,9 @@
 //                  gmtell_slot gmtell_queue mp_dead_input ok_input
 //                  door_input door_vtable door_open_hook door_draw door_handler door_gate door_floor
 //                  door_condition door_tick door_open door_opened door_house door_exiting(3) door_table
-//                  dialogue_input dialogue_handler dialogue_dispatch dialogue_release dialogue_clear
-//                  dialogue_wait dialogue_tick dialogue_click_return dialogue_texts(2)
+//                  dialogue_input dialogue_handler dialogue_dispatch dialogue_advance dialogue_page_sound
+//                  dialogue_release dialogue_clear dialogue_wait dialogue_tick dialogue_click_return
+//                  dialogue_texts(2)
 //                  the text-entry windows' sites in this file's order of them
 //                  target_arrow_return pick_arrow_return
 //                  the trade windows' sites and offsets in this file's order of them
@@ -706,24 +707,27 @@ int main(int argc, char** argv) {
             DialogueSites t;
             const bool talks = resolve_dialogue(in, close_instance, &t, why, sizeof(why));
             snprintf(label, sizeof(label), "the dialogue boxes resolve: their input routine once, its handler, the"
-                " text dispatch handing its code on to the other box's text object, the cancel, the tick through"
-                " their vtables and its left-button test%s%s",
+                " text dispatch handing its code on to the other box's text object, its gate's advance and page-turn"
+                " sound, the cancel, the tick through their vtables and its left-button test%s%s",
                 talks ? "" : ": ", why);
             check(talks, label);
             if (talks) {
-                const void* fns[3];
-                memcpy(&fns[0], &t.dispatch, 4);
-                memcpy(&fns[1], &t.release, 4);
-                memcpy(&fns[2], &t.clear, 4);
+                const void* fns[4];
+                memcpy(&fns[0], &t.advance, 4);
+                memcpy(&fns[1], &t.page_sound, 4);
+                memcpy(&fns[2], &t.release, 4);
+                memcpy(&fns[3], &t.clear, 4);
                 const struct {
                     const char* name;
                     uintptr_t got;
                 } dialogue[] = {
                     {"dialogue_input", reinterpret_cast<uintptr_t>(t.input)},
                     {"the dialogue boxes' handler", reinterpret_cast<uintptr_t>(t.handler)},
-                    {"the text dispatch", reinterpret_cast<uintptr_t>(fns[0])},
-                    {"the chat log's release", reinterpret_cast<uintptr_t>(fns[1])},
-                    {"the text object's clear", reinterpret_cast<uintptr_t>(fns[2])},
+                    {"the text dispatch", reinterpret_cast<uintptr_t>(t.dispatch)},
+                    {"the text advance", reinterpret_cast<uintptr_t>(fns[0])},
+                    {"the gate's page-turn sound", reinterpret_cast<uintptr_t>(fns[1])},
+                    {"the chat log's release", reinterpret_cast<uintptr_t>(fns[2])},
+                    {"the text object's clear", reinterpret_cast<uintptr_t>(fns[3])},
                     {"the event's wait flag", reinterpret_cast<uintptr_t>(t.wait)},
                     {"the dialogue boxes' tick", reinterpret_cast<uintptr_t>(t.tick)},
                     {"the tick's left-button test's return", t.click_return},
@@ -735,7 +739,7 @@ int main(int argc, char** argv) {
                     expect(dialogue[i].name, dialogue[i].got, argc, argv, at + count + doors + i);
                 }
             }
-            const int dialogues = 10;
+            const int dialogues = 12;
             TextSites x;
             const bool typed = resolve_text(in, close_instance, &x, why, sizeof(why));
             snprintf(label, sizeof(label), "the text-entry windows resolve: their input routines once each, every"
@@ -796,6 +800,9 @@ int main(int argc, char** argv) {
                     {"passinpu's field start", reinterpret_cast<const void*>(x.passinpu_start)},
                     {"comment's field start", reinterpret_cast<const void*>(x.comment_start)},
                     {"msgline's field start", reinterpret_cast<const void*>(x.msgline_start)},
+                    {"the text entry's manager's global", x.line},
+                    {"the manager's unbind", reinterpret_cast<const void*>(x.unbind)},
+                    {"the manager's bind", reinterpret_cast<const void*>(x.bind)},
                 };
                 const int texts = static_cast<int>(sizeof(text) / sizeof(text[0]));
                 for (int i = 0; i < texts; ++i) {
@@ -832,6 +839,11 @@ int main(int argc, char** argv) {
                     offers ? "" : ": ", why);
                 check(offers, label);
                 if (offers) {
+                    // The engine never calls the clock; the allocator's call
+                    // to it is what resolve_offer() matched kShapeClock at.
+                    Shape alloc;
+                    const uint8_t* throttle_clock = shape_is(in, o.allocator, kShapeAllocator, &alloc)
+                        ? shape_target(in, alloc, 7) : NULL;
                     const struct {
                         const char* name;
                         uintptr_t got;
@@ -860,7 +872,7 @@ int main(int argc, char** argv) {
                         {"the intervals' global", reinterpret_cast<uintptr_t>(o.intervals)},
                         {"the intervals' offset", o.interval},
                         {"the packet ids the throttle takes", o.packets},
-                        {"the clock", reinterpret_cast<uintptr_t>(o.clock)},
+                        {"the clock", reinterpret_cast<uintptr_t>(throttle_clock)},
                         {"the clock's object's global", reinterpret_cast<uintptr_t>(o.clock_object)},
                         {"the item record", reinterpret_cast<uintptr_t>(o.item)},
                         {"inventor_rows", reinterpret_cast<uintptr_t>(o.rows)},

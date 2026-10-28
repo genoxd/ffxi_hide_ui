@@ -2,10 +2,7 @@
 <settings>
     <global>
         <layout>
-            <ui>
-                <h>1080</h>
-                <w>1920</w>
-            </ui>
+
         </layout>
     </global>
 </settings>

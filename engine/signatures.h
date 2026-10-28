@@ -1,5 +1,4 @@
-// signatures.h - how the engine finds FFXiMain's routines and data, the
-// routines it calls, and the fourteen routines it hooks.
+// How the engine finds FFXiMain's routines and data.
 
 #ifndef HIDEUI_SIGNATURES_H_
 #define HIDEUI_SIGNATURES_H_
@@ -18,8 +17,8 @@ const char kSigSetPosition[] =
     "83 ec 0c 66 8b 44 24 14 53 55 8b 6c 24 18 56 8b f1 57 33 ff 8d 5e 14 66 89 6e 52 8b cb 66 89 46 54";
 const char kSigCloseByName[] =
     "8b 44 24 04 83 ec 20 56 8b f1 8d 4c 24 04 50 51 8b ce e8 ?? ?? ?? ?? 8d 54 24 04 8b ce 52 e8 ?? ?? ?? ?? 85 c0 74 ?? 6a 01 50 8b ce e8";
-// Close by name ends in its call of close by instance (this = the manager;
-// the menu, a flag; ret 8; nothing for a NULL menu).
+// Close by name ends in its call of close by instance, which does nothing for
+// a NULL menu.
 const size_t kCloseByNameInstanceCall = 44;
 const char kSigDockMasks[] =
     "8b 04 bd ?? ?? ?? ?? 8b 4e 34 85 c1 74 ?? 56 57 8b cd e8";
@@ -29,78 +28,59 @@ const char kSigUpdate[] =
     "83 ec 14 53 55 56 57 6a ff 6a 04 68 8b 00 00 00 6a 3e 8b e9 e8 ?? ?? ?? ?? 83 c4 10 3c 01 75";
 const char kSigStagedClose[] =
     "53 56 8b 74 24 0c 33 db 57 3b f3 8b f9 0f 84 ?? ?? ?? ?? 8b ce e8 ?? ?? ?? ?? 83 7e 10 0e 75";
-// The show path through its gate: a NULL menu, the closing byte +0x6E set,
-// no registry entry at +0x04 and any state at +0x10 but 0x0E each return at
-// once. hook_show_pre goes by the same test.
+// The show path's gate returns at once for a NULL menu, the closing byte
+// +0x6E set, no registry entry at +0x04, or a state at +0x10 other than 0x0E;
+// hook_show_pre tests the same.
 const char kSigShow[] =
     "53 55 56 8b 74 24 10 32 db 57 85 f6 8b f9 0f 84 ?? ?? ?? ?? 8a 46 6e 84 c0 0f 85 ?? ?? ?? ?? 8b 46 04 85 c0 0f 84 ?? ?? ?? ?? 8b 46 10 bd 0e 00 00 00 3b c5 0f 85";
-// The mouse mode picker, the whole routine; its mov ecx imm32 at +4 is the
-// manager.
+// The mouse mode picker, the whole routine.
 const char kSigMouseMode[] =
     "56 8b f1 b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 84 c0 74 06 c6 46 4d 02 5e c3 c6 46 4d 01 5e c3";
 const size_t kMouseModeManagerImm = 4;
 
 // The menu input sink (this = the menu; the code), hooked. The routing
-// routine (this = the manager; the code) hands every key and gamepad code to
-// the active menu through its one call to the sink at kRoutingSinkCall; it is
-// never hooked or called, only resolved for that call's return address.
+// routine hands every key and gamepad code to the active menu through its one
+// call to the sink at kRoutingSinkCall, and is resolved only for that call's
+// return address.
 const char kSigMenuInput[] =
     "51 55 56 8b f1 57 83 7e 10 0e 75 09 5f 5e 33 c0 5d 59 c2 04 00 66 83 7e 56 00";
 const char kSigMenuRouting[] =
     "56 8b f1 e8 ?? ?? ?? ?? 84 c0 75 3a 8b ce e8 ?? ?? ?? ?? 84 c0 74 20 8b ce e8 ?? ?? ?? ?? 84 c0 75 15 8b 44 24 08 8b 4e 54 50 e8";
 const size_t kRoutingSinkCall = 0x2A;
 
-// The compass draw entry (no arguments, plain ret), hooked: the compass
-// through its global, its update, the manager's gate, then its render by a
-// jump. The global is the imm32 at +2 and again at +31, which must agree;
-// the manager's at +16. The first instruction is the prologue, so the engine
-// reads the global out of the intact copy at +31 and pins it at +2 before
-// the scan, as it pins the manager.
+// The compass draw entry (no arguments, plain ret), hooked. Its global is the
+// imm32 at +2 and again at +31, which must agree; a hook's patch may cover
+// +2, so the engine reads +31 and pins +2 before the scan.
 const char kSigCompassDraw[] =
     "8b 0d ?? ?? ?? ?? 85 c9 74 ?? e8 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 3c 01 74 ?? 8b 0d ?? ?? ?? ?? e9 ?? ?? ?? ?? c3";
 const size_t kCompassDrawGlobal = 2;
 const size_t kCompassDrawGlobal2 = 31;
 const size_t kCompassDrawManagerImm = 16;
 
-// The macro key gate (no arguments, `this` unused, al 1 while the macro keys
-// may act; plain ret), hooked: the macro key handler's one question before
-// it opens a bar and before each number key, and the gate's only caller.
-// The prologue, mov ax,[imm32], reads a word the engine knows from nowhere
-// else, so the engine reads the imm32 out of the hit (on a patched site,
-// out of the daemon's saved original) and pins it at +2 before the scan
-// that resolves the site; the manager's imm32 at +40 is pinned as the
-// mouse mode picker's.
+// The macro key gate (no arguments, al 1 while the macro keys may act),
+// hooked: the macro key handler, its only caller, asks it before it opens a
+// bar and before each number key. The prologue's imm32 (+2) is a word known
+// from nowhere else, so it is read out of the hit (on a patched site, the
+// daemon's saved original) and pinned before the scan that resolves the site.
 const char kSigMacroGate[] =
     "66 a1 ?? ?? ?? ?? 56 33 f6 66 85 c0 74 ?? 0f bf c0 8b 34 85 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 83 39 60 0f 85 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 84 c0 0f 85";
 const size_t kMacroGateGlobal = 2;
 const size_t kMacroGateManagerImm = 40;
 
-// The ability opener (kind, flag, extra; cdecl, the caller popping the 12
-// bytes, nothing returned), hooked: the one routine every open of the job
-// ability, pet command, weapon skill and job trait lists goes through, from
-// the abilities menu rows and the /ja, /ws and /pet commands. It tests a
-// player global, opens abisortw by name when flag is 1, opens ability by
-// name, then hands kind to the controller, which stores it at
-// kAbilityCategory (game.h). The prologue, mov eax,[imm32], reads a global
-// the engine knows from nowhere else, so it is read out of the hit and
-// pinned at +1 before the scan that resolves the site, as the macro gate's
-// word is; the manager's imm32 at +29 is pinned as the mouse mode picker's.
-// The second push's imm32, at +43, must point at the registry's ability
-// key, checked once the site is found.
+// The ability opener (kind, flag, extra; cdecl), hooked: every open of the
+// ability lists goes through it. It opens abisortw when flag is 1, then
+// ability, and hands kind to the controller (game.h's kAbilityCategory). Its
+// prologue's global (+1) is read out of the hit and pinned as the macro
+// gate's word is.
 const char kSigAbilityOpen[] =
     "a1 ?? ?? ?? ?? 85 c0 74 ?? 53 8b 5c 24 0c 80 fb 01 75 ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8";
 const size_t kAbilityOpenGlobal = 1;
 const size_t kAbilityOpenManagerImm = 29;
 const size_t kAbilityOpenKeyImm = 43;
 
-// The magic list's opener (category, sort, exclusion mask; cdecl, the
-// caller popping the 12 bytes, nothing returned), never hooked: it tests
-// the player global, opens magic by name through the manager (the key
-// push's imm32 at kMagicOpenKeyImm, the manager's at kMagicOpenManagerImm,
-// pinned before the scan, the open routine's call at kMagicOpenCall), then
-// hands its three arguments to the controller in magic's registry slot
-// (kMagicOpenSlot), whose rebuild opens subwindo every time and, with a
-// sort of 1, mgcsortw, or blusortw for blue magic.
+// The magic list's opener (category, sort, exclusion mask; cdecl), called,
+// never hooked. The controller's rebuild opens subwindo, and with sort 1
+// mgcsortw, or blusortw for blue magic.
 const char kSigMagicOpen[] =
     "a1 ?? ?? ?? ?? 85 c0 74 2d 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b 44 24 0c 8b 4c 24 08 8b 54 24 04 50 51 8b 0d ?? ?? ?? ?? 52 e8 ?? ?? ?? ?? c3";
 const size_t kMagicOpenKeyImm = 0x0E;
@@ -109,15 +89,9 @@ const size_t kMagicOpenCall = 0x17;
 const size_t kMagicOpenSlot = 0x2C;
 
 // The equipment set's opener (this = the controller in equip's registry
-// slot, no arguments, plain ret), never hooked: three tests, each printing
-// the game's refusal and returning, then the guard at kEquipOpenGuard, the
-// global in equip's registry slot read and the routine left with that
-// controller NULL or its word +0x1A (kEquipOpenGuardWord) not 0. Past it,
-// persona's mode is set to 2, persona and money are opened by name,
-// inventor is handed the equipment's list, and equip is opened by name:
-// each open a key push (kEquipOpenKeys), the manager's mov 5 bytes on and
-// the open routine's call (kEquipOpenCalls), persona's after its mode's
-// write.
+// slot), called, never hooked. It returns early after three tests that print
+// the game's refusal, and at kEquipOpenGuard while that controller is NULL or
+// its word +0x1A is not 0.
 const char kSigEquipOpen[] =
     "e8 ?? ?? ?? ?? 84 c0 74 0e 8b 0d ?? ?? ?? ?? 6a 4e e8 ?? ?? ?? ?? c3 e8 ?? ?? ?? ?? 84 c0 74 0e 8b 0d ?? ?? ?? ?? 6a 4d e8 ?? ?? ?? ?? c3 6a 00 e8 ?? ?? ?? ?? 83 c4 04 84 c0 75 11";
 const size_t kEquipOpenGuard = 0x4D;
@@ -129,13 +103,9 @@ const size_t kEquipOpenCalls[kEquipOpenCount] = {0x142, 0x155, 0x186};
 const char* const kEquipOpenWindows[kEquipOpenCount] = {"persona", "money", "equip"};
 const size_t kEquipOpenManager = 5;
 
-// The equipment shortcut's handler (no arguments, eax 1), never run: the
-// Monstrosity check called first (kEquipShortcutCheck), and only when it
-// answers no, the set's opener on the controller in equip's registry slot
-// (kEquipShortcutSlot, the call at kEquipShortcutOpen). The check (no
-// arguments, al 1 in Monstrosity) reads a word of the player's data and
-// the game's mode byte, kShapeMonstrosity; open_set('equipment') asks it
-// first, as the shortcut does.
+// The equipment shortcut's handler, never run: it runs the set's opener only
+// when the Monstrosity check (kShapeMonstrosity, al 1 in Monstrosity) answers
+// no. open_set('equipment') asks the check first, as the shortcut does.
 const char kSigEquipShortcut[] =
     "e8 ?? ?? ?? ?? 84 c0 75 0b 8b 0d ?? ?? ?? ?? e8 ?? ?? ?? ?? b8 01 00 00 00 c3";
 const size_t kEquipShortcutCheck = 0;
@@ -144,12 +114,8 @@ const size_t kEquipShortcutOpen = 15;
 const char kShapeMonstrosity[] =
     "a1 ?? ?? ?? ?? 85 c0 74 0d 66 83 b8 ?? ?? ?? ?? 00 74 03 b0 01 c3 80 3d ?? ?? ?? ?? 17 0f 94 c0 c3";
 
-// The map's opener (mode; cdecl, nothing returned), never hooked, the one
-// the main menu's map row and the map command run with mode 0: the player's
-// position read, then the controller in mapframe's registry slot read twice
-// (kShapeMapFrame at kMapOpenFrameAt, holes 0 and 5) and handed to the
-// map's routine (hole 6), which opens mapframe and map0 by name through the
-// manager at kMapRoutineOpensAt (kShapeMapOpens: key, manager, open, twice).
+// The map's opener (mode; cdecl), called with mode 0 as the main menu's map
+// row and the map command run it.
 const char kSigMapOpen[] =
     "a1 ?? ?? ?? ?? 83 ec 10 85 c0 53 56 57 0f 84 ?? ?? ?? ?? 8b 5c 24 20 bf 02 00 00 00 83 fb 01 74 05 83 fb 04 75 05 bf 01 00 00 00 b9";
 const size_t kMapOpenFrameAt = 0x77;
@@ -160,16 +126,9 @@ const size_t kMapRoutineOpensAt = 0x791;
 const char kShapeMapOpens[] =
     "53 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 53 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ??";
 
-// The blue magic set's opener and the automaton's (this = the controller in
-// bluequip's and automato's registry slot, no arguments, plain ret), never
-// hooked, the ones the magic menu's set row and the automaton menu's
-// attachment row run: each tests the player's job, refusing with the game's
-// message, then opens its windows (kShapeSetSpellsOpens at
-// kSetSpellsOpensAt: persona's mode 2 and persona, bluehelp's and
-// bluinven's openers on the controllers in their slots, bluepoin, bluequip;
-// kShapeAttachmentsOpens at kAttachmentsOpensAt: bluehelp's and bluinven's
-// openers, the same routines, statpup, automato), each by name through the
-// manager.
+// The blue magic set's and the automaton's openers (this = the controller in
+// bluequip's or automato's registry slot), called as the magic menu's set row
+// and the automaton menu's attachment row run them.
 const char kSigSetSpellsOpen[] =
     "a0 ?? ?? ?? ?? 56 a8 01 8b f1 0f 84 ?? ?? ?? ?? a0 ?? ?? ?? ?? 8a 0d ?? ?? ?? ?? 3c 10 74 0d 80 f9 10 0f 85 ?? ?? ?? ?? 3a c1 75 1d c6 46 5c 00";
 const size_t kSetSpellsOpensAt = 0x78;
@@ -186,13 +145,9 @@ const char kShapeAttachmentsOpens[] =
     " 00 00 00 68 19 fc ff ff 68 19 fc ff ff 50 e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ??"
     " 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c3";
 
-// The main menu's linkshell row, never run: its check (1, 1; cdecl, al 1
-// refuses), called at kLinkshellCheckCall, then the linkshell list's opener
-// (this = the controller in link5's registry slot, read at kLinkshellSlot;
-// mode, two more, 0 each; ret 0xC through the open routine), called at
-// kLinkshellOpenCall, which ends in a jump to the open routine with link5's
-// key, 1 and 0 written over its own arguments (kShapeLinkshellTail at
-// kLinkshellTailAt).
+// The main menu's linkshell row, never run: its check (1, 1; al 1 refuses),
+// then the linkshell list's opener (mode and two more, 0 each), which
+// tail-jumps to the open routine with link5's key written over its arguments.
 const char kSigLinkshellRow[] =
     "6a 01 6a 01 e8 ?? ?? ?? ?? 83 c4 08 84 c0 74 0e e8 ?? ?? ?? ?? e8 ?? ?? ?? ?? 5e c2 08 00 8b 0d ?? ?? ?? ?? 6a 00 6a 00 6a 00 e8";
 const size_t kLinkshellCheckCall = 4;
@@ -202,12 +157,8 @@ const size_t kLinkshellTailAt = 0xCF;
 const char kShapeLinkshellTail[] =
     "5f 5e c7 44 24 0c 00 00 00 00 c7 44 24 08 01 00 00 00 c7 44 24 04 ?? ?? ?? ?? b9 ?? ?? ?? ?? e9 ?? ?? ?? ??";
 
-// The Monstrosity instincts' opener (no arguments, cdecl, plain ret), never
-// hooked, the one the main menu's equipment row runs in Monstrosity
-// (kShapeInstinctsOpen from its start): the instinct buffer's prep, then
-// mp_stat's opener (kShapeMpStatOpen, this = the controller in mp_stat's
-// slot, hole 3; 1) and mp_cstm's (kShapeMpCstmOpen, this = mp_cstm's, hole
-// 5), then mp_mncst by name through the manager.
+// The Monstrosity instincts' opener (cdecl), called as the main menu's
+// equipment row runs it in Monstrosity.
 const char kSigInstinctsOpen[] =
     "56 be f8 ef 00 00 8b 0d ?? ?? ?? ?? 56 e8 ?? ?? ?? ?? 46 81 fe ff ef 00 00 72 eb e8";
 const char kShapeInstinctsOpen[] =
@@ -218,18 +169,10 @@ const char kShapeMpStatOpen[] =
 const char kShapeMpCstmOpen[] =
     "6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c3";
 
-// The item menu's use of the item under the cursor (esi its record), never
-// run (kShapeItemUse from the signature's hit): the item's data from the
-// cache (hole 0, its global; hole 1, the lookup, this = the cache; id), its
-// type word through the data's pointer at hole 3; the M tabula and the R
-// tabula each the maze editor's opener (holes 5 and 8; this = the
-// controller in prvdungp's slot, holes 4 and 7; mode 0 or 1, the record's
-// index; ret 8); a crystal the check (hole 10; 0x77, 0; cdecl, al 0
-// refuses), then the synthesis's opener (hole 13; this = the controller in
-// tskill1's slot, hole 12; the record's index and id, mode 0; ret 0xC, al 0
-// refuses). The synthesis's opener opens tskill1 by name through the
-// manager at kSynthesisOpensAt; the maze editor's hands on to its setup at
-// kTabulaSetupCall, which opens prvdungp at kTabulaOpensAt.
+// The item menu's use of the item under the cursor, never run: the maze
+// editor's opener for a tabula (mode 0 or 1), and for a crystal a check
+// (0x77, 0; al 0 refuses), then the synthesis's opener (al 0 refuses). Hole
+// 3: the item data's offset of its pointer to the type word.
 const char kSigItemUse[] =
     "8b 0d ?? ?? ?? ?? 33 c0 66 8b 06 50 e8 ?? ?? ?? ?? 85 c0 0f 84 ?? ?? ?? ?? 8b 88 ?? ?? ?? ?? 66 8b 09 66 83 f9 16 75 18 8b 0d ?? ?? ?? ?? 33 d2 8a 56 02 52 6a 00 e8 ?? ?? ?? ??";
 const char kShapeItemUse[] =
@@ -240,9 +183,8 @@ const char kShapeItemUse[] =
 const size_t kSynthesisOpensAt = 0xA9;
 const char kShapeSynthesisOpens[] =
     "6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ??";
-// Before it, the synthesis's opener keeps the list the controller in
-// inventor's registry slot (hole 0) holds at the byte hole 1, for its cancel
-// to reopen inventor with.
+// The synthesis's opener keeps inventor's list (hole 1: its offset in
+// inventor's controller) for its cancel to reopen inventor with.
 const size_t kSynthesisKeepsAt = 0x4F;
 const char kShapeSynthesisKeeps[] =
     "8b 15 ?? ?? ?? ?? 8b 42 ?? 89 46 4c";
@@ -253,15 +195,10 @@ const size_t kTabulaOpensAt = 0x5F;
 const char kShapeTabulaOpens[] =
     "6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ??";
 
-// The macro set menu's input routine (this = mcrselop's controller; event,
-// row; ret 8), never run (kShapeMacroEdit from the hit): on a confirm with
-// the controller in mcrselec's registry slot (hole 0), it takes the set
-// mcrselec's row and page name and dispatches the row through its jump table
-// (hole 4), whose first entry, the edit row, kMacroEditRow bytes in, hands
-// the set to the macro data's select (hole 5), then runs the editor's
-// opener (hole 7; this = the editor object in the global at hole 6, no
-// arguments, plain ret). The opener opens mcrbedit and the two palettes by
-// name through the manager, the one last used last (kShapeMacroEditorOpens).
+// The macro set menu's input routine, never run: its edit row (the jump
+// table at hole 4) selects the set (hole 5) and runs the editor's opener
+// (hole 7, on the editor object in the global at hole 6), which opens
+// mcrbedit and the two palettes, the one last used last.
 const char kSigMacroEdit[] =
     "57 8b f9 8b 0d ?? ?? ?? ?? 85 c9 0f 84 ?? ?? ?? ?? 66 83 7c 24 08 05 0f 85 ?? ?? ?? ?? 8b 51 1c 33 c0 8a 41 6c 56 8d 04 80 8d 34 82 0f bf 44 24 10 48 83 f8 04 0f 87";
 const char kShapeMacroEdit[] =
@@ -274,23 +211,18 @@ const char kShapeMacroEditorOpens[] =
     " ?? e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c3 e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ??"
     " ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c3";
 
-// The template swap (this = the menu; the key; ret 4), hooked, and called
-// through its site by the resize: what the owners of the resizable windows
-// run as their rows change, and what puts a frame on the new template's
-// default spot. Its prologue is 5 bytes.
+// The template swap (this = the menu; the key), hooked and called by the
+// resize: the resizable windows' owners run it as their rows change, and it
+// puts the frame on the new template's default spot. Its prologue is 5 bytes.
 const char kSigTemplateSwap[] =
     "83 ec 18 53 55 56 57 8b f9 89 7c 24";
 
-// The routines a hidden window's draw and the target arrows are painted
-// through, hooked: the per-menu draw (this = the menu, no arguments, plain
-// ret), which the draw walk calls for each menu it draws; the sprite draw
-// (this = the sprite, eight arguments, ret 0x20); and the draw primitive
-// (this = the renderer; type, count, vertices, stride; ret 0x10), the
-// renderer's DrawPrimitiveUP. Prologues of 5, 5 and 7 bytes. The quad
-// routine (this = a sprite, five arguments, ret 0x14), which every quad of
-// the interface goes through, is found for its call of the draw primitive
-// at kQuadPrimitiveCall and never hooked; another hook may have patched its
-// first five bytes.
+// Hooked to keep a hidden window and the target arrows from painting: the
+// per-menu draw (this = the menu), the sprite draw (this = the sprite, eight
+// arguments, ret 0x20) and the draw primitive (this = the renderer;
+// DrawPrimitiveUP's arguments, ret 0x10). Prologues of 5, 5 and 7 bytes. The
+// quad routine is found only for its call of the draw primitive at
+// kQuadPrimitiveCall; another hook may have patched its first five bytes.
 const char kSigMenuDraw[] =
     "83 ec 24 53 55 56 57 8b e9 e8 ?? ?? ?? ?? 66 8b 45 56 33 ff 66 3b c7 7e 05";
 const char kSigSpriteDraw[] =
@@ -301,12 +233,9 @@ const char kSigQuadDraw[] =
     "8b 44 24 08 83 ec 10 53 32 db 85 c0 a1 ?? ?? ?? ?? 56 57 8b f9 8b 40 0c 8b 08 0f 84 ?? ?? ?? ??";
 const size_t kQuadPrimitiveCall = 0x231;
 
-// The target window's draw of its two arrows, never run by the engine: each
-// a call of the sprite draw (at kTargetArrowCall, kPickArrowCall), the
-// arrow it always draws and the second it draws while the player picks a
-// command's target, the second within kArrowSpan bytes after the first. The
-// address each call returns to tells its arrow's draw from every other
-// sprite's.
+// The target window's sprite draw calls of its two arrows: the one it always
+// draws, and the one while the player picks a command's target. Each call's
+// return address tells its arrow from every other sprite.
 const char kSigTargetArrow[] =
     "8b 4c 8e 78 68 00 00 80 3f 68 00 00 80 3f 52 50 e8 ?? ?? ?? ?? 8a 86 b8 00 00 00";
 const char kSigPickArrow[] =
@@ -316,18 +245,16 @@ const size_t kPickArrowCall = 6;
 const size_t kArrowSpan = 0x80;
 
 // The macro key object's global, read out of the macro subsystem's
-// constructor, a data site never run or hooked: the global is the imm32 at
-// +15 and again at +23, which must agree. The object is kMacroObjectBytes
-// (game.h), the constructor's allocation; the global is NULL before the
+// constructor (the imm32s at +15 and +23 must agree). It is NULL before the
 // subsystem exists.
 const char kSigMacroObject[] =
     "8b 0d ?? ?? ?? ?? 51 8b c8 e8 ?? ?? ?? ?? a3 ?? ?? ?? ?? eb 06 89 1d ?? ?? ?? ?? 6a 50 e8";
 const size_t kMacroObjectImm = 15;
 const size_t kMacroObjectImm2 = 23;
 
-// The row hit test: never hooked or called. Resolved to check that it still
-// takes a hit on a menu whose kMenuMouse byte is 0 for a miss (game.h), the
-// read below, once, inside its first kHitTestBytes.
+// The row hit test, only checked: it must still treat a menu whose kMenuMouse
+// byte (game.h) is 0 as a miss, by the read below once in its first
+// kHitTestBytes.
 const char kSigRowHitTest[] =
     "83 ec 08 53 55 56 8b f1 8b 0d ?? ?? ?? ?? 57 89 74 24 10 d9 41 48 d8 1d ?? ?? ?? ?? df e0 25 00 41 00 00 0f 84 ?? ?? ?? ?? 8a 41 4e 84 c0 0f 84 ?? ?? ?? ?? 8d 4e 14 e8";
 // mov esi,[esp+0x10] (this); mov cl,[esi+0x77]; test cl,cl; je
@@ -335,9 +262,7 @@ const uint8_t kHitTestMouseRead[] = {0x8b, 0x74, 0x24, 0x10, 0x8a, 0x4e, 0x77, 0
 const size_t kHitTestMouseByte = 6;     // where in the read the menu offset sits
 const size_t kHitTestBytes = 0x100;
 
-// The routines the reply calls, reset and resize call; none is hooked.
-// SetCursor and the glyph converter are resolved on their own, beside
-// SetPosition, and the template swap with the sites it is one of.
+// Routines the replies, reset and resize call; none is hooked.
 const char kSigPassinpuReset[] =
     "33 c0 89 41 1c 89 41 20 88 41 24 89";
 const char kSigPartySend[] =
@@ -346,10 +271,9 @@ const char kSigPartyClear[] =
     "c6 05 ?? ?? ?? ?? 00 c3 90 90 90 90 90 90 90 90 8a";
 const char kSigLink5Clear[] =
     "53 56 8b f1 33 db 88 1d ?? ?? ?? ??";
-// arealist's close+reset (this = the controller): its close by name, whose
-// begin-close clears the latch and the mode on an open instance, then the
-// rows freed. The latch clear is that begin-close, called alone when no
-// instance is open.
+// arealist's close and reset (this = the controller): an open instance's
+// begin-close clears the latch and the mode, then the rows are freed. With no
+// instance open, kSigArealistLatch, that begin-close, is called alone.
 const char kSigArealistClose[] =
     "56 8b f1 8b 06 ff 50 74 6a 01 6a 00 6a 00 8b ce c7 46 34 00 00 00 00 c6 46 49 01 e8 ?? ?? ?? ?? 8b ce 5e e9 ?? ?? ?? ?? 90 90 90 90 90 90 90 90 a1 ?? ?? ?? ?? 55";
 const char kSigArealistLatch[] =
@@ -364,9 +288,9 @@ const char kSigSetFrameRect[] =
     "83 ec 08 56 8b f1 8d 4e 14 e8 ?? ?? ?? ?? 85 c0 89 44 24 08";
 const char kSigSetCursor[] =
     "83 ec 08 56 57 8b 7c 24 14 8b f1 66";
-// The cursor onto a row with no input event (this = a menu; the row; ret
-// 4): what the yes/no class's confirm runs on a question asked again whose
-// default is no.
+// The cursor onto a row with no input event (this = a menu; the row): what
+// the yes/no class's confirm runs on a question asked again whose default is
+// no.
 const char kSigSelectRow[] =
     "56 57 8b 7c 24 0c 8b f1 66 85 ff 7f 05 bf 01 00 00 00 66 8b 46 58 66 3b f8 7e 02 8b f8 66 8b 46 4c 66 3b c7 74 ??";
 
@@ -375,9 +299,9 @@ const char kSigSelectRow[] =
 const char kSigGlyphConvert[] =
     "55 8b 6c 24 0c 85 ed 75 04 33 c0 5d c3 8b 44 24 10 85 c0 75 02 5d c3 53 56 57 8d 48 ff 32 db 33 ff";
 
-// Data read out of the code that uses it: link5's own confirm adds the
-// concierge cache to slot * 0x20, query's input handler compares the
-// cancel-allowed byte with 1.
+// Data read out of the code that uses it: link5's confirm adds the concierge
+// cache to slot * 0x20; query's input handler compares the cancel-allowed
+// byte with 1.
 const char kSigLink5Cache[] =
     "8b 4e 6c 83 c4 04 85 c9 74 17 83 f8 10 73 12 8b d0 c1 e2 05 81 c2 ?? ?? ?? ?? 52 50 ff d1";
 const char kSigQueryCancelAllowed[] =
@@ -395,21 +319,16 @@ const size_t kLink5LatchImm = 2;
 const size_t kLink5OpenGlobal = 16;
 const size_t kLink5OpenCallback = 22;
 
-// The yes/no class's constructor (this = the controller; key, cancellable),
-// a data site never run: its vtable is the imm32 at +31, and its 16-byte key
-// lands at +0x20, game.h's kYesNoKey.
+// The yes/no class's constructor, never run: its vtable is the imm32 at +31,
+// and its 16-byte key lands at +0x20 (game.h's kYesNoKey).
 const char kSigYesNoClass[] =
     "53 56 8b f1 8d 4e 04 e8 ?? ?? ?? ?? 33 db 8b ce 66 c7 46 0e ff ff 89 5e 08 c6 46 0c 01 c7 06 ?? ?? ?? ?? 89 5e 34 e8 ?? ?? ?? ?? 8b 4c 24 0c 8d 46 20";
 const size_t kYesNoClassVtable = 31;
 
-// The yes/no class's confirm (this = the controller; no arguments): never
-// run or called. Resolved to check that it keeps its question where the
-// replies read and write it (game.h): the signature reads the mode
-// (+0x40), the callback (+0x14), the window (+0x08), its cursor row against
-// yes (+0x4C, 1) and the context (+0x18); inside its first
-// kYesNoConfirmBytes, once each, the callback called then the chained flag
-// (+0x3A) read, the callback cleared, and the chained default (+0x3B) read
-// as the chained flag is cleared.
+// The yes/no class's confirm, only checked: it must keep its question where
+// game.h's replies read and write it (mode +0x40, callback +0x14, window
+// +0x08, cursor row +0x4C, context +0x18, chained flag +0x3A, chained default
+// +0x3B), with each read below once in its first kYesNoConfirmBytes.
 const char kSigYesNoConfirm[] =
     "56 8b f1 8b 46 40 85 c0 74 05 e8 ?? ?? ?? ?? 8b 46 14 85 c0 75 12 8b 46 08 6a 01 50 b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 5e c3 8b 4e 08 66 83 79 4c 01 75 08 8b 56 18 6a 01 52 eb 06 8b 4e 18 6a 00";
 // call eax; mov al,[esi+0x3A]; add esp,8; test al,al
@@ -420,14 +339,10 @@ const uint8_t kConfirmCallbackClear[] = {0xc7, 0x46, 0x14, 0x00, 0x00, 0x00, 0x0
 const uint8_t kConfirmChainedDefault[] = {0x8a, 0x46, 0x3b, 0xc6, 0x46, 0x3a, 0x00, 0x84, 0xc0};
 const size_t kYesNoConfirmBytes = 0xC0;
 
-// The KO window's input handler from its confirm on, a data site never run:
-// the decider (cdecl, al; its two arguments the imm8s pushed at +3 and +1)
-// picks the question's message, the imm32 at +17 when it answers 1, else
-// the imm8 at +24, fetched by the message getter (cdecl; the category, the
-// imm8 at +26, then the id); then the yes/no class's ask on the controller in
-// the global at +37 with the imm8s pushed at +42 (mode), +44 (cancellable),
-// +46 (help), +48 (default), the message, +51 (context) and the callback,
-// the imm32 at +53. Each call is a rel32 after its e8.
+// The KO window's input handler from its confirm on, never run: the decider
+// picks the question's message (kDeadTextIfSet when it answers 1, else
+// kDeadTextOtherwise), and the yes/no class's ask takes the pushed values the
+// offsets below name.
 const char kSigDeadConfirm[] =
     "6a ?? 6a ?? e8 ?? ?? ?? ?? 83 c4 08 84 c0 74 07 68 ?? ?? ?? ?? eb 02 6a ?? 6a ?? e8 ?? ?? ?? ?? 83 c4 08 8b 0d ?? ?? ?? ?? 6a ?? 6a ?? 6a ?? 6a ?? 50 6a ?? 68 ?? ?? ?? ?? e8 ?? ?? ?? ??";
 const size_t kDeadDeciderSecond = 1;
@@ -446,35 +361,32 @@ const size_t kDeadAskContext = 51;
 const size_t kDeadAskCallback = 53;
 const size_t kDeadAskCall = 57;
 
-// The ask that confirm calls (this = the controller), checked at its
-// address: the class's test of a pending question and the 0x1C bytes of
-// arguments it pops on that early answer of 0.
+// The ask that confirm calls, checked at its address: the class's test of a
+// pending question, which answers 0 early.
 // push esi; mov esi,ecx; mov eax,[esi+0x14]; test eax,eax; je +6; xor al,al; pop esi; ret 0x1C
 const uint8_t kYesNoAskHead[] = {0x56, 0x8b, 0xf1, 0x8b, 0x46, 0x14, 0x85, 0xc0, 0x74, 0x06, 0x32, 0xc0, 0x5e,
                                  0xc2, 0x1c, 0x00};
 
-// That callback (cdecl; context, answer), checked at the address the
-// confirm names: on a yes it sets the byte kDeadChosen of the controller in
-// the global between these two, which must be the registry's dead slot.
+// That callback (cdecl; context, answer), checked at the address the confirm
+// names: on a yes it sets byte kDeadChosen of the controller in the global
+// between these two, which must be the registry's dead slot.
 // mov al,[esp+8]; test al,al; je +9; mov eax,[imm32]
 const uint8_t kDeadChosenHead[] = {0x8a, 0x44, 0x24, 0x08, 0x84, 0xc0, 0x74, 0x09, 0xa1};
 // mov byte [eax+0x24],1; ret
 const uint8_t kDeadChosenTail[] = {0xc6, 0x40, 0x24, 0x01, 0xc3};
 
-// The KO window's tick (this = the controller; ret 4): never run. Resolved
-// to check that the controller keeps the countdown's end at +0x1C, in the
-// game clock's seconds, and writes the countdown at +0x20 as (end - now) *
-// 60, which options('dead') reads; past the end, its decider (the rel32
-// after the e8 at kDeadTickDeciderCall, the confirm's own) answering 1
-// keeps the countdown at 0x1E rather than ending it.
+// The KO window's tick, only checked: the countdown's end at +0x1C in game
+// clock seconds, the countdown at +0x20 as (end - now) * 60, which
+// options('dead') reads. Past the end, its decider (the confirm's own)
+// answering 1 holds the countdown at 0x1E.
 const char kSigDeadTick[] =
     "56 8b f1 e8 ?? ?? ?? ?? 8b 4e 1c 3b c8 76 12 2b c8 8d 04 49 8d 04 80 c1 e0 02 89 46 20 5e c2 04 00 6a 00 6a 01 e8 ?? ?? ?? ?? 83 c4 08 84 c0 74 0b c7 46 20 1e 00 00 00 5e c2 04 00";
 const size_t kDeadTickDeciderCall = 37;
 
-// The yes/no class's input routine (its vtable's slot kYesNoInputSlot):
-// its cancel, once inside its first kYesNoInputBytes, tests the question's
-// cancellable byte (game.h's kYesNoCancellable) before the callback is
-// called with the context and no, kYesNoCancelCall bytes after the test.
+// The yes/no class's input routine (vtable slot kYesNoInputSlot): its cancel
+// tests the cancellable byte (game.h's kYesNoCancellable) before calling the
+// callback with no, kYesNoCancelCall bytes later, in its first
+// kYesNoInputBytes.
 // mov cl,[esi+0x39]; test cl,cl; je near
 const uint8_t kYesNoCancelTest[] = {0x8a, 0x4e, 0x39, 0x84, 0xc9, 0x0f, 0x84};
 // mov edx,[esi+0x18]; push 0; push edx; call eax
@@ -483,26 +395,19 @@ const size_t kYesNoCancelCall = 11;
 const size_t kYesNoInputSlot = 6;
 const size_t kYesNoInputBytes = 0x190;
 
-// The number boxes' confirms (this = the controller; the number; ret 4),
-// called: the callback (game.h's kBoxLayouts) with the number and the
-// context, the callback cleared, moneyctr's extra callback, then the window
-// closed through the manager, the imm32 at kBoxConfirmManager[b].
+// The number boxes' confirms (this = the controller; the number), called:
+// they call and clear the callback (moneyctr also its extra one), then close
+// the window.
 const char kSigMoneyConfirm[] =
     "56 8b f1 8b 46 2c 85 c0 74 15 8b 4e 30 8b 54 24 08 51 52 ff d0 83 c4 08 c7 46 2c 00 00 00 00 8b 46 34 85 c0 74 09 ff d0 c7 46 34 00 00 00 00 8b 46 08 6a 01 50 b9 ?? ?? ?? ?? e8";
 const char kSigItemConfirm[] =
     "56 8b f1 8b 46 24 85 c0 74 15 8b 4e 2c 8b 54 24 08 51 52 ff d0 83 c4 08 c7 46 24 00 00 00 00 8b 46 08 6a 01 50 b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 5e c2 04 00";
 const size_t kBoxConfirmManager[kBoxCount] = {54, 38};
 
-// The number boxes' setups (this = the controller), never run or called:
-// resolved to check that each writes its question where kBoxLayouts reads
-// it and only then opens its window, the key at kBoxSetupKey[b] its own,
-// the manager at kBoxSetupManager[b], the open routine's call at
-// kBoxSetupOpen[b]. moneyctr's (initial, max, callback, context; ret 0x10)
-// writes the value, the max (0: the gil the player has), the callback, the
-// context, and zero for its extra callback, the last three in the bytes
-// kMoneySetupTail at +kMoneySetupTailAt; itemctrl's (initial, max, callback,
-// context, preview; ret 0x14) writes nothing for a max of 0 and, for a max
-// of 1, calls the callback with no open.
+// The number boxes' setups, only checked: each must write its question where
+// kBoxLayouts reads it before opening its own window. moneyctr's max 0 means
+// the gil the player has; itemctrl's writes nothing for a max of 0, and for
+// 1 calls the callback with no open.
 const char kSigMoneySetup[] =
     "8b 44 24 04 56 8b f1 89 46 28 8b 44 24 0c 85 c0 75 15 50 50 e8 ?? ?? ?? ?? 83 c4 08 85 c0 74 05 8b 40 04 eb 02 33 c0 8b 4c 24 10 8b 54 24 14 6a 00 89 4e 2c 6a 01 68 ?? ?? ?? ?? b9";
 const char kSigItemSetup[] =
@@ -515,13 +420,10 @@ const uint8_t kMoneySetupTail[] = {0x89, 0x46, 0x24, 0x89, 0x56, 0x30, 0xc7, 0x4
                                    0xe8};
 const size_t kMoneySetupTailAt = 64;
 
-// The routines that ask through a number box (game.h's kAskers, in that
-// order), each found by the callback it asks with: the routine's own entry
-// where its bytes tell it from every other, else the site that asks,
-// pushing the callback as the imm32 at `callback`. Where the bytes hold
-// them, `setup_call` is the call that reaches the box's setup, and
-// `box_global` and `owner_global` the imm32s of the globals of the box's
-// and the asker's own controllers, each its registry slot; 0 for none.
+// The routines that ask through a number box, in game.h's kAskers order,
+// each known by the callback it asks with. `setup_call` reaches the box's
+// setup; `box_global` and `owner_global` are the imm32s of the box's and the
+// asker's controller globals; 0 for none.
 const char kSigAskDeliveryGil[] =
     "8b 44 24 04 85 c0 7e 1d 50 6a 00 6a 00 e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 83 c4 08 50 e8 ?? ?? ?? ?? 84 c0 75 0e a1 ?? ?? ?? ?? 66 c7 80 b4 01 00 00 09 00 8b 0d ?? ?? ?? ?? 6a 00 8b 51 08";
 const char kSigAskHandoverGil[] =
@@ -558,7 +460,7 @@ const char kSigAskShopSell[] =
 struct AskerSite {
     const char* name;
     const char* signature;
-    uint8_t callback;           // 0: the hit is the callback
+    uint8_t callback;           // the pushed callback's imm32; 0: the hit is the callback
     uint8_t setup_call;
     uint8_t box_global;
     uint8_t owner_global;
@@ -583,38 +485,27 @@ const AskerSite kAskerSites[kAskerCount] = {
     {"ask_shop_sell", kSigAskShopSell, 23, 30, 15, 0},
 };
 
-// sortyn's setup (this = the controller; callback, context, help text,
-// title, default yes, y offset; ret 0x18), never run or called: resolved to
-// check that it writes the question where game.h's kSortyn* read it and
-// only then opens its own key, the imm32 at kSortynSetupKey, through the
-// manager at kSortynSetupManager and the call at kSortynSetupOpen. It
-// answers 1 whether the open was refused or not.
+// sortyn's setup, only checked: it must write the question where game.h's
+// kSortyn* read it before opening its own key. It answers 1 whether the open
+// was refused or not.
 const char kSigSortynSetup[] =
     "8b 44 24 04 56 85 c0 8b f1 75 06 32 c0 5e c2 18 00 8b 4c 24 10 8b 54 24 14 89 46 14 8b 44 24 0c 89 46 18 8b 44 24 1c 6a 00 89 4e 1c 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? 89 56 20 89 46 24 e8";
 const size_t kSortynSetupKey = 47;
 const size_t kSortynSetupManager = 52;
 const size_t kSortynSetupOpen = 62;
 
-// sortyn's input routine from its confirm on, never run or called: the
-// confirm on row 1 answers 1, on row 2 0, its cancel 0; the callback called
-// with the context and the answer, cleared, then its own key (the imm32 at
-// kSortynConfirmKey) closed by name through the manager (kSortynConfirmManager,
-// the call at kSortynConfirmClose).
+// sortyn's input routine from its confirm on, only checked: row 1 answers 1,
+// row 2 and the cancel 0; it calls and clears the callback, then closes its
+// own key.
 const char kSigSortynConfirm[] =
     "0f bf 44 24 0c 48 74 0a 48 75 37 c6 44 24 08 00 eb 05 c6 44 24 08 01 8b 46 14 85 c0 74 15 8b 4c 24 08 8b 56 18 51 52 ff d0 83 c4 08 c7 46 14 00 00 00 00 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8";
 const size_t kSortynConfirmKey = 52;
 const size_t kSortynConfirmManager = 57;
 const size_t kSortynConfirmClose = 61;
 
-// The key item list's ask, inside its input routine, never run: evitem01's
-// key (the imm32 at kEvitemAskKey) opened through the manager
-// (kEvitemAskManager, the open routine's call at kEvitemAskOpen), then the
-// setup called on the controller in the global at kEvitemAskGlobal, the
-// call at kEvitemAskSetup, just past the bytes matched. The setup begins
-// with kEvitemSetupHead (the question written at +0x74); at
-// kEvitemSetupPush the push of the callback, its imm32 next, then a call.
-// The callback begins with kEvitemCallbackHead and the key item list's
-// global, its registry slot.
+// The key item list's ask, never run: it opens evitem01, then calls the
+// setup, which writes the question at +0x74 and pushes the callback; the
+// callback reads the key item list's global, its registry slot.
 const char kSigEvitemAsk[] =
     "8b f8 85 ff 0f 8c ?? ?? ?? ?? 57 e8 ?? ?? ?? ?? 83 c4 04 8b ce 85 c0 75 30 e8 ?? ?? ?? ?? 8b ce e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 57";
 const size_t kEvitemAskKey = 42;
@@ -631,10 +522,8 @@ const size_t kEvitemSetupPushAt = 51;
 const uint8_t kEvitemCallbackHead[] = {0x56, 0x8b, 0x35};
 
 // evitem01's input routine from its code test on, never run: the cancel
-// answers 0, the confirm 1 on the list's first row (+0x30 0), the answer
-// pushed as a byte to the callback at +0x64 (cdecl); kEvitemCloseTail then
-// follows the bytes matched: the window closed by instance through the
-// manager, its imm32 next, then the call.
+// answers 0, the confirm 1 on the list's first row (+0x30 0), passed as a
+// byte to the callback at +0x64 (cdecl); then the window closes by instance.
 const char kSigEvitemInput[] =
     "0f bf c1 83 e8 05 74 1b 48 74 11 8b 44 24 0c 50 51 8b ce e8 ?? ?? ?? ?? 5e c2 08 00 c6 44 24 08 00 eb 0c 8b 46 30 85 c0 0f 94 c1 88 4c 24 08 8b 54 24 08 81 e2 ff 00 00 00 52 ff 56 64";
 const size_t kEvitemCloseAt = 61;
@@ -642,23 +531,17 @@ const size_t kEvitemCloseAt = 61;
 const uint8_t kEvitemCloseTail[] = {0x8a, 0x46, 0x70, 0x8b, 0x4e, 0x08, 0x83, 0xc4, 0x04, 0x50, 0x51, 0xb9};
 
 // confyn's input routine, never run: the confirm on row 1 restores the
-// defaults (the routine called at kConfynRestore, cdecl, with 1 in mode 0
-// and 2 in mode 1, nothing in any other), and any confirm closes the window
-// by instance through the manager (kConfynManager, the call at
-// kConfynClose).
+// defaults (cdecl; 1 in mode 0, 2 in mode 1, nothing in any other), and any
+// confirm closes the window by instance.
 const char kSigConfynInput[] =
     "66 83 7c 24 04 05 56 8b f1 75 31 66 83 7c 24 0c 01 75 19 8b 46 14 83 e8 00 74 07 48 75 0e 6a 02 eb 02 6a 01 e8 ?? ?? ?? ?? 83 c4 04 8b 46 08 6a 01 50 b9 ?? ?? ?? ?? e8";
 const size_t kConfynRestore = 36;
 const size_t kConfynManager = 51;
 const size_t kConfynClose = 55;
 
-// bankmenu's open hook, then its begin-close, never run: the hook asks
-// whether the player has Mog Safe 2 (the player data's global, the imm32 at
-// kBankData, handed to the routine called at kBankAsk) and turns row 2 off
-// when not; the begin-close (the jmp at kBankBeginClose) is the clear of
-// the pending callback, kBankClear. The routine asked is kBankAskHead, a
-// call, then kBankAskTail; the one it calls is kBankFlagHead, the same
-// global, kBankFlagMid, the flag's offset in the player data, kBankFlagTail.
+// bankmenu's open hook, then its begin-close, never run: the hook turns row 2
+// off unless the player has Mog Safe 2, a flag in the player data; the
+// begin-close clears the pending callback.
 const char kSigBankOpen[] =
     "a1 ?? ?? ?? ?? 56 50 8b f1 e8 ?? ?? ?? ?? 83 c4 04 85 c0 75 0c 8b 4e 08 6a 02 6a 05 e8 ?? ?? ?? ?? 5e c3 90 90 90 90 90 90 90 90 90 90 90 90 90 e9 ?? ?? ?? ??";
 const size_t kBankData = 1;
@@ -677,24 +560,20 @@ const uint8_t kBankFlagTail[] = {0x8b, 0xc1, 0xc3};
 // mov dword [ecx+0x14],0; ret
 const uint8_t kBankClear[] = {0xc7, 0x41, 0x14, 0x00, 0x00, 0x00, 0x00, 0xc3};
 
-// bankmenu's input routine, never run: row 1 the container 1, any other 9;
-// the callback at +0x14 called with the container and 0 on a confirm, 1 on
-// a cancel (cdecl), then the window closed through its class's close, the
-// call at kBankInputClose to kBankClose.
+// bankmenu's input routine, never run: row 1 is container 1, any other 9; the
+// callback at +0x14 (cdecl) gets the container and 0 on a confirm, 1 on a
+// cancel, then the window closes through its class's close.
 const char kSigBankInput[] =
     "0f bf 44 24 04 56 8b f1 33 c9 66 83 7c 24 0c 01 0f 95 c1 83 e8 05 8d 0c cd 01 00 00 00 74 1d 48 75 30 8b 46 14 85 c0 74 22 6a 01 51 ff d0 83 c4 08 8b ce e8 ?? ?? ?? ?? 5e c2 08 00 8b 46 14";
 const size_t kBankInputClose = 51;
 // mov eax,[ecx]; jmp [eax+0x48]
 const uint8_t kBankClose[] = {0x8b, 0x01, 0xff, 0x60, 0x48};
 
-// maplist's close+reset (this = the controller): its close by name through
-// its class, the rows freed; then its key handler, which reads maplist's own
-// global first, the imm32 at kMaplistGlobal, its registry slot. Inside the
-// key handler's first kMaplistHandlerBytes, once each, each ending in a call
-// of close+reset: kMaplistLeaf, a leaf row's confirm, the callback at +0x6C
-// called with the row's entry (cdecl); kMaplistCloseRow, the confirm of a
-// row whose id is 0x7FFFFFFF; kMaplistTopCancel, the cancel at the top
-// level. kMaplistSubLevel is the cancel's test of the list it shows.
+// maplist's close and reset (this = the controller), then its key handler,
+// which first reads maplist's global, its registry slot. In the handler's
+// first kMaplistHandlerBytes, once each, each ending in a call of the close
+// and reset: a leaf row's confirm (the callback at +0x6C, cdecl, gets the row's entry),
+// the confirm of a row with id 0x7FFFFFFF, and the cancel at the top level.
 const char kSigMaplistClose[] =
     "56 8b f1 8b 06 ff 50 74 6a 01 6a 00 6a 00 8b ce c7 46 34 00 00 00 00 c6 46 49 01 e8 ?? ?? ?? ?? 8b ce 5e e9 ?? ?? ?? ?? 90 90 90 90 90 90 90 90 a1 ?? ?? ?? ?? 56 85 c0 8b f1 0f 84";
 const size_t kMaplistHandler = 48;
@@ -709,20 +588,10 @@ const uint8_t kMaplistCloseRow[] = {0x8b, 0x08, 0x81, 0xf9, 0xff, 0xff, 0xff, 0x
 const uint8_t kMaplistTopCancel[] = {0x66, 0x83, 0x7e, 0x58, 0x00, 0x75, 0x0b, 0xe8};
 // cmp word [esi+0x5C],0; mov ecx,esi; jl
 const uint8_t kMaplistSubLevel[] = {0x66, 0x83, 0x7e, 0x5c, 0x00, 0x8b, 0xce, 0x7c};
-// Every confirm and cancel first needs the player data's global
-// (bankmenu's), the imm32 at kMaplistData. Below the top the key handler
-// steps between levels; each step, once within the same bytes, rebuilds the
-// list through one routine, then puts the list's cursor on a row through
-// the base list's select (this, row, 0). kMaplistDescend is the confirm of a
-// row whose id is below 0: its call reads the row under the cursor
-// (kMaplistCursor, -1 with no window), kMaplistDescendKeep's call is the
-// rebuild and kMaplistDescendSelect's the select of row 0.
-// kMaplistBackMaps, the cancel inside a zone's maps, and kMaplistBackRegion,
-// the cancel inside a region, each call the rebuild, then select the row
-// the step down kept (kMaplistBackSelect, through ecx and through edx). The
-// rebuild empties and frees the rows through the calls close+reset makes at
-// kMaplistSetRows and kMaplistFreeRows (kMaplistRebuildHead,
-// kMaplistRebuildFree).
+// Every confirm and cancel first needs the player data's global (bankmenu's).
+// Each step between levels rebuilds the list, then selects a row (this, row,
+// 0): a descent (a row id below 0) row 0, a step back up the row the descent
+// kept. The rebuild frees the rows through the calls close and reset makes.
 const size_t kMaplistData = 65;
 const size_t kMaplistSetRows = 27;
 const size_t kMaplistFreeRows = 35;
@@ -752,15 +621,10 @@ const uint8_t kMaplistRebuildHead[] = {0x53, 0x56, 0x57, 0x6a, 0x01, 0x6a, 0x00,
 // mov ecx,esi; call
 const uint8_t kMaplistRebuildFree[] = {0x8b, 0xce, 0xe8};
 
-// map0's input routine (this = the controller; the code, the row; ret 8),
-// never run: its cancel, code 6, which the menu input sink hands it on
-// Escape, closes the window by instance (the manager at kMap0Manager, the
-// call at kMap0CloseInstance) and then calls the map's close (kMap0MapClose)
-// with 0 on the controller in mapframe's registry slot (kMap0Frame). The
-// map's close (ret 4) opens with kMapCloseHead. kMapClosesAt bytes in, it
-// closes kMapWindows by name through the manager, kMapClose bytes each:
-// map0's mov ecx,manager; push key; call, then push key; mov ecx,manager;
-// call for the others; then kMapClosesTail, its class's fade-out.
+// map0's input routine, never run: its cancel (code 6, Escape) closes the
+// window by instance, then calls the map's close with 0 on mapframe's
+// controller, which closes kMapWindows by name, kMapClose bytes each from
+// kMapClosesAt, then fades out (kMapClosesTail).
 const char kSigMap0Input[] =
     "0f bf 44 24 04 83 e8 05 74 27 48 0f 85 c3 00 00 00 8b 41 08 6a 01 50 b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 6a 00 e8 ?? ?? ?? ?? c2 08 00";
 const size_t kMap0Manager = 24;
@@ -776,13 +640,10 @@ const int kMapWindowCount = 5;
 // mov edx,[esi]; mov ecx,esi; call [edx+0x50]; pop esi; ret 4
 const uint8_t kMapClosesTail[] = {0x8b, 0x16, 0x8b, 0xce, 0xff, 0x52, 0x50, 0x5e, 0xc2, 0x04, 0x00};
 
-// The GM tell poller, run every frame, never run or called here: the
-// question's result word read through the routine called at kGmTellRead
-// (kGmTellResultRead: +0x548 of the window's controller), 0 waiting, 0xFF or
-// below 0 declined, else the option chosen; the queue's current slot the
-// global at kGmTellSlot. Past the bytes matched, kGmTellTitleRead and the
-// imm32 of the slot's title pointer: the queue's start + kGmTellTitle, a
-// slot every kGmTellSlotBytes, the GM's name its first bytes.
+// The game's GM tell poller, never run by the engine: the question's result
+// word (+0x548 of the window's controller) is 0 while waiting, 0xFF or below
+// 0 when declined, else the option chosen. kGmTellTitleRead's imm32 is the
+// queue's start + kGmTellTitle (game.h).
 const char kSigGmTellPoll[] =
     "8b 0d ?? ?? ?? ?? e8 ?? ?? ?? ?? 66 85 c0 0f 84 ?? ?? ?? ?? 66 3d ff 00 0f 84 ?? ?? ?? ?? 66 85 c0 0f 8c ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 0f bf c0 8d 14 89 c1 e2 04 03 d0 8d 04 89 c1 e0 06";
 const size_t kGmTellRead = 6;
@@ -793,11 +654,11 @@ const uint8_t kGmTellResultRead[] = {0x66, 0x8b, 0x81, 0x48, 0x05, 0x00, 0x00, 0
 // mov edx,[edx*4+imm32]
 const uint8_t kGmTellTitleRead[] = {0x8b, 0x14, 0x95};
 
-// mp_dead's input routine from its code test on, never run: the confirm on
-// row 1 writes 1 at +0x24, on any other row 2; the cancel hands the focus to
-// the chat logs. Within kMpDeadTickBytes after the hit, once, its tick's
-// kMpDeadTick: the countdown at +0x20 from the deadline at +0x1C, and past
-// the deadline 2 at +0x24, the countdown 0 and the window closed.
+// mp_dead's input routine from its code test on, never run: the confirm
+// writes 1 at +0x24 on row 1, else 2; the cancel hands the focus to the chat
+// logs. Its tick (kMpDeadTick) writes the countdown at +0x20 from the
+// deadline at +0x1C; past it, 2 at +0x24, the countdown 0, and the window
+// closed.
 const char kSigMpDeadInput[] =
     "83 e8 05 74 1d 48 75 33 8b 0d ?? ?? ?? ?? b8 01 00 00 00 88 41 59 8b 15 ?? ?? ?? ?? 88 42 59 c2 08 00 b8 01 00 00 00 66 39 44 24 08 75 06 89 41 24 c2 08 00 c7 41 24 02 00 00 00";
 const size_t kMpDeadTickBytes = 0x100;
@@ -807,10 +668,8 @@ const uint8_t kMpDeadTick[] = {0x8b, 0x4e, 0x1c, 0x3b, 0xc8, 0x76, 0x12, 0x2b, 0
 
 // ok's input routine, never run: once acknowledged (+0x25C 1) it takes
 // nothing; its confirm marks the window busy, writes 1 at +0x25C, calls the
-// callback at +0x14 with the context at +0x18 when one is set (cdecl) and
-// closes the window by instance through the manager (the imm32 at
-// kOkManager, the call at kOkClose). Within its first kOkInputBytes, once,
-// kOkCloseAgain: the window closed again when +0x258 is set.
+// callback at +0x14 (cdecl) with the context at +0x18 when one is set, and
+// closes the window by instance, again when +0x258 is set.
 const char kSigOkInput[] =
     "56 8b f1 83 be 5c 02 00 00 01 74 58 66 83 7c 24 08 05 75 50 8b 46 08 c6 40 5d 01 c7 86 5c 02 00 00 01 00 00 00 e8 ?? ?? ?? ?? 8b 46 14 85 c0 74 19 8b 4e 18 51 ff d0 8b 56 08 83 c4 04 b9";
 const size_t kOkManager = 62;
@@ -819,23 +678,13 @@ const size_t kOkInputBytes = 0x68;
 // mov al,[esi+0x258]; test al,al; je
 const uint8_t kOkCloseAgain[] = {0x8a, 0x86, 0x58, 0x02, 0x00, 0x00, 0x84, 0xc0, 0x74};
 
-// mogdoor's input routine (this = the controller; code, row; ret 8), never
-// run or called: the floor read called first (kDoorFloorCall), the codes'
-// jump table in the code (the imm32 at kDoorCodeTable; code 5's entry the
-// bytes past the jump), then the confirm: the gate called with the imm8s pushed at
-// kDoorGateFirst and kDoorGateSecond (the call at kDoorGateCall), on al 0
-// nothing; ebx 1, and on the list of areas (+0x18) kDoorAreaRow at
-// kDoorAreaRowAt with the Mog Garden's zone next (an imm16), then
-// kDoorGardenRow and, further on, kDoorAreaExit: the Mog Garden row writes
-// 0x7F at +0x15 only with +0x19 set, any other row its place. At the top
-// (kDoorTopRow at kDoorTopRowAt, its rows' jump table, in the code, the
-// imm32 after it)
-// row 1 writes 0xFF and closes the window by instance, row 2 writes 0, row
-// 3 with +0x1A set 0x7D plus the floor read's nonzero, row 4 opens the list
-// of areas. Within its first kDoorInputBytes, once, kDoorTail: an exit at
-// +0x15 from 0 up puts the routine at the imm32 kDoorTailOpened past it at
-// the Mog House door actor's +0x880, opens the door (the call at
-// kDoorTailOpen) and sets the bytes at kDoorTailBytes to bl, 1.
+// mogdoor's input routine, never run. Its confirm does nothing while the gate
+// answers al 0. The exit byte +0x15: 0xFF stays (top row 1, which closes the
+// window; row 4, which opens the list of areas, +0x18), 0 goes back (row 2),
+// 0x7D plus the floor read's nonzero (row 3, with +0x1A set), 0x7F the Mog
+// Garden (only with +0x19 set), else the area's place in the list. An exit of
+// 0 or more sets the door actor's +0x880 routine, opens the door and writes
+// bl, 1 at kDoorTailBytes.
 const char kSigDoorInput[] =
     "53 56 8b f1 e8 ?? ?? ?? ?? 0f bf 44 24 0c 48 83 f8 08 0f 87 ?? ?? ?? ?? ff 24 85 ?? ?? ?? ?? 6a 00 6a 04 e8 ?? ?? ?? ?? 83 c4 08 84 c0 0f 84 ?? ?? ?? ?? 8a 46 18 bb 01 00 00 00 84 c0 74 3b";
 const size_t kDoorFloorCall = 4;
@@ -891,22 +740,19 @@ const size_t kDoorTailOpenAt = 39;
 const size_t kDoorTailOpen = 44;
 const size_t kDoorTailBytes[3] = {49, 55, 61};
 const size_t kDoorTailEndAt = 67;
-// The floor read (cdecl): mov eax,[imm32] (the player data's global), then
-// kDoorFloorMid, the word's offset, kDoorFloorTail.
+// The floor read (cdecl): the player data's global, then kDoorFloorMid, the
+// word's offset, kDoorFloorTail.
 const uint8_t kDoorFloorMid[] = {0x85, 0xc0, 0x75, 0x01, 0xc3, 0x33, 0xc9, 0x66, 0x8b, 0x88};
 const uint8_t kDoorFloorTail[] = {0x8b, 0xc1, 0xc3};
-// The routine the exit puts at the door actor's +0x880: the player's actor
-// through kDoorOpenedActor's globals, then mogdoor's controller through its
-// global, its +0x15 pushed to the call that sends the exit.
+// The routine the exit puts at the door actor's +0x880: it pushes mogdoor's
+// +0x15 to the call that sends the exit.
 const uint8_t kDoorOpenedHead[] = {0x0f, 0xbf, 0x05};
 const uint8_t kDoorOpenedActor[] = {0x8b, 0x0c, 0x85};
 const uint8_t kDoorOpenedTest[] = {0x85, 0xc9, 0x74, 0x0f, 0x8b, 0x15};
 const uint8_t kDoorOpenedSend[] = {0x8a, 0x42, 0x15, 0x50, 0xe8};
-// mogdoor's vtable, the one in the image's read-only data naming the input
-// routine at slot kDoorInputSlot: its open hook (slot 1), from the player
-// data's global, kDoorOpenRange with the last nation it takes next (an
-// imm8), kDoorOpenList with the table of lists next (an imm32), then
-// kDoorOpenCount; within its first kDoorOpenBytes, once, kDoorOpenTop.
+// mogdoor's vtable is the one naming the input routine at kDoorInputSlot. In
+// its open hook, kDoorOpenRange is followed by the last nation it takes (an
+// imm8), kDoorOpenList by the table of lists (an imm32).
 const size_t kDoorInputSlot = 6;
 const size_t kDoorOpenSlot = 1;
 const size_t kDoorDrawSlot = 4;
@@ -922,15 +768,13 @@ const size_t kDoorOpenListAt = 20;
 const size_t kDoorOpenTable = 28;
 const size_t kDoorOpenCountAt = 32;
 const size_t kDoorOpenBytes = 0x60;
-// Its tick (slot 10; ret 4): push ecx; push ebx; push esi; mov esi,ecx;
-// call; within kDoorTickBytes it writes +0x19 once and +0x1A twice.
+// Its tick writes +0x19 once and +0x1A twice within kDoorTickBytes.
 const uint8_t kDoorTickHead[] = {0x51, 0x53, 0x56, 0x8b, 0xf1, 0xe8};
 const uint8_t kDoorTickGarden[] = {0x88, 0x46, 0x19};
 const uint8_t kDoorTickFloor[] = {0x88, 0x46, 0x1a};
 const size_t kDoorTickBytes = 0x90;
-// Its draw (slot 4): the condition the back row's text depends on (the call
-// before kDoorDrawCondition), then the getter called with each text, once
-// each within kDoorDrawBytes; the back row's two texts by that condition.
+// Its draw: the back row's text depends on the call before
+// kDoorDrawCondition; the message getter is called with each text.
 const uint8_t kDoorDrawCondition[] = {0x8b, 0x4e, 0x08, 0x8a, 0xd8};
 const uint8_t kDoorDrawTitle[] = {0x55, 0x6a, 0x45, 0x6a, 0x09, 0xe8};
 const uint8_t kDoorDrawStay[] = {0x55, 0x68, 0xb8, 0x00, 0x00, 0x00, 0x6a, 0x09, 0xe8};
@@ -940,11 +784,8 @@ const uint8_t kDoorDrawList[] = {0x55, 0x68, 0xb9, 0x00, 0x00, 0x00, 0x6a, 0x09,
 const uint8_t kDoorDrawArea[] = {0x51, 0x6a, 0x14, 0xe8};
 const size_t kDoorDrawBytes = 0x290;
 
-// The door's handler from its open on, never run or called: the nation
-// written at +0x14 and +0x1B on the controller in mogdoor's registry slot
-// (the imm32 at kDoorHandlerGlobal), then mogdoor's key (kDoorHandlerKey)
-// opened through the manager (kDoorHandlerManager) and the open routine
-// (the call at kDoorHandlerOpen).
+// The door's handler from its open on, never run: it writes the nation at
+// +0x14 and +0x1B of mogdoor's controller, then opens mogdoor.
 const char kSigDoorHandler[] =
     "e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? 88 41 14 88 59 1b b9 ?? ?? ?? ?? e8";
 const size_t kDoorHandlerGlobal = 7;
@@ -952,19 +793,12 @@ const size_t kDoorHandlerKey = 16;
 const size_t kDoorHandlerManager = 27;
 const size_t kDoorHandlerOpen = 31;
 
-// The NPC dialogue boxes' input routine (this = the controller; code, row;
-// ret 8), slot 6 of both boxes' vtables, never run or called: the handler
-// called (kDialogueHandlerCall), then again (kDialogueHandlerAgain, past
-// kDialogueAgain) when the controller is one of the boxes in the globals at
-// kDialogueGlobals, rem4line's and rem4li2's registry slots. Within the
-// handler's first kDialogueHandlerBytes, once each: kDialogueDispatchCall,
-// the code handed to the text dispatch on the box's text object; and
-// kDialogueCancelTest, code 6 past the test of the cancel-allowed byte
-// (kDialogueGateHead, its imm32, kDialogueGateTail before it), then around
-// a sound: the box's lines handed back to the chat log (kDialogueRelease),
-// its text object cleared (kDialogueClear), the event's wait flag set to 2
-// (kDialogueWait, its imm32, 2) and the box closed by instance through the
-// manager (kDialogueClose, its imm32, then the call).
+// The NPC dialogue boxes' input routine (slot 6 of both vtables), never run:
+// it calls the handler, again for a box in kDialogueGlobals. The handler
+// hands the code to the box's text object's dispatch; its cancel (code 6,
+// with the cancel-allowed byte 1) hands the box's lines back to the chat log,
+// clears the text object, sets the event's wait flag to 2 and closes the box
+// by instance.
 const char kSigDialogueInput[] =
     "53 8b 5c 24 08 56 57 8b 7c 24 14 8b f1 57 53 e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 3b f1 74 0a 8b 0d ?? ?? ?? ?? 3b f1 75 07";
 const size_t kDialogueHandlerCall = 15;
@@ -993,22 +827,21 @@ const size_t kDialogueReleaseAt = 11;
 const size_t kDialogueClearAt = 26;
 const size_t kDialogueWaitAt = 34;
 const size_t kDialogueCloseAt = 41;
-// The text dispatch (this = a text object; the code; ret 4): its gate
-// called on it first, then, past that call, on the other dialogue box's
-// text object (kShapeDialogueTwin: `this` compared with the global naming
-// one box's text object, hole 0, then the other's, hole 1 and again 3, the
-// gate called at holes 2 and 4). The gate, on a page that waits for a key
-// (+0x20 bit 0) and code 5, calls the advance; the advance shows the next
-// page through the box's show (the call after kDialogueAdvanceShow), which
-// counts the page's lines at +0x4E, each line's codes at +4 of a line
-// object, their count at +0x208, and adds each to the box's list at +0x14
-// (kDialogueShowFields, once each within kDialogueShowBytes). The clear
-// begins kDialogueClearHead.
+// The text dispatch (this = a text object; the code) calls its gate on it,
+// then on the other box's text object (kShapeDialogueTwin holes: 0 one box's
+// text object global, 1 and 3 the other's, 2 and 4 the gate). The gate, on
+// a page waiting for a key (+0x20 bit 0) and code 5, calls the advance, then
+// the page-turn sound. The advance's show counts the page's lines at +0x4E,
+// each line's codes at +4 of a line object with their count at +0x208, and
+// adds each line to the box's list at +0x14.
 const uint8_t kDialogueDispatchHead[] = {0x56, 0x57, 0x8b, 0x7c, 0x24, 0x0c, 0x8b, 0xf1, 0x57, 0xe8};
 const char kShapeDialogueTwin[] =
     "8b 0d ?? ?? ?? ?? 3b f1 75 11 8b 0d ?? ?? ?? ?? 57 e8 ?? ?? ?? ?? 5f 5e c2 04 00 3b 35 ?? ?? ?? ?? 75 06 57 e8 ?? ?? ?? ?? 5f 5e c2 04 00";
 const uint8_t kDialogueGateHeadBytes[] = {0xf6, 0x41, 0x20, 0x01, 0x74, 0x12, 0x66, 0x83, 0x7c, 0x24, 0x04, 0x05,
                                           0x75, 0x0a, 0xe8};
+// push '0015'
+const uint8_t kDialogueSoundName[] = {0x68, 0x30, 0x30, 0x31, 0x35};
+const size_t kDialogueSoundBytes = 0x20;
 const uint8_t kDialogueAdvanceShow[] = {0x8b, 0x4e, 0x30, 0x50, 0xe8};
 const size_t kDialogueAdvanceBytes = 0xC0;
 const uint8_t kDialogueShowLines[] = {0x66, 0xc7, 0x43, 0x4e, 0x00, 0x00};
@@ -1018,14 +851,9 @@ const uint8_t kDialogueShowCodes[] = {0x8d, 0x55, 0x04, 0x68, 0x01, 0x01, 0x00, 
 const uint8_t kDialogueShowAdd[] = {0x8d, 0x4b, 0x14, 0xe8};
 const size_t kDialogueShowBytes = 0x180;
 const uint8_t kDialogueClearHead[] = {0x51, 0x53, 0x56, 0x8b, 0xf1, 0x33, 0xdb, 0x8b, 0x46, 0x1c, 0x3b, 0xc3};
-// The boxes' tick (slot 10 of every vtable naming the input routine at
-// slot 6), never run or called. Within its first kDialogueTickBytes, once
-// each: kDialogueClick, the key test called (0x3E, 0x8B, 5, -1), its al
-// tested past the return (kDialogueClickAfter); kDialogueAuto, +0x60 read;
-// kDialogueTimed, the timer's al tested and the page test called (its
-// bytes kDialogueLastPage) on the text object, the timer called before it
-// (kDialogueTimerCall), the timer beginning kDialogueTimerHead and reading
-// the s64 at +0x28 at kDialogueTimerAt (kDialogueTimerCount).
+// The boxes' tick, only checked, once each in its first kDialogueTickBytes:
+// the key test, the read of +0x60, and the timer (an s64 count at +0x28 of
+// the text object) before the last-page test.
 const size_t kDialogueTickSlot = 10;
 const size_t kDialogueTickBytes = 0x180;
 const uint8_t kDialogueClick[] = {0x6a, 0xff, 0x6a, 0x05, 0x68, 0x8b, 0x00, 0x00, 0x00, 0x6a, 0x3e, 0xe8};
@@ -1041,23 +869,16 @@ const uint8_t kDialogueTimerCount[] = {0x8b, 0x4e, 0x28, 0x99, 0x2b, 0xc8, 0x89,
                                        0xca};
 const size_t kDialogueTimerAt = 19;
 
-// The text-entry windows' input routines (this = the controller; code,
-// row; ret 8), never run or called; what each reply does is read out of
-// them. A shape is the game's bytes with ?? holes, compared where the code
-// holds them (signatures.h's shape_is) or found once within a span
-// (shape_once); its holes are numbered in order.
+// The text-entry windows' input routines, never run; what each reply does is
+// read out of them. A shape is the game's bytes with ?? holes, compared where
+// the code holds them (shape_is) or found once within a span (shape_once);
+// its holes are numbered in order.
 //
-// stringdl's routine hands the code to its handler for the mode: the slot's
-// at kStringdlSlotCall, the name's at kStringdlNameCall; with a reply
-// written, kShapeStringdlTail raises the outgoing box through the manager's
-// focus (holes: delivery's registry slot, the manager, the focus by a
-// jump). The name's handler commits on row 2 (kShapeStringdlNamed: the
-// field's end when it edits, then its text into +0x58 and +0x15C = 1; holes
-// the end and the field's read) and writes +0x15C = 2 on its cancel
-// (kStringdlCancelWrite); the slot's writes 3 and 4 (kStringdlSlotReplies). The
-// end clears +0x164 and turns the game's text entry off
-// (kShapeStringdlStop; holes the entry's global, its deactivate, the global
-// again and its attach).
+// stringdl's routine hands the code to the slot's or the name's handler; with
+// a reply written, it raises the outgoing box through the manager's focus.
+// The name's handler commits on row 2 (the text into +0x58, +0x15C = 1) and
+// writes +0x15C = 2 on its cancel; the slot's writes 3 and 4. The field's end
+// clears +0x164 and takes the line from the field holding it.
 const char kSigStringdlInput[] =
     "56 8b f1 0f be 46 14 48 74 16 48 75 24 8b 44 24 0c 8b 4c 24 08 50 51 8b ce e8 ?? ?? ?? ?? eb 11 8b 54 24 0c 8b 44 24 08 52 50 8b ce e8 ?? ?? ?? ?? 66 83 be 5c 01 00 00 00 5e 74 23";
 const size_t kStringdlSlotCall = 0x19;
@@ -1075,20 +896,11 @@ const uint8_t kStringdlSlotReplies[2][9] = {{0x66, 0xc7, 0x81, 0x5c, 0x01, 0x00,
                                              {0x66, 0xc7, 0x81, 0x5c, 0x01, 0x00, 0x00, 0x04, 0x00}};
 const size_t kStringdlSlotBytes = 0x60;
 
-// comment's routine ends the field at kCommentStopCall on its way to the
-// line above; its Escape (kShapeCommentEscape) ends the field keeping the
-// line, then closes the window by instance through the manager (holes: the
-// end, the manager, close by instance). The end (kShapeCommentStop) takes
-// the field's 40 bytes into the line of the message's slot +0x16 the field
-// edits (+0x14, 0..2), then the line's sanitize (kShapeCommentSanitize, the
-// line onto itself) and trim (kShapeCommentTrim), each once within
-// kCommentStopBytes. The begin-close (slot 2 of the vtable naming the
-// routine at slot 6) ends a field still open keeping its line
-// (kShapeCommentClose, its hole the end). The open hook (slot 1) starts the
-// field on line 0 (kShapeCommentOpen, its hole the start); the start
-// (kShapeCommentStart, this = the controller; the line; ret 4) trims the
-// line with the end's trim (kShapeCommentStartTrim) and writes the line it
-// edits to +0x14 (kCommentStartLine), each once within kCommentStartBytes.
+// comment's Escape ends the field keeping the line, then closes the window by
+// instance; its begin-close ends a field still open, keeping its line. The
+// field's end takes its 40 bytes into line +0x14 (0..2) of message slot
+// +0x16, then sanitizes and trims it. The field's start (this = the
+// controller; the line) trims the line and writes it to +0x14.
 const char kSigCommentInput[] =
     "0f bf 44 24 04 48 56 83 f8 11 8b f1 0f 87 ?? ?? ?? ?? 33 c9 8a 88 ?? ?? ?? ?? ff 24 8d ?? ?? ?? ?? 6a 01 8b ce e8 ?? ?? ?? ?? 8a 46 15 fe c8 88 46 15";
 const size_t kCommentStopCall = 0x25;
@@ -1117,25 +929,12 @@ const char kShapeCommentStartTrim[] =
 // mov [esi+0x14],bl
 const uint8_t kCommentStartLine[] = {0x88, 0x5e, 0x14};
 
-// msgline's routine ends the field keeping its text at kMsglineStopCall,
-// then commits (kShapeMsglineCommit, right after): nothing sent for an
-// empty text or with the player's data global NULL (hole 1), else a jump
-// through the mode's table (hole 4). The modes that write a message, each
-// its case: 0 kShapeMsglineTell (holes: the POL interface's global, the
-// sent callback, the message getter, the global again, its number, the
-// sender), 1 kShapeMsglineReply (the callback, the getter, the sender), 2
-// kShapeMsglineShort (the clock's text, the global, the callback, its
-// number, the sender), 5 kShapeMsglineAnswer (the second callback, the
-// getter, the sender) and 7 kShapeMsglineDated (the clock's text twice, the
-// second callback, the sender). Then kShapeMsglineSent: a sender's 0 marks
-// the sending indicator (holes: its owner's global, the mark) and sets the
-// busy byte (hole 2) before msgline's close by name (holes 3 to 5); its
-// Escape (kShapeMsglineCancel) ends the field dropping its text, then closes
-// it the same way. The end (kShapeMsglineStop) takes the field's shown text
-// into +0x53, 300 bytes, and zeroes +0x17E. The open hook (slot 1 of the
-// vtable naming the routine) starts the field (kShapeMsglineStart), which
-// gives modes 2 and 7 the short field (kShapeMsglineField,
-// kMsglineFieldLong, kMsglineFieldShort).
+// msgline's commit sends nothing for an empty text or a NULL player data
+// global, else the mode's case sends it. A sender's 0 marks the sending
+// indicator and sets the busy byte before msgline's close by name; its Escape
+// drops the text and closes the same way. The field's end takes its shown
+// text into +0x53 (300 bytes) and zeroes +0x17E; the field is short in modes
+// 2 and 7.
 const char kSigMsglineInput[] =
     "0f bf 44 24 04 81 ec 44 01 00 00 83 c0 fd 83 f8 0f 53 56 57 8b f1 0f 87 ?? ?? ?? ?? 33 c9 8a 88 ?? ?? ?? ?? ff 24 8d ?? ?? ?? ?? 6a 01 8b ce e8 ?? ?? ?? ?? 8d 5e 53";
 const size_t kMsglineStopCall = 0x2F;
@@ -1170,13 +969,10 @@ const char kShapeMsglineField[] =
 const uint8_t kMsglineFieldLong[] = {0x68, 0x2c, 0x01, 0x00, 0x00, 0x6a, 0x08};
 const uint8_t kMsglineFieldShort[] = {0x6a, 0x0f, 0x6a, 0x07};
 
-// scname's routine works only while the player search's global (its imm32
-// at +1) is set; it ends the field keeping the name at kScnameStopCall. Row
-// 2 (kShapeScnameSearch) clears the search's criteria at +0x5C, names it
-// +0x18, starts the search (holes: the clear, the name, the search's global,
-// the start), then closes scname and scsibori by name through the manager
-// (holes 4 to 9). The end (kShapeScnameStop) takes the field's text into
-// +0x18 when told to keep it.
+// scname's routine works only while the player search's global is set. Row 2
+// clears the search's criteria at +0x5C, names them from +0x18, starts the
+// search, then closes scname and scsibori. The field's end takes its text
+// into +0x18 when told to keep it.
 const char kSigScnameInput[] =
     "a1 ?? ?? ?? ?? 57 85 c0 8b f9 0f 84 ?? ?? ?? ?? 0f bf 4c 24 08 83 c1 fd 83 f9 0e 0f 87 ?? ?? ?? ?? 33 d2 8a 91 ?? ?? ?? ?? ff 24 95 ?? ?? ?? ?? 66 83 7c 24 0c 01 0f 85 ?? ?? ?? ?? 6a 01";
 const size_t kScnameSearchGlobal = 1;
@@ -1187,18 +983,12 @@ const char kShapeScnameSearch[] =
 const char kShapeScnameStop[] =
     "56 8b f1 8b 4e 14 85 c9 74 33 8a 44 24 08 84 c0 74 14 6a 00 e8 ?? ?? ?? ?? 8d 56 18";
 
-// link11's routine ends a field keeping it at kLink11StopCall. Its cancel
-// with no field (kShapeLink11Cancel) closes link11, opens link6 and raises
-// link5's window (holes: link11's key, the manager, close by name, link6's
-// key, the manager, the open, link5's registry slot, the manager, the
-// focus by a jump). Row 5 (kShapeLink11Create) buzzes on an empty name,
-// asks whether the second linkshell slot is taken (hole 1), takes link5's
-// selected row (holes 2 and 3), encodes the name +0x34 (hole 4), sends the
-// request with the colors +0x30..+0x32 (hole 5) and, queued, writes the
-// item's word (hole 6) and the slot into the request's bytes (holes 7 to
-// 10) and sets link5's +0x65 bit 0 (hole 11 its slot); the cancel's closes
-// follow. The end (kShapeLink11Stop) takes the name field's text into +0x34
-// whatever it is told.
+// link11's cancel with no field closes link11, opens link6 and raises link5's
+// window. Row 5 buzzes on an empty name (+0x34), asks whether the second
+// linkshell slot is taken, takes link5's selected row, encodes the name,
+// sends the request with the colors +0x30..+0x32 and, queued, writes the
+// item's word and the slot into the request's bytes and sets link5's +0x65
+// bit 0. The field's end takes the name into +0x34 whatever it is told.
 const char kSigLink11Input[] =
     "55 56 8b f1 57 8b 46 14 85 c0 74 14 8b 7e 08 6a 00 50 8b cf e8 ?? ?? ?? ?? 8b cf e8 ?? ?? ?? ?? 8b 46 14 66 8b 4c 24 10 83 f8 01 75 47";
 const size_t kLink11StopCall = 0x69;
@@ -1210,10 +1000,9 @@ const char kShapeLink11Create[] =
 const char kShapeLink11Stop[] =
     "56 8b f1 8b 46 14 83 f8 01 74 18 7e 4f 83 f8 04 7f 4a 8a 4c 24 08 84 c9 75 42 8a 4e 33 88 4c 30 2e eb 39 8b 4e 2c 6a 00 e8 ?? ?? ?? ?? 8d 56 34";
 
-// passinpu's routine ends the field keeping its text at kPassinpuStopCall;
-// its open hook (slot 1 of the vtable naming the routine) starts the field
-// (kShapePassinpuOpen, hole 2 the start). The end (kShapePassinpuStop)
-// takes the field's text into +0x24 when told to keep it.
+// passinpu's field's end takes its text into +0x24 when told to keep it. The
+// field's start, from its open hook, ends in the text entry manager's unbind,
+// then its bind of the field (holes as kShapeStringdlStop's).
 const char kSigPassinpuInput[] =
     "0f bf 44 24 04 83 c0 fd 56 83 f8 0e 8b f1 77 76 33 c9 8a 88 ?? ?? ?? ?? ff 24 8d ?? ?? ?? ?? 6a 01 8b ce e8 ?? ?? ?? ?? 8b 46 1c 85 c0 74 0d";
 const size_t kPassinpuStopCall = 0x23;
@@ -1222,13 +1011,16 @@ const char kShapePassinpuOpen[] =
     "56 8b f1 6a 01 6a 10 8b 4e 08 e8 ?? ?? ?? ?? 8b 46 14 8b 4e 08 85 c0 75 19 6a 01 e8 ?? ?? ?? ?? 8b ce e8 ?? ?? ?? ??";
 const char kShapePassinpuStop[] =
     "8a 44 24 04 56 84 c0 8b f1 74 17 8b 4e 38 6a 00 e8 ?? ?? ?? ?? 8d 56 24";
+const size_t kPassinpuBindAt = 0x7D;
+const char kShapePassinpuBind[] =
+    "8b 0d ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b 56 38 8b 0d ?? ?? ?? ?? 52 e8 ?? ?? ?? ?? 5f 5e c3";
 
 // The key test (cdecl; 0x3E, action, query, slot; al), hooked for the
-// dialogue boxes' left-button test: no signature of its own, it is the
-// routine the UI update calls at kUpdateKeyTestCall. Its prologue, push
-// ecx then mov al,[imm32], reads the input mute byte, the imm32 read out
-// of the routine (on a patched site, out of the daemon's saved original);
-// kKeyTestBody follows it, nothing relative before its jne.
+// dialogue boxes' left-button test. It has no signature: it is the routine
+// the UI update calls at kUpdateKeyTestCall. Its prologue reads the input
+// mute byte, whose imm32 is read out of the routine (on a patched site, the
+// daemon's saved original); kKeyTestBody follows, nothing relative before
+// its jne.
 const size_t kUpdateKeyTestCall = 20;
 const uint8_t kKeyTestHead[] = {0x51, 0xa0};
 const uint8_t kKeyTestBody[] = {0x56, 0x8b, 0x74, 0x24, 0x14, 0x3c, 0x01, 0x57, 0x75, 0x09};
@@ -1274,12 +1066,11 @@ const size_t kPartyClearFlag = 2;
 const uint32_t kDockMaskTable[5] = {0x1000, 0x2000, 0x4000, 0x10000000, 0};
 
 // The prologue is the run of whole, position-independent instructions the
-// daemon relocates; each lies inside the exact bytes of its signature, but
-// for `manager_imm`: an imm32 in it that must be the manager's address, which
-// the engine writes into the signature before it scans. `callee_pops` is 1
-// for a routine that pops its own arguments (thiscall, stdcall), 0 for one
-// whose caller does (cdecl). A site with no signature is found from another
-// (the key test, kUpdateKeyTestCall), its prologue read out of the routine.
+// daemon relocates, inside the signature's exact bytes but for `manager_imm`,
+// an imm32 the engine writes with the manager's address before it scans.
+// `callee_pops`: 1 for thiscall and stdcall, 0 for cdecl. A site with no
+// signature (the key test) is found from another, its prologue read out of
+// the routine.
 struct SiteSpec {
     const char* name;
     const char* signature;
@@ -1316,11 +1107,8 @@ const SiteSpec kSites[kSiteCount] = {
     {"primitive_draw", kSigPrimitiveDraw, 7, 16, 1, &hook_primitive_pre, NULL, 0},
 };
 
-// What resolve_asked() and resolve_dialogue() take from the resolution
-// before them: the image's code and its read-only data sections, the
-// inventory and the registry's table, the manager, the open routine, close
-// by name, the game's message getter (the KO window's confirm's), the key
-// test and the cancel-allowed byte.
+// What resolve_asked() and resolve_dialogue() take from the resolution before
+// them; `message` is the game's message getter.
 const int kDataSections = 4;
 
 struct AskedInputs {
@@ -1448,10 +1236,20 @@ inline int asked_vtables(const AskedInputs& in, const uint8_t* routine, size_t s
     return found;
 }
 
-// A vtable's routine at `slot`, when it is in the image's code.
+// A vtable's routine at `slot`, when the slot lies in the data section that
+// holds the vtable and the routine in the image's code.
 inline const uint8_t* asked_slot_routine(const AskedInputs& in, const uint8_t* vtable, size_t slot) {
-    const uint8_t* fn = rdptr(vtable, 4 * slot);
-    return fn >= in.text && fn < in.text + in.size ? fn : NULL;
+    for (int k = 0; k < in.data_count; ++k) {
+        const uint8_t* base = in.data[k];
+        if (vtable >= base && vtable < base + in.data_size[k]) {
+            if (static_cast<size_t>(vtable - base) + 4 * (slot + 1) > in.data_size[k]) {
+                return NULL;
+            }
+            const uint8_t* fn = rdptr(vtable, 4 * slot);
+            return fn >= in.text && fn < in.text + in.size ? fn : NULL;
+        }
+    }
+    return NULL;
 }
 
 // `bytes` once within the first `span` bytes from `at`, into *found.
@@ -2037,14 +1835,18 @@ inline bool resolve_dialogue(const AskedInputs& in, const uint8_t* close_instanc
         ? asked_target(in, dispatch + sizeof(kDialogueDispatchHead) - 1, 0xE8) : NULL;
     const uint8_t* advance = gate && asked_bytes(in, gate, kDialogueGateHeadBytes, sizeof(kDialogueGateHeadBytes))
         ? asked_target(in, gate + sizeof(kDialogueGateHeadBytes) - 1, 0xE8) : NULL;
+    const uint8_t* sound = advance ? asked_target(in, gate + sizeof(kDialogueGateHeadBytes) + 4, 0xE8) : NULL;
+    const uint8_t* sound_name = NULL;
     const uint8_t* show_call = NULL;
     const uint8_t* show = advance && asked_once(in, advance, kDialogueAdvanceBytes, kDialogueAdvanceShow,
         sizeof(kDialogueAdvanceShow), &show_call) ? asked_target(in, show_call + sizeof(kDialogueAdvanceShow) - 1, 0xE8)
         : NULL;
     if (!release || !clear || !asked_bytes(in, clear, kDialogueClearHead, sizeof(kDialogueClearHead)) || !show
+        || !asked_once(in, sound, kDialogueSoundBytes, kDialogueSoundName, sizeof(kDialogueSoundName), &sound_name)
         || !asked_data(in, s.wait, 1)) {
         snprintf(why, len, "dialogue_input: the text dispatch, its gate on a page waiting for a key, its advance, the"
-            " box's show or the text object's clear is not the routine the engine knows (client patched?)");
+            " page-turn sound after it, the box's show or the text object's clear is not the routine the engine knows"
+            " (client patched?)");
         return false;
     }
     Shape twin;
@@ -2110,7 +1912,9 @@ inline bool resolve_dialogue(const AskedInputs& in, const uint8_t* close_instanc
             " object where the engine does (client patched?)");
         return false;
     }
-    memcpy(&s.dispatch, &dispatch, sizeof(s.dispatch));
+    s.dispatch = dispatch;
+    memcpy(&s.advance, &advance, sizeof(s.advance));
+    memcpy(&s.page_sound, &sound, sizeof(s.page_sound));
     memcpy(&s.release, &release, sizeof(s.release));
     memcpy(&s.clear, &clear, sizeof(s.clear));
     s.click_return = reinterpret_cast<uintptr_t>(click + sizeof(kDialogueClick) + 4);
@@ -2132,9 +1936,9 @@ inline const uint8_t* text_vtable_routine(const AskedInputs& in, const uint8_t* 
     return asked_slot_routine(in, tables[0], slot);
 }
 
-// The text-entry windows' routines and data (signatures.h's kSig*Input and
-// kShape*), every routine named by more than one site agreeing; `close_instance`
-// the routine close by name ends in, `focus` checked against link11's.
+// The text-entry windows' routines and data, every routine named by more than
+// one site agreeing; `close_instance` is the routine close by name ends in,
+// `focus` checked against link11's.
 inline bool resolve_text(const AskedInputs& in, const uint8_t* close_instance, TextSites* out, char* why,
                          size_t len) {
     TextSites s;
@@ -2171,11 +1975,17 @@ inline bool resolve_text(const AskedInputs& in, const uint8_t* close_instance, T
     }
     const uint8_t* stop = shape_target(in, b, 0);
     if (!shape_is(in, stop, kShapeStringdlStop, &c) || shape_ptr(c, 0) != shape_ptr(c, 2)
-        || !asked_data(in, shape_ptr(c, 0), 4)) {
-        snprintf(why, len, "stringdl_input: the field's end it calls does not clear +0x164 and turn the text entry"
-            " off (client patched?)");
+        || !asked_data(in, shape_ptr(c, 0), 4) || !shape_target(in, c, 1) || !shape_target(in, c, 3)) {
+        snprintf(why, len, "stringdl_input: the field's end it calls does not clear +0x164 and take the line from"
+            " the field holding it (client patched?)");
         return false;
     }
+    const uint8_t* line = shape_ptr(c, 0);
+    const uint8_t* unbind = shape_target(in, c, 1);
+    const uint8_t* bind = shape_target(in, c, 3);
+    s.line = reinterpret_cast<uint8_t**>(const_cast<uint8_t*>(line));
+    memcpy(&s.unbind, &unbind, sizeof(s.unbind));
+    memcpy(&s.bind, &bind, sizeof(s.bind));
     memcpy(&s.stringdl_stop, &stop, sizeof(s.stringdl_stop));
     memcpy(&s.focus, &focus, sizeof(s.focus));
 
@@ -2389,6 +2199,12 @@ inline bool resolve_text(const AskedInputs& in, const uint8_t* close_instance, T
             " take its text into +0x24 (client patched?)");
         return false;
     }
+    if (!shape_is(in, shape_target(in, a, 2) + kPassinpuBindAt, kShapePassinpuBind, &c) || shape_ptr(c, 0) != line
+        || shape_ptr(c, 2) != line || shape_target(in, c, 1) != unbind || shape_target(in, c, 3) != bind) {
+        snprintf(why, len, "passinpu_input: its field's start does not end in the unbind and bind of the text entry's"
+            " manager stringdl's end calls (client patched?)");
+        return false;
+    }
     fn = shape_target(in, a, 2);
     memcpy(&s.passinpu_start, &fn, sizeof(fn));
     memcpy(&s.passinpu_stop, &stop, sizeof(s.passinpu_stop));
@@ -2396,24 +2212,13 @@ inline bool resolve_text(const AskedInputs& in, const uint8_t* close_instance, T
     return true;
 }
 
-// The trade's input routine from its row dispatch on (this = the
-// controller; code, row; ret 8), never run: its confirm on rows 1..8
-// (kShapeTradeRow at kTradeRowAt: the row table, the player's data's
-// global and the own offer's index and id words) hands an offered item's
-// index and id to the stage with a count of 0, its removal
-// (kShapeTradeRemove once within kTradeInputBytes); row 9's je (its rel32
-// at kTradeOkJump) reaches kShapeTradeOkRow, the OK unless the player's OK
-// is in; row 10's (kTradeCancelJump) kShapeTradeCancelRow, the cancel, then
-// the trade's windows closed when it went. The stage (kShapeTradeStage:
-// the row table again, the un-OK, the send of the gil; within
-// kTradeStageBytes the own offer's index word, kShapeTradeStageSlot, and
-// the states written, kShapeTradeStageTail), the OK (kShapeTradeOk: +0xC0
-// = 4 once sent), the cancel (kShapeTradeCancel: the partner's fields
-// cleared once sent) and the close (kShapeTradeClose: trade's key, then
-// gift's, closed by name through the manager). The send (kShapeTradeSend:
-// the player's data and the own offer's index word again, then the
-// allocator for kSendTradeChange) has the partner's offer's reader
-// (kShapeTradeTheirs, its offset the hole) once within kTradeSendBytes.
+// The trade's input routine from its row dispatch on, never run. Rows 1..8
+// hand an offered item's index and id to the stage with a count of 0, its
+// removal; row 9 is the OK unless the player's is in (+0xC0 4); row 10 the
+// cancel, then the trade's windows closed when it went. The stage un-OKs and
+// sends the gil; the OK writes +0xC0 = 4 once sent; the cancel clears the
+// partner's fields once sent; the close closes trade, then gift, by name.
+// kShapeTradeTheirs' hole: the partner's offer's offset.
 const char kSigTradeInput[] =
     "0f bf 44 24 04 48 56 83 f8 07 57 8b f1 0f 87 ?? ?? ?? ?? ff 24 85 ?? ?? ?? ?? 0f bf 44 24 10 8b c8 83 e9 09 0f 84 ?? ?? ?? ?? 49 0f 84 ?? ?? ?? ?? 49 74 72 8b 8e c0 00 00 00 83 f9 03 75 62";
 const size_t kTradeOkJump = 38;
@@ -2442,15 +2247,11 @@ const char kShapeTradeTheirs[] =
     "3c 0a 72 03 32 c0 c3 25 ff 00 00 00 8d 14 80 8d 04 50 8d 84 81 ?? ?? ?? ?? 8b 48 04 85 c9 75 03 32 c0 c3 8b 4c 24 04 89 01 b0 01 c3";
 const size_t kTradeSendBytes = 0x100;
 
-// The trade's open of its three windows (this = the controller; no
-// arguments; al), never run: it cancels (the calls at kTradeOpenCancel) when
-// the partner's name cannot be read by the reader at kTradeOpenName (index
-// and id at +0x6C), and hands the inventory list its mode
-// (kShapeOfferMode: the mode's global, the list's, the mode's setter, then
-// money's key opened through the manager); within kTradeOpenBytes it
-// cancels and closes the windows when its own did not open
-// (kShapeTradeOpenTail). The name's reader (kShapeActorName): the actor
-// table, then the titled name's length word, the titled name and the name.
+// The trade's open of its three windows, never run: it cancels when the
+// partner's name (index and id at +0x6C) cannot be read, hands the inventory
+// list its mode and opens money; it cancels and closes the windows when its
+// own did not open. kShapeActorName's holes: the actor table, then the titled
+// name's length word, the titled name and the name.
 const char kSigTradeOpen[] =
     "56 6a 08 8b f1 e8 ?? ?? ?? ?? 83 c4 04 84 c0 6a 00 75 0b 8b ce e8 ?? ?? ?? ?? 32 c0 5e c3 8d 46 6c 50 e8 ?? ?? ?? ?? 83 c4 08 84 c0 75 0d 6a 00 8b ce e8 ?? ?? ?? ?? 32 c0 5e c3";
 const size_t kTradeOpenCancel[2] = {21, 50};
@@ -2462,20 +2263,12 @@ const char kShapeTradeOpenTail[] = "8b ce e8 ?? ?? ?? ?? 84 c0 74 07 8b ce e8 ??
 const char kShapeActorName[] =
     "56 8b 74 24 08 57 8b 46 04 85 c0 76 24 8b 06 8b 04 85 ?? ?? ?? ?? 85 c0 74 17 66 83 b8 ?? ?? ?? ?? 00 76 08 8d b8 ?? ?? ?? ?? eb 07 8d 78 ?? eb 02 33 ff";
 
-// The NPC trade's input routine (this = the controller; code, row; ret 8),
-// never run: rows 1..8 hand the inventory list's window (the list's global
-// at kHandoverList) the focus and write the row to +0x40
-// (kShapeHandoverPick); row 9's je (its imm8 at kHandoverOkJump) reaches
-// kShapeHandoverOkRow, the OK, then the close when it went, else the
-// buzz; row 10's (kHandoverCancelJump) that close alone. The OK
-// (kShapeHandoverOk: items, then the gil, then the NPC) sends through the
-// allocator for kSendHandover (kShapeHandoverSend, once within
-// kHandoverOkBytes); the close (kShapeHandoverClose) clears the NPC and
-// closes the window by instance. The stage (kShapeHandoverStage: index 0
-// the gil at +0x3C, else every entry holding the item cleared, then +0x40's)
-// is the one its item count's asker calls. Its open hook, slot 1 of the
-// vtable naming the input routine at 6, hands the list its mode
-// (kShapeHandoverMode) once within kHandoverOpenBytes.
+// The NPC trade's input routine, never run: rows 1..8 give the inventory
+// list's window the focus and write the row to +0x40; row 9 is the OK, then
+// the close when it went, else the buzz; row 10 the close alone. The OK sends
+// the items, the gil and the NPC; the close clears the NPC and closes the
+// window by instance. The stage, which the item count's asker calls, puts the
+// gil at +0x3C for index 0, else clears every entry holding the item.
 const char kSigHandoverInput[] =
     "0f bf 44 24 04 53 56 83 e8 05 57 8b f1 74 15 48 75 6e 8b 4e 08 85 c9 74 59 6a 01 6a 0a e8 ?? ?? ?? ?? eb 5c 66 8b 5c 24 14 0f bf c3 83 e8 09 74 36 48 74 3e 48 6a 00 74 18 a1 ?? ?? ?? ??";
 const size_t kHandoverOkJump = 48;
@@ -2502,17 +2295,13 @@ const char kShapeHandoverMode[] = "8b 0d ?? ?? ?? ?? 85 c9 74 0b a1 ?? ?? ?? ?? 
 const size_t kAskTradeItemStage = 29;
 const size_t kAskHandoverItemStage = 27;
 
-// The inventory list's build of a row, never run: the item's data from the
-// cache in the global at kRowsCache (the call at kRowsItemData), its lock
-// byte (the u16 offset at kRowsLock and kRowsLockAgain) raised around its
-// description (the call at kRowsDescribe), the gil's row gray. Then
-// (kShapeRowsTest, once within kRowsBytes) the mode's test of the row at
-// vtable +0x30 (the item, the description), its lock byte lowered again
-// (the hole agreeing), and unless the test marks the row offered, the
-// item's status at +8 above 0x1B grays it, else its class in the table
-// (hole 2), each class's case in the jump table (hole 3): kept at the
-// shape's end, kept for the mode in the global of hole 4 alone (at
-// kRowsModalCase), grayed (at kRowsGrayCase).
+// The inventory list's build of a row, never run: the item's lock byte (a u16
+// offset) is raised around its description, and the gil's row is gray. Then
+// the mode's test of the row (vtable +0x30); unless it marks the row offered,
+// a status at +8 above 0x1B grays the item, else its class picks a case: kept,
+// kept only for the mode in the global of hole 4 (kRowsModalCase), or grayed
+// (kRowsGrayCase). kShapeRowsTest holes 2 and 3: the class table and the
+// cases' jump table.
 const char kSigInventorRows[] =
     "8b 0d ?? ?? ?? ?? 33 c0 66 8b 07 50 e8 ?? ?? ?? ?? 85 c0 89 44 24 18 0f 84 ?? ?? ?? ?? 8a 88 ?? ?? 00 00 50 fe c1 88 88 ?? ?? 00 00 e8 ?? ?? ?? ?? 83 c4 04 66 81 3f ff ff 89 44 24 1c";
 const size_t kRowsCache = 2;
@@ -2527,13 +2316,10 @@ const size_t kRowsModalCase = 79;
 const size_t kRowsGrayCase = 91;
 const size_t kRowsCases = 3;
 
-// What those lead to: the allocator (this none; the packet id, a flag that
-// skips the throttle, a size; cdecl), kShapeAllocator: the player's data,
-// the ids it takes, the last send's words in that data, the clock's call,
-// the intervals' global and their words; the clock (kShapeClock: its
-// object's global, seconds * 1000 + ms); the item record (cdecl;
-// container, index), moneyctr's setup's call at kMoneySetupItemCall,
-// kShapeItemRecord: the player's data, the inventory's records' offset.
+// What those lead to: the allocator (cdecl; the packet id, a flag that skips
+// the throttle, a size), the clock (seconds * 1000 + ms) and the item record
+// (cdecl; container, index), which moneyctr's setup calls at
+// kMoneySetupItemCall.
 const char kShapeAllocator[] =
     "a1 ?? ?? ?? ?? 56 85 c0 57 0f 84 ?? ?? ?? ?? 8b 74 24 0c 81 fe ?? ?? ?? ?? 0f 8d ?? ?? ?? ?? 8b 7c 24 10 85 ff 0f 85 ?? ?? ?? ?? 8b 8c b0 ?? ?? ?? ?? 85 c9 0f 84 ?? ?? ?? ?? 53 e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 8b 94 b1 ?? ?? ?? ??";
 const char kShapeClock[] = "8b 0d ?? ?? ?? ?? 8b 41 0c 8b 49 10 8d 04 80 8d 04 80 8d 04 80 8d 04 c1 c3";
@@ -2548,17 +2334,14 @@ inline const uint8_t* rel32_target(const uint8_t* at) {
     return at + 4 + rel;
 }
 
-// The trade's and the NPC trade's routines and data (signatures.h's
-// kSigTradeInput, kSigTradeOpen, kSigHandoverInput, kSigInventorRows and
-// their shapes), every routine named by more than one site agreeing:
-// `close_instance` the routine close by name ends in, `money_setup`
-// moneyctr's setup and `askers` the number boxes' askers' callbacks.
+// The trade's and the NPC trade's routines and data, every routine named by
+// more than one site agreeing; `money_setup` is moneyctr's setup and
+// `askers` the number boxes' askers' callbacks.
 inline bool resolve_offer(const AskedInputs& in, const uint8_t* close_instance, const uint8_t* money_setup,
                           const void* const* askers, OfferSites* out, char* why, size_t len) {
     OfferSites s;
     memset(&s, 0, sizeof(s));
     Shape a, b, c, d;
-    const void* fn;
 
     // the trade's rows, and the routines they reach
     s.trade_input = asked_find(in, "trade_input", kSigTradeInput, why, len);
@@ -2703,7 +2486,8 @@ inline bool resolve_offer(const AskedInputs& in, const uint8_t* close_instance, 
     memcpy(&s.ok[kOfferHandover], &ok, sizeof(ok));
     memcpy(&s.handover_close, &close, sizeof(close));
 
-    // the allocator, its throttle and the clock; the item record
+    // the allocator, its throttle and the clock; the item record. The clock
+    // is never called: kShapeClock pins it to the words clock_read() reads.
     if (!shape_is(in, s.allocator, kShapeAllocator, &a) || shape_ptr(a, 0) != reinterpret_cast<const uint8_t*>(s.player)
         || reinterpret_cast<uintptr_t>(shape_ptr(a, 2)) <= kSendHandover || !shape_target(in, a, 7)
         || !asked_data(in, shape_ptr(a, 8), 4) || !shape_is(in, shape_target(in, a, 7), kShapeClock, &b)
@@ -2716,8 +2500,6 @@ inline bool resolve_offer(const AskedInputs& in, const uint8_t* close_instance, 
     s.last_send = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(shape_ptr(a, 5)));
     s.intervals = const_cast<uint8_t**>(reinterpret_cast<uint8_t* const*>(shape_ptr(a, 8)));
     s.interval = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(shape_ptr(a, 9)));
-    fn = shape_target(in, a, 7);
-    memcpy(&s.clock, &fn, sizeof(fn));
     s.clock_object = const_cast<uint8_t**>(reinterpret_cast<uint8_t* const*>(shape_ptr(b, 0)));
     const uint8_t* item = money_setup ? asked_target(in, money_setup + kMoneySetupItemCall, 0xE8) : NULL;
     if (!item || !shape_is(in, item, kShapeItemRecord, &a)
@@ -2778,10 +2560,9 @@ inline bool shape_opens(const AskedInputs& in, const Shape& s, int i, const char
 }
 
 // The openers of the sets past equipment, ability and magic, each where the
-// player's own menu row, command or item use runs it, with what that runs
-// first. Every open they make must name its window's key and go through the
-// manager's open routine, and the controllers they are run on, or read,
-// must be the ones in their windows' registry slots.
+// player's own menu row, command or item use runs it. Every open must name its
+// window's key through the manager's open routine, on the controllers in the
+// windows' registry slots.
 inline bool resolve_set_openers(const AskedInputs& in, OpenerSites* s, char* why, size_t len) {
     Shape a;
     Shape b;
@@ -2937,10 +2718,9 @@ inline bool resolve_set_openers(const AskedInputs& in, OpenerSites* s, char* why
 }
 
 // The equipment set's opener, the Monstrosity check the equipment shortcut
-// asks before it, and the magic list's opener, the manager pinned into the
-// last's signature before the scan. Each open they make must name its
-// window's registry key and go through the manager's open routine; the
-// controllers they read must be the ones in the windows' registry slots.
+// asks before it, and the magic list's opener, whose signature has the
+// manager pinned before the scan. Opens and controllers are checked as
+// resolve_set_openers() checks them.
 inline bool resolve_openers(const AskedInputs& in, OpenerSites* out, char* why, size_t len) {
     OpenerSites s;
     memset(&s, 0, sizeof(s));
@@ -3024,40 +2804,36 @@ inline bool resolve_openers(const AskedInputs& in, OpenerSites* out, char* why, 
     return true;
 }
 
-// The routes open(name, arg) runs and the openers of the sets past macros
-// (game.h's RouteSites), each read where the game's own menu row, command
-// or list runs it. A signature anchored at a call site is never run; one
-// anchored at a routine is that routine. The routines the game builds alike
-// for several windows (the post menu's and fp_cat2's openers, the comment
-// sub-lists' and the timers') are told apart by the key they open.
+// The routes open(name, arg) runs and the openers of the sets past macros,
+// each read where the game's own menu row, command or list runs it. A
+// signature at a call site is never run; one at a routine's entry is that
+// routine. Routines built alike for several windows are told apart by the key
+// they open.
 
 // The storage list's opener (this = storage's or storage2's controller;
-// mode), ret 4: the mode written at +0x14, then storage for 0 and storage2
-// for 1 by name through the open routine.
+// mode): the mode at +0x14, then storage for 0, storage2 for 1.
 const char kSigStorageOpen[] =
     "8b 44 24 04 6a 00 89 41 14 b9 ?? ?? ?? ?? 85 c0 6a 01 75 0d 68 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 04 00 68 ?? ?? ?? ?? e8";
 
-// The post menu's opener (this = mogpost's controller; mode), ret 4, the
-// mode written at +0x14 before its open: keyed to mogpost at kMogpostKey.
+// The post menu's opener (this = mogpost's controller; mode): the mode at
+// +0x14, then the open, keyed at kFieldOpenKey.
 const char kSigMogpostOpen[] =
     "8b 44 24 04 6a 00 89 41 14 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 04 00";
 const size_t kFieldOpenKey = 12;
 
-// The job change menu's main and support rows: the row written into the
-// word (hole 1) of the controller in jobcselu's slot, then the open by the
-// key the language's lookup (6) answers. Its confirm, never run: the Mog
-// House's manager's global (hole 0) and the Nomad Moogle service's (hole
-// 4), each tested before the job change acts through it, the row read from
-// the same word (holes 1 and 5).
+// The job change menu's main and support rows write the row into a word (hole
+// 1) of jobcselu's controller, then open by the key the language's lookup (6)
+// answers. Its confirm, never run, tests the Mog House manager's global (hole
+// 0) or the Nomad Moogle service's (hole 4), reading the row from that word
+// (holes 1 and 5).
 const char kSigJobChangeRow[] =
     "8b 0d ?? ?? ?? ?? 85 c9 74 03 89 41 ?? 6a 00 6a 01 6a 06 e8 ?? ?? ?? ?? 83 c4 04 b9 ?? ?? ?? ?? 50 e8 ?? ?? ?? ?? c2 08 00";
 const char kSigJobChangeConfirm[] =
     "8b 0d ?? ?? ?? ?? 85 c9 74 1a 83 7e ?? 01 75 0a 6a 00 50 e8 ?? ?? ?? ?? eb 27 50 6a 00 e8 ?? ?? ?? ?? eb 1d 8b 0d ?? ?? ?? ?? 85 c9 74 13 83 7e ?? 01";
 
-// The friend list's text command: the controller in friend's slot, closed,
-// handed to the friend list's opener with 0. The opener (ret 4) ends at
-// kFriendOpensAt in friend's open, then titlehan's when its controller
-// exists.
+// The friend list's text command closes friend's controller and hands it to
+// the friend list's opener with 0, which ends at kFriendOpensAt in friend's
+// open, then titlehan's when its controller exists.
 const char kSigFriendCommand[] =
     "8b 0d ?? ?? ?? ?? 85 c9 74 0e 8b 41 08 85 c0 75 07 6a 00 e8 ?? ?? ?? ?? 8b 44 24 0c c3";
 const size_t kFriendOpensAt = 0xbf;
@@ -3065,10 +2841,10 @@ const char kShapeFriendOpens[] =
     "6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b 46 08 5f 5e 5b 85 c0 74 1c a1 ?? ?? ?? ?? 85 c0 74 13 6a"
     " 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 04 00";
 
-// The friend menu's Messages row: the mail list's opener on the controller
-// in msglist's slot with (0, 0, 0), its refusal (al 0) printed. The opener
-// (ret 0xC) ends at kMsglistOpensAt in msglist's open, titlehan's when its
-// controller exists, al 1, and the refusal's al 0.
+// The friend menu's Messages row runs the mail list's opener on msglist's
+// controller with (0, 0, 0), printing its refusal (al 0). The opener ends at
+// kMsglistOpensAt in msglist's open, then titlehan's when its controller
+// exists.
 const char kSigMessagesRow[] =
     "8b 0d ?? ?? ?? ?? 85 c9 74 2b 6a 00 6a 00 6a 00 e8 ?? ?? ?? ?? 84 c0 75 1c 8b 0d ?? ?? ?? ?? 6a 7a e8";
 const size_t kMsglistOpensAt = 0x76;
@@ -3076,64 +2852,61 @@ const char kShapeMsglistOpens[] =
     "6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? a1 ?? ?? ?? ?? 85 c0 74 13 6a 00 6a 01 68 ?? ?? ?? ?? b9 ??"
     " ?? ?? ?? e8 ?? ?? ?? ?? b0 01 c2 0c 00 32 c0 c2 0c 00";
 
-// The blacklist command's call of the blacklist's opener on the controller
-// in blklist's slot; the opener (plain ret) ends at kBlklistOpensAt in
-// blklist's open.
+// The blacklist command's call of the blacklist's opener on blklist's
+// controller; the opener ends at kBlklistOpensAt in blklist's open.
 const char kSigBlacklistCommand[] =
     "8b 0d ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b 44 24 14 5f 5e c3";
 const size_t kBlklistOpensAt = 0x47;
 const char kShapeBlklistOpens[] = "6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 5e c3";
 
-// The mount list's opener (list, sort), cdecl: abisortw for a sort of 1,
-// mount, then its setup on the controller in mount's slot, which opens
-// subwindo (kShapeMountSetup at the setup's start).
+// The mount list's opener (list, sort; cdecl): abisortw for sort 1, mount,
+// then its setup on mount's controller, which opens subwindo.
 const char kSigMountOpen[] =
     "80 7c 24 08 01 75 13 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b 44 24 04 8b 0d ?? ?? ?? ?? 50 e8";
 const char kShapeMountSetup[] =
     "8b 41 68 53 33 db 50 89 59 64 e8 ?? ?? ?? ?? a1 ?? ?? ?? ?? 53 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? c7 40 28 0a 00 00"
     " 00 89 58 20 89 58 24 88 58 30 89 58 34 c7 40 2c e8 03 00 00 e8 ?? ?? ?? ??";
 
-// The Job Points job list's test of a job (1..22 at level 99), ret 4, its
-// `this` unread; and the job's category list's opener (this = jbpcat's
-// controller; job), ret 4, the job at +0x54 and the page at +0x58 written.
+// The Job Points job list's test of a job (1..22 at level 99; `this`
+// unread), and the job's category list's opener (this = jbpcat's controller;
+// job), which writes the job at +0x54 and the page at +0x58.
 const char kSigJobPointsTest[] =
     "8b 44 24 04 3c 01 72 15 3c 16 77 11 50 e8 ?? ?? ?? ?? 83 c4 04 3c 63 0f 93 c0 c2 04 00 32 c0 c2 04 00";
 const char kSigJobPointsOpen[] =
     "8a 44 24 04 6a 00 88 41 54 c7 41 58 00 00 00 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 04 00";
 
-// fp_cat2's opener (this = its controller; category), ret 4, the category
-// written at +0x50: keyed to fp_cat2 at kFieldOpenKey.
+// fp_cat2's opener (this = its controller; category): the category at +0x50,
+// then the open, keyed at kFieldOpenKey.
 const char kSigFpCat2Open[] =
     "8a 44 24 04 6a 00 88 41 50 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 04 00";
 
-// The main menu's Search row: the search reset on the controller in
-// scresult's slot with 0, then searchma's open by name. The results list's
-// narrow row: scsibori's open only while the results' mode (the word of
-// hole 0) is 1 or 2, a search run.
+// The main menu's Search row resets the search on scresult's controller with
+// 0, then opens searchma. The results list's narrow row opens scsibori only
+// while the results' mode (the word of hole 0) is 1 or 2, a search run.
 const char kSigSearchRow[] =
     "8b 0d ?? ?? ?? ?? 85 c9 74 07 6a 00 e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8";
 const char kSigResultsNarrow[] =
     "8b 76 ?? 83 fe 01 74 0c 83 fe 02 74 07 5f 32 c0 5e c2 04 00 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 5f b0 01 5e";
 
-// comgenre's opener (this = its controller; mode), ret 4: a mode of 3 or
-// more refused, the mode at +0x14, then the open. The comment sub-lists'
-// (this = the list's controller; mode, base), ret 8, alike for sccompar,
-// sccomite and sccomls, keyed at kCommentSubKey.
+// comgenre's opener (this = its controller; mode) refuses a mode of 3 or more
+// and writes it at +0x14 before the open. The comment sub-lists' opener
+// (this = the list's controller; mode, base) is alike for sccompar, sccomite
+// and sccomls.
 const char kSigComgenreOpen[] =
     "66 8b 44 24 04 66 85 c0 7c 1d 66 3d 03 00 7d 17 6a 00 66 89 41 14 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 04 00";
 const char kSigCommentSubOpen[] =
     "8b 44 24 04 83 f8 03 73 1d 89 41 14 8b 44 24 08 6a 00 89 41 18 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 08 00";
 const size_t kCommentSubKey = 24;
 
-// The inventory's cursor, the compare option's panel: the item panel's
-// set-and-open on the controller in itemxinf's slot with mode 5, the item's
-// id, slot and bag, its record's extra data (the record + the byte of hole
-// 3), and the controllers in equip's and inventor's slots.
+// The inventory's compare option: the item panel's set-and-open on
+// itemxinf's controller with mode 5, the item's id, slot and bag, its
+// record's extra data (the record + the byte of hole 3), and equip's and
+// inventor's controllers.
 const char kSigCompareSite[] =
     "8b 0d ?? ?? ?? ?? 8b 15 ?? ?? ?? ?? 51 8b 0d ?? ?? ?? ?? 83 c6 ?? 52 56 50 53 55 6a 05 e8";
 
-// The timers' openers (this = the timer's controller; kind, ticks), ret 8,
-// alike for casttime and eventtim, keyed at kTimerKey.
+// The timers' opener (this = the timer's controller; kind, ticks), alike for
+// casttime and eventtim.
 const char kSigTimerOpen[] =
     "8b 44 24 04 89 41 20 8b 44 24 08 85 c0 7d 08 c7 44 24 08 00 00 00 00 db 44 24 08 6a 00 6a 01 68 ?? ?? ?? ?? d9 51 18 d9 59 14 b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 08 00";
 const size_t kTimerKey = 32;
@@ -3157,12 +2930,11 @@ const char kSigQuestCommand[] =
 const char kSigQuest00Confirm[] =
     "8b ce e8 ?? ?? ?? ?? 8b ce e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b 56 30 8b 0d ?? ?? ?? ?? 52 e8 ?? ?? ?? ?? 5e";
 
-// The missions command: on the controller in miss00's slot the missions
-// menu's setter with 0 (the player's nation's log), or the log by its name,
-// then miss00's open (kShapeMissionsOpen at kMissionsOpenAt). The setter
-// (ret 4) writes the log word (hole 1 of kShapeMissionsSetter); the by-name
-// routine tests each log's expansion bit (the table of hole 0) with the
-// expansion test (hole 1) of kShapeMissionsByName.
+// The missions command runs, on miss00's controller, the missions menu's
+// setter with 0 (the player's nation's log) or the by-name routine, then
+// opens miss00. The setter writes the log word (kShapeMissionsSetter hole 1);
+// the by-name routine tests each log's expansion bit (kShapeMissionsByName
+// holes: 0 the table, 1 the test).
 const char kSigMissionsCommand[] =
     "8b 0d ?? ?? ?? ?? 85 c9 74 34 a1 ?? ?? ?? ?? 83 e8 02 74 09 6a 00 e8 ?? ?? ?? ?? eb 0e a1 ?? ?? ?? ?? 8b 50 04 52 e8 ?? ?? ?? ?? 6a 00 6a 01 68";
 const size_t kMissionsOpenAt = 47;
@@ -3173,21 +2945,19 @@ const char kShapeMissionsByName[] =
     "53 55 8b 6c 24 0c 56 57 8b d1 33 ff 0f be 87 ?? ?? ?? ?? 50 e8 ?? ?? ?? ?? 83 c4 04 84 c0 74 3a";
 const int kMissionLogCount = 15;
 
-// map0's Wide Scan row: while the map tracks (the routine of hole 0 answers
-// a word of 1) a yes/no on comyn first; else (kShapeWideScanOpen at
-// kWideScanOpenAt) scanlist's opener on its controller, which opens
-// scanlist by name (kShapeScanlistOpen at its start).
+// map0's Wide Scan row: while the map tracks (the routine of hole 0 answers a
+// word of 1), a yes/no on comyn first; else scanlist's opener on its
+// controller, which opens scanlist by name.
 const char kSigWideScanRow[] =
     "e8 ?? ?? ?? ?? 85 c0 74 2f 83 38 01 75 2a 6a 00 6a 01 6a 00 6a 00 6a 45 6a 0e e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 83 c4 08 50 6a 00 68 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 08 00";
 const size_t kWideScanOpenAt = 56;
 const char kShapeWideScanOpen[] = "8b 0d ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 08 00";
 const char kShapeScanlistOpen[] = "56 6a ?? 8b f1 e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ??";
 
-// The conquest map's text command: on the controller in cnqframe's slot,
-// closed, with the player's data there, the Region Info opener (kind, the
-// player's area: the word of hole 2 in the player's data), ret 8, which
-// writes the kind at the word of kShapeRegionKind's hole, kRegionKindAt
-// into it.
+// The conquest map's text command runs, on cnqframe's closed controller, the
+// Region Info opener (kind, the player's area: the word of hole 2 in the
+// player's data), which writes the kind at kShapeRegionKind's hole,
+// kRegionKindAt into it.
 const char kSigRegionCommand[] =
     "8b 0d ?? ?? ?? ?? 85 c9 74 1e a1 ?? ?? ?? ?? 85 c0 74 15 8b 51 08 85 d2 75 0e 8b 80 ?? ?? ?? ?? 50 6a 00 e8 ?? ?? ?? ?? 8b 44 24 0c c3";
 const size_t kRegionKindAt = 0x5e;
@@ -3199,20 +2969,18 @@ const char kShapeRegionKind[] = "89 9e ?? ?? ?? ??";
 const char kSigColoresuRow[] =
     "a1 ?? ?? ?? ?? 85 c0 74 06 0f bf d7 89 50 ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8";
 
-// The text color menu's first row: 0 written at textcol1's, textcol2's and
-// textcol3's category words (holes 1, 3 and 5); its last row's tail
-// (kShapeTextColorOpens at kTextColorOpensAt) opens textcol2, then
-// textcol1.
+// The text color menu's first row writes 0 at textcol1's, textcol2's and
+// textcol3's category words (holes 1, 3 and 5); its tail opens textcol2,
+// then textcol1.
 const char kSigTextColorRows[] =
     "a1 ?? ?? ?? ?? c7 40 ?? 00 00 00 00 8b 0d ?? ?? ?? ?? c7 41 ?? 00 00 00 00 8b 15 ?? ?? ?? ?? c7 42 ?? 00 00 00 00 eb";
 const size_t kTextColorOpensAt = 0x92;
 const char kShapeTextColorOpens[] =
     "6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 6a 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ??";
 
-// The macro editor's pick (this = the editor; row), ret 4: the row stored
-// for the palette in its byte (hole 0, 1 Ctrl), then (the rest from
-// kShapeMacroPickOpens at kMacroPickOpensAt) mcrbedit, mcr1edit and
-// mcr2edit closed by name, mcrledit's and macro's opens.
+// The macro editor's pick (this = the editor; row) stores the row for the
+// palette in its byte (hole 0; 1 Ctrl), closes mcrbedit, mcr1edit and
+// mcr2edit by name, then opens mcrledit and macro.
 const char kSigMacroPick[] =
     "80 79 ?? 01 75 09 8a 44 24 04 88 41 ?? eb 07 8a 54 24 04 88 51 ?? 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8";
 const size_t kMacroPickOpensAt = 47;
@@ -3221,8 +2989,8 @@ const char kShapeMacroPickOpens[] =
     " 00 6a 01 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 04 00";
 
 // The macro palettes' Escape, the same in mcr1edit's and mcr2edit's input
-// routines: the editor's close (kShapeMacroClose: mcrbedit, mcr1edit and
-// mcr2edit by name), then titlewin's step back (0, 2).
+// routines: the editor's close (mcrbedit, mcr1edit and mcr2edit by name),
+// then titlewin's step back (0, 2).
 const char kSigPaletteEscape[] =
     "8b 4e 24 e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 5e 5b c7 44 24 0c 02 00 00 00 83 c4 04 c7 44 24 04 00 00 00 00 e9";
 const char kShapeMacroClose[] =
@@ -3235,29 +3003,26 @@ const char kShapeMacroClose[] =
 const char kSigItemsRow[] =
     "8b 0d ?? ?? ?? ?? 6a 01 6a 00 e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? c6 81 ?? ?? ?? ?? 01 8b 15 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? 52 e8";
 
-// The item data the inventory list's rows read (offer.item_data): its
-// summary's builder, the first call within kSummaryBuildSpan pushed (0,
-// the data), copies each of the data's words from its pointer at the
-// offset of hole 0 into the summary at the displacement ending hole 2; the
-// type word is the one whose pointer the item use reads.
+// The item data's summary builder (the first call within kSummaryBuildSpan
+// pushing 0 and the data) copies each word from its pointer at hole 0's
+// offset into the summary at the displacement ending hole 2; the type word is
+// the one whose pointer the item use reads.
 const size_t kSummaryBuildSpan = 0x100;
 const size_t kSummaryTypeSpan = 0x200;
 const char kShapeSummaryType[] = "8b 86 ?? ?? ?? ?? 85 c0 74 07 66 8b ?? 66 89 ?? ??";
 
-// The macro editor's palette switch (this = the editor; row), ret 4, Left
-// or Right on a palette: the row written for both palettes (holes 1 and 2),
-// then the palette byte (hole 0) toggled, the other palette's window opened
-// by name (mcr2edit here, mcr1edit in kShapePaletteSwitchBack at
-// kPaletteSwitchBackAt) and the switch's sound.
+// The macro editor's palette switch (this = the editor; row), Left or Right
+// on a palette: the row written for both palettes (holes 1 and 2), the
+// palette byte (hole 0) toggled, the other palette's window opened by name,
+// then the switch's sound.
 const char kSigPaletteSwitch[] =
     "8a 41 ?? ba 01 00 00 00 3a c2 8a 44 24 04 6a 00 52 88 41 ?? 88 41 ?? 75 1b c6 41 ?? 02 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 04 00 88 51 ?? 68";
 const size_t kPaletteSwitchBackAt = 55;
 const char kShapePaletteSwitchBack[] = "68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? e8 ?? ?? ?? ?? c2 04 00";
 
-// The Status screen's close: statcom2's Escape with no row picked, its
-// menu closed by instance with 1 (kSigStatusEscape, kStatusEscapeAt into
-// its input routine), and its begin-close (kSigStatusClose), which closes
-// persona and mp_stat by name: one vtable names both.
+// The Status screen's close: statcom2's Escape with no row picked closes its
+// menu by instance with 1, and its begin-close closes persona and mp_stat by
+// name; one vtable names both.
 const char kSigStatusEscape[] =
     "66 83 7f 18 00 7d 15 8b 47 08 6a 01 50 b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 5f 5e c2 08 00 8b cf e8";
 const size_t kStatusEscapeAt = 0x1b;
@@ -3265,24 +3030,22 @@ const char kSigStatusClose[] =
     "56 8b f1 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b ce 5e e9";
 const size_t kStatusCloseKey = 4;
 
-// textcol1's Escape: textcol2, then textcol1, closed by name, keyed to
-// textcol2 at kTextColorEscapeKey.
+// textcol1's Escape closes textcol2, then textcol1, by name.
 const char kSigTextColorEscape[] =
     "68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? e9";
 const size_t kTextColorEscapeKey = 1;
 
-// mp_mncst's Escape: mp_stat's controller global (hole 0) and a routine
-// closing mp_stat by name, mp_cstm's (hole 2) and one closing mp_cstm, then
-// mp_mncst closed by name, keyed to mp_mncst at kInstinctsEscapeKey.
+// mp_mncst's Escape closes mp_stat and mp_cstm through routines of theirs on
+// their controllers (holes 0 and 2), then mp_mncst by name.
 const char kSigInstinctsEscape[] =
     "8b 0d ?? ?? ?? ?? e8 ?? ?? ?? ?? 8b 0d ?? ?? ?? ?? e8 ?? ?? ?? ?? 68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c3";
 const size_t kInstinctsEscapeKey = 23;
 const char kShapeCloseByNameRet[] = "68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ?? c3";
 
-// cnqframe's input routine: nothing while its closing bit is set, else on
-// Escape (event 6) the fade's start through vtable +0x50, then the windows
-// of kRegionEscapeNames closed by name, each a kShapeCloseByName at
-// game.h's kRegionEscapeAt + kRegionEscapeStep * i, and ret 8.
+// cnqframe's input routine does nothing while its closing bit is set; on
+// Escape (event 6) it starts the fade (vtable +0x50), then closes
+// kRegionEscapeNames by name, each a kShapeCloseByName at game.h's
+// kRegionEscapeAt + kRegionEscapeStep * i.
 const char kSigRegionEscape[] =
     "f6 41 14 40 0f 85 ?? ?? ?? ?? 66 83 7c 24 04 06 0f 85 ?? ?? ?? ?? 8b 01 ff 50 50 68";
 const char kShapeCloseByName[] = "68 ?? ?? ?? ?? b9 ?? ?? ?? ?? e8 ?? ?? ?? ??";
@@ -3290,9 +3053,8 @@ const char* const kRegionEscapeNames[] = {"conquer1", "conq3pts", "conq6sta", "b
                                           "campresu", "campsan", "camparea", "allied", "coloresu", "colorank",
                                           "colopoin"};
 
-// The inventory's first free slot, never run: from slot 1 while below the
-// bag's size (the routine its calls reach, cdecl (bag), al the size, slot
-// 0 counted), record by record.
+// The inventory's first free slot, never run: record by record from slot 1
+// while below the bag's size (cdecl (bag); al the size, slot 0 counted).
 const char kSigFreeSlot[] =
     "a1 ?? ?? ?? ?? 53 85 c0 56 74 2f 6a 00 b3 01 8d b0 ?? ?? ?? ?? e8 ?? ?? ?? ?? 83 c4 04 3a c3 76 19 66 83 3e 00 74 18 6a 00 fe c3 83 c6 2c e8";
 
@@ -3342,11 +3104,10 @@ inline bool route_fail(char* why, size_t len, const char* name, const char* says
     return false;
 }
 
-// game.h's RouteSites, each opener checked to open, close or write what its
-// route needs as the engine knows it; `item_type` is the item use's pointer
-// to the type word, which the summary's builder must read too, and
-// `close_instance` and `yesno_ask` the routines the engine resolved for
-// those, which the Status screen's Escape and the Wide Scan row call.
+// game.h's RouteSites, each opener checked to do what its route needs.
+// `item_type` is the item use's offset of the type word's pointer, which the
+// summary's builder must read too; the Status screen's Escape and the Wide
+// Scan row call `close_instance` and `yesno_ask`.
 inline bool resolve_routes(const AskedInputs& in, const OfferSites& offer, uint32_t item_type,
                            const uint8_t* close_instance, const uint8_t* yesno_ask, RouteSites* out, char* why,
                            size_t len) {
@@ -3856,19 +3617,14 @@ inline bool resolve_routes(const AskedInputs& in, const OfferSites& offer, uint3
     return true;
 }
 
-// ---------------------------------------------------------------------------
 // The settings (core.h's kSettings): the game's config store, the routines
-// the Config pages set through and the tables naming their rows, each
-// checked against what the engine reads and writes.
+// the Config pages set through and the tables naming their rows.
 
-// The store's set by id (cdecl; id, value): the store's global (the imm32
-// at kCfgSetStore), then its set method (this = the store; id, value), ret
-// 8, the call at kCfgSetMethod. The method looks the entry up (hole 0 of
-// kShapeCfgMethod), changes nothing for the value already stored but for
-// id 0xCE, then stores it (hole 1). The lookup: the entries at
-// kStoreEntries, kEntryBytes each. The store: a value outside kEntryMin to
-// kEntryMax (-1: no range) takes kEntryDefault instead, the value goes to
-// kEntryValue, then the id's subscribers run.
+// The store's set by id (cdecl; id, value) calls the store's set method
+// (this = the store; id, value), which changes nothing for the value already
+// stored, but for id 0xCE. A value outside kEntryMin..kEntryMax (-1: no
+// range) takes kEntryDefault instead; it goes to kEntryValue, then the id's
+// subscribers run.
 const char kSigCfgSet[] =
     "8b 0d ?? ?? ?? ?? 85 c9 74 10 8b 44 24 08 8b 54 24 04 50 52 e8 ?? ?? ?? ?? c3 83 c8 ff c3";
 const size_t kCfgSetStore = 2;
@@ -3880,23 +3636,18 @@ const char kShapeCfgLookup[] = "8b 49 04 85 c9 74 10 8b 44 24 04 8d 14 80 8d 04 
 const char kShapeCfgStore[] =
     "8b 44 24 04 8b 4c 24 08 39 48 08 75 0c f6 40 28 01 75 06 83 c8 ff c2 08 00 8b 50 1c 83 fa ff 74 10 56 8b 70 18"
     " 3b f1 5e 7f 04 3b ca 7e 03 8b 48 20 89 48 08 8b 48 24 85 c9 74 0d";
-// The store's read by id (cdecl; id), as conf12wi's equipment lock rows
-// call it: the same global, the entry's kEntryValue.
+// The store's read by id (cdecl; id), as conf12wi's equipment lock rows call
+// it.
 const char kShapeCfgGet[] = "8b 0d ?? ?? ?? ?? 85 c9 74 0b 8b 44 24 04 50 e8 ?? ?? ?? ?? c3";
 
 // The store's save, never run: nothing unless its loaded byte is 1.
 const char kSigCfgSave[] =
     "56 8b f1 80 7e 09 01 75 0c e8 ?? ?? ?? ?? 8b ce e8 ?? ?? ?? ?? b8 01 00 00 00 5e c3";
 
-// The chat filter page's row state (this = its controller; row), never
-// run: the row table at kFilterTable, 4 bytes a row (the mask bit, the
-// second state's bit, the text's id), and again at +1; a mask bit of
-// kFilterNoBit has none; a negative second state is a system level, read
-// from the page's copy of 0x35 at +0x3C; the second state 2 with no mask
-// bit is Tell's, with the flag of 0x47 at +0x40. The mask bits' read at
-// kFilterBitCall is kShapeFilterBit's, kFilterBitsPerWord bits to a word;
-// a second state of kFilterOneState (the compare kFilterOneStateTest, once
-// in its first kFilterStateBytes) has none.
+// The chat filter page's row state, never run: the row table, 4 bytes a row
+// (the mask bit, the second state's bit, the text's id). A negative second
+// state is a system level, read from the page's copy of 0x35 at +0x3C; second
+// state 2 with no mask bit is Tell's, with the page's copy of 0x47 at +0x40.
 const char kSigFilterState[] =
     "56 57 8b 7c 24 0c 8b f1 8a 04 bd ?? ?? ?? ?? 3c 33 75 55 8a 04 bd ?? ?? ?? ?? 84 c0 7d 1a 8b 4e 3c 0f be c0 f7 d8 3b c8 0f 8c ?? ?? ?? ?? 5f b8 01 00 00 00 5e c2 04 00 3c 02 75 23 8b 4e 40";
 const size_t kFilterTable = 11;
@@ -3907,23 +3658,20 @@ const char kShapeFilterBit[] =
     "8b 4c 24 04 83 f9 1e 7d 04 33 c0 eb 08 b8 01 00 00 00 83 c1 e2 ba 01 00 00 00 d3 e2 8b 4c 24 08 85 14 81 0f 95 c0 c3";
 const uint8_t kFilterOneStateTest[] = {0x80, 0xf9, 0x0b};
 
-// The battle effects filter page's toggle (this = its controller; row),
-// never run: its copy of 0x92 at +0x30, the row table at kEffectTable, 4
-// bytes a row (the bit, 0, the text's id), the bit read by kShapeBitTest.
+// The battle effects filter page's toggle, never run: its copy of 0x92 at
+// +0x30, the row table 4 bytes a row (the bit, 0, the text's id).
 const char kSigEffectRows[] =
     "56 57 8b 7c 24 0c 8b f1 33 c9 8b 46 30 8a 0c bd ?? ?? ?? ?? 50 51 e8 ?? ?? ?? ?? 83 c4 08 84 c0 74 20";
 const size_t kEffectTable = 16;
 const size_t kEffectBitCall = 22;
 const char kShapeBitTest[] = "8b 4c 24 04 b8 01 00 00 00 d3 e0 85 44 24 08 0f 95 c0 c3";
 
-// conf11s's load of a group (this = its controller; window, group), never
-// run: its copy of 0xB9..0xBC written back, read again, then the group's
-// table from the getter called at kRoutingGetter, each row 8 bytes (the
-// text's id, the bit), ended by an id of -1. textcol1's open, never run:
-// the category's table from the getter called at kColorGetter, each row 16
-// bytes (the label's id, the sample's, the color, the store word), ended by
-// a label of -1. Both getters are kShapeFourTables: a table for each of 0
-// to 3 (holes 1 to 4), through a jump table (hole 0) to each in order.
+// conf11s's load of a group, never run: its copy of 0xB9..0xBC written back
+// and read again, then the group's table, 8 bytes a row (the text's id, the
+// bit), ended by an id of -1. textcol1's open, never run: the category's
+// table, 16 bytes a row (the label's id, the sample's, the color, the store
+// word), ended by a label of -1. Both tables come from a kShapeFourTables
+// getter: a jump table (hole 0) to a table for each of 0 to 3 (holes 1 to 4).
 const char kSigRoutingGroups[] =
     "8b 44 24 04 53 56 8b f1 8b 4c 24 10 57 89 4e 38 8b ce 89 46 34 e8 ?? ?? ?? ?? 8b ce e8 ?? ?? ?? ?? 8b 56 38 52 e8 ?? ?? ?? ?? 83 c4 04 89 46 3c";
 const size_t kRoutingGetter = 37;
@@ -3946,10 +3694,8 @@ const char kSigKeyRows2[] =
 const size_t kKeyRows2 = 23;
 
 // conf12wi's equipment lock rows, never run: 0xBF read through the store's
-// read (the call at kLockGet), set through its set (kLockSet), then the
-// request routine called at kLockCalls with 4, 1 or 0, which sets 0xBF
-// itself (kLockSetsBytes: twice in its first kLockRouteBytes) as it
-// succeeds.
+// read and set through its set, then the request routine called with 4, 1 or
+// 0, which sets 0xBF itself as it succeeds.
 const char kSigLockRows[] =
     "33 d2 66 3d 04 00 56 68 bf 00 00 00 0f 94 c2 8b f2 e8 ?? ?? ?? ?? 56 68 bf 00 00 00 8b f8 e8 ?? ?? ?? ?? 83 c4 0c 83 fe 01 5e 6a 00 6a 00 75 21 83 ff 01 74 0e 6a 04 e8";
 const size_t kLockGet = 17;
@@ -3957,21 +3703,17 @@ const size_t kLockSet = 30;
 const size_t kLockCalls[3] = {55, 69, 83};
 const size_t kLockRouteBytes = 0x96;
 const uint8_t kLockSetsBytes[] = {0x68, 0xbf, 0x00, 0x00, 0x00, 0xe8};
-// That request's head, kShapeLockHead: its gate's call (hole 0; al 1 and
-// nothing sent), its wait's call (hole 3), the wait's refusal (message 0x22
-// through the chat log's owner, al 1 and nothing sent), then the clock's
-// call (hole 7) stored in the stamp (hole 8). The wait, kShapeLockWait: the
-// clock's call (hole 0) less the stamp (hole 1), above the interval in
-// milliseconds (hole 2).
+// kShapeLockHead holes: 0 the gate (al 1: nothing sent), 3 the wait (its
+// refusal message 0x22, nothing sent), 7 the clock, 8 the stamp.
+// kShapeLockWait holes: 0 the clock, 1 the stamp, 2 the interval in ms.
 const char kShapeLockHead[] =
     "53 e8 ?? ?? ?? ?? 84 c0 74 04 32 c0 5b c3 8b 5c 24 08 80 fb 02 74 ?? 8a 44 24 0c 84 c0 75 ?? e8 ?? ?? ?? ?? 84 c0"
     " 75 ?? 8b 0d ?? ?? ?? ?? 6a 22 e8 ?? ?? ?? ?? b0 01 5b c3 e8 ?? ?? ?? ?? a3 ?? ?? ?? ??";
 const char kShapeLockWait[] = "e8 ?? ?? ?? ?? 2b 05 ?? ?? ?? ?? 3d ?? ?? ?? ?? 0f 97 c0 c3";
 
-// conf4's idle timer rows, never run: each row's minutes in seconds, then
-// the timer's routine (the call at kIdleCalls; kShapeIdle, cdecl
-// (seconds)), which stores seconds / 60 in 0x41 through the store's set,
-// and for 0 (kShapeIdleOff at kIdleOffAt) -1.
+// conf4's idle timer rows, never run: each row's minutes in seconds go to the
+// timer's routine (cdecl; seconds), which stores seconds / 60 in 0x41
+// through the store's set, or -1 for 0.
 const char kSigIdleRows[] =
     "8d 44 40 fa 8d 04 80 8d 04 80 c1 e0 03 50 e8 ?? ?? ?? ?? 83 c4 04 66 89 77 22 5f 5e c2 08 00 6a 00 e8 ?? ?? ?? ?? 83 c4 04 66 89 77 22";
 const size_t kIdleCalls[2] = {14, 33};
@@ -3980,13 +3722,10 @@ const char kShapeIdle[] =
 const size_t kIdleOffAt = 0x47;
 const char kShapeIdleOff[] = "6a ff 6a 41 e8 ?? ?? ?? ??";
 
-// conf3win's open from its read of the player flag 0 into its field +0x38
-// (the call at kAnonymousGet), and its begin-close, which hands that field
-// to the flag's request (kAnonymousSet) once a row has changed it. The
-// read is kShapeFlagGet: the player's data's global (hole 0), its flags
-// through a jump table (hole 3), flag 0's kShapeFlagBit: bit 2 of the byte
-// at hole 0's offset. The request is kShapeFlagSet, through the same
-// global.
+// conf3win's open reads player flag 0 into its field +0x38, and its
+// begin-close hands that field to the flag's request once a row has changed
+// it. kShapeFlagGet holes: 0 the player's data's global, 3 the flags' jump
+// table; flag 0 is bit 2 of the byte at kShapeFlagBit's hole.
 const char kSigAnonymousRows[] =
     "6a 00 89 46 30 e8 ?? ?? ?? ?? 83 c4 0c 25 ff 00 00 00 89 46 38 c6 46 3c 00 5e c3 90 90 90 80 79 3c 01 75 0e 8a 41 38 50 6a 00 e8 ?? ?? ?? ?? 83 c4 08 c3";
 const size_t kAnonymousGet = 5;
@@ -4062,6 +3801,11 @@ inline const char* setting_row(const AskedInputs& in, const SettingSites& s, int
                 return buf;
             }
             return NULL;
+        }
+        if ((bit != kFilterNoBit && bit >= 2 * kFilterBitsPerWord) || (sub != kFilterOneState && sub >= 32)) {
+            snprintf(buf, size, "the chat filter's row %d is not a bit of its words (mask bit %d, second state %d)",
+                r + 1, bit, sub);
+            return buf;
         }
         slot->row = filter_row(bit, sub);
         const bool one = slot->row.mask >= 0 && slot->row.second < 0 && !slot->row.flagged;

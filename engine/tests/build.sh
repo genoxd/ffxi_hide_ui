@@ -9,12 +9,12 @@
 #                    basename in two folders as two addons ship it, which the
 #                    loader maps as two images, and hideui.lua beside the one
 #                    in build/a; build/c, build/d, build/e, build/f,
-#                    build/g, build/h and build/i hold copies built from the
-#                    same source that publish engine abi 2's, abi 3's, abi
-#                    4's, abi 5's, abi 6's, abi 7's and abi 8's tables,
-#                    standing for a 0.4.x, a 0.5.0, a 0.5.1 to 0.6.3, a 0.7.0
-#                    to 0.8.0, a 0.9.0, a 0.10.0 and an earlier 0.11.0
-#                    build's resident.
+#                    build/g, build/h, build/i and build/j hold copies built
+#                    from the same source that publish engine abi 2's, abi
+#                    3's, abi 4's, abi 5's, abi 6's, abi 7's, abi 8's and abi
+#                    9's tables, the last up to set_setting9, standing for a
+#                    0.4.x, a 0.5.0, a 0.5.1 to 0.6.3, a 0.7.0 to 0.8.0, a
+#                    0.9.0, a 0.10.0 and two earlier 0.11.0 builds' residents.
 #   lua_client_test  examples/hideuidemo's Lua under lua5.1, against a stand-in
 #                    native module
 #   image_check.exe  the signatures and the menu table against an unpacked
@@ -40,7 +40,7 @@ i686-w64-mingw32-g++ "${FLAGS[@]}" -shared -o FFXiMain.dll fake_ffximain.cpp
 i686-w64-mingw32-g++ "${FLAGS[@]}" -static -o e2e_test.exe e2e_test.cpp
 i686-w64-mingw32-g++ "${FLAGS[@]}" -static -o image_check.exe image_check.cpp
 
-mkdir -p build/a build/b build/c build/d build/e build/f build/g build/h build/i
+mkdir -p build/a build/b build/c build/d build/e build/f build/g build/h build/i build/j
 for copy in a b; do
     cp "$ENGINE" "build/$copy/_HideUI.dll"
     cp "$DAEMON" "build/$copy/hideui_daemon.dll"
@@ -48,8 +48,9 @@ done
 cp "$ADDON/libs/hideui.lua" build/a/hideui.lua
 # Engine abi 2's table ends at query_options, 140 bytes; abi 3's at status3,
 # 236; abi 4's at status4, 284; abi 5's at block5, 328; abi 6's at macros,
-# 340; abi 7's at unblock7, 348; abi 8's at withdraw8, 388.
-for table in "c 2 140" "d 3 236" "e 4 284" "f 5 328" "g 6 340" "h 7 348" "i 8 388"; do
+# 340; abi 7's at unblock7, 348; abi 8's at withdraw8, 388; abi 9's at
+# set_setting9, 408, before info9 and unblock9.
+for table in "c 2 140" "d 3 236" "e 4 284" "f 5 328" "g 6 340" "h 7 348" "i 8 388" "j 9 408"; do
     read -r copy abi bytes <<< "$table"
     if ! log=$(HIDEUI_DEFINES="-DHU_ENGINE_ABI_BUILT=${abi}u -DHU_ENGINE_PUBLISHED_SIZE=${bytes}u" \
             bash ../build.sh "$(pwd)/build/$copy/_HideUI.dll" 2>&1); then
@@ -63,12 +64,13 @@ status=0
 echo "== engine_test (wine)"
 env -u DISPLAY WINEDEBUG="${WINEDEBUG:--all}" wine engine_test.exe || status=1
 echo
-echo "== e2e_test (wine): $(md5sum "$ENGINE" | cut -c1-12) engine as copies a and b, $(md5sum build/c/_HideUI.dll | cut -c1-12) engine abi 2 table as copy c, $(md5sum build/d/_HideUI.dll | cut -c1-12) engine abi 3 table as copy d, $(md5sum build/e/_HideUI.dll | cut -c1-12) engine abi 4 table as copy e, $(md5sum build/f/_HideUI.dll | cut -c1-12) engine abi 5 table as copy f, $(md5sum build/g/_HideUI.dll | cut -c1-12) engine abi 6 table as copy g, $(md5sum build/h/_HideUI.dll | cut -c1-12) engine abi 7 table as copy h, $(md5sum build/i/_HideUI.dll | cut -c1-12) engine abi 8 table as copy i, $(md5sum "$DAEMON" | cut -c1-12) daemon, $(md5sum "$LUACORE" | cut -c1-12) LuaCore"
+echo "== e2e_test (wine): $(md5sum "$ENGINE" | cut -c1-12) engine as copies a and b, $(md5sum build/c/_HideUI.dll | cut -c1-12) engine abi 2 table as copy c, $(md5sum build/d/_HideUI.dll | cut -c1-12) engine abi 3 table as copy d, $(md5sum build/e/_HideUI.dll | cut -c1-12) engine abi 4 table as copy e, $(md5sum build/f/_HideUI.dll | cut -c1-12) engine abi 5 table as copy f, $(md5sum build/g/_HideUI.dll | cut -c1-12) engine abi 6 table as copy g, $(md5sum build/h/_HideUI.dll | cut -c1-12) engine abi 7 table as copy h, $(md5sum build/i/_HideUI.dll | cut -c1-12) engine abi 8 table as copy i, $(md5sum build/j/_HideUI.dll | cut -c1-12) engine abi 9 table to set_setting9 as copy j, $(md5sum "$DAEMON" | cut -c1-12) daemon, $(md5sum "$LUACORE" | cut -c1-12) LuaCore"
 env -u DISPLAY WINEDEBUG="${WINEDEBUG:--all}" wine e2e_test.exe \
     "Z:$LUACORE" "Z:$(pwd)/build/a/_HideUI.dll" "Z:$(pwd)/FFXiMain.dll" \
     "Z:$(pwd)/build/b/_HideUI.dll" "Z:$(pwd)/build/c/_HideUI.dll" "Z:$(pwd)/build/a/hideui.lua" \
     "Z:$(pwd)/build/d/_HideUI.dll" "Z:$(pwd)/build/e/_HideUI.dll" "Z:$(pwd)/build/f/_HideUI.dll" \
-    "Z:$(pwd)/build/g/_HideUI.dll" "Z:$(pwd)/build/h/_HideUI.dll" "Z:$(pwd)/build/i/_HideUI.dll" || status=1
+    "Z:$(pwd)/build/g/_HideUI.dll" "Z:$(pwd)/build/h/_HideUI.dll" "Z:$(pwd)/build/i/_HideUI.dll" \
+    "Z:$(pwd)/build/j/_HideUI.dll" || status=1
 echo
 echo "== lua_client_test (lua5.1)"
 lua5.1 lua_client_test.lua "$ADDON" || status=1
@@ -100,10 +102,11 @@ lua5.1 lua_client_test.lua "$ADDON" || status=1
 # door's handler, the confirm's gate, the floor read, the draw's condition,
 # the tick, the door actor's open, the routine the exit gives the door, the
 # Mog House object's global, the exit's three bytes and the nations' lists;
-# the dialogue boxes' input routine, handler, text dispatch, the chat log's
-# release, the text object's clear, the event's wait flag, the tick and its
-# left-button test's return, and the two globals naming their text objects
-# that the dispatch hands its code between; the text-entry windows:
+# the dialogue boxes' input routine, handler, text dispatch, its gate's
+# advance and page-turn sound, the chat log's release, the text object's
+# clear, the event's wait flag, the tick and its left-button test's return,
+# and the two globals naming their text objects that the dispatch hands its
+# code between; the text-entry windows:
 # stringdl's input routine, name and slot handlers, field end and the
 # manager's focus;
 # comment's input routine, vtable, begin-close, field end, the line's
@@ -115,7 +118,8 @@ lua5.1 lua_client_test.lua "$ADDON" || status=1
 # search's start; link11's input routine, field end, the second slot's
 # test, link5's selection, the name's encoder, the request's sender, the
 # item lookup and the request's four bytes; passinpu's input routine, field
-# end and start; comment's and msgline's field starts; then where the target
+# end and start; comment's and msgline's field starts; the text entry's
+# manager's global, its unbind and its bind; then where the target
 # window's two arrow draws return; then the trade windows: the trade's input
 # routine, stage, OK, cancel, close, rows' slots, send and the allocator,
 # the trade's open, its mode's global and the actor table; the NPC trade's
@@ -183,14 +187,14 @@ elif [ -f "$IMAGE" ]; then
         10141875 1023BC40 \
         101D6070 10337460 101D5CF0 101D5DE0 101D5BC9 101CBC00 100F0F20 101CBBD0 101D5D50 100AD100 101D5CC0 \
         1062F6AC 1062F6A8 105EDDBE 10481F10 1037DC28 \
-        10136A90 10136AD0 101266E0 10129130 101268A0 10487200 10136B70 10136C79 104E1148 104E114C \
+        10136A90 10136AD0 101266E0 10126930 10037E80 10129130 101268A0 10487200 10136B70 10136C79 104E1148 104E114C \
         1014F310 1014F3D0 1014F5B0 1014F3B0 1015DA10 \
         101DD990 10337E60 101DCE60 101DCCF0 1018F9C0 1018FB60 \
         101FEF10 101FE9F0 104DED90 1035F1C4 100DB640 10310BCE 100F6F40 100F6F00 100F6E80 100F7050 100F71E0 \
         101FF3D0 101FF450 105771F0 10220D50 1062FFA0 \
         1020DED0 1020DDC0 1063096C 10107580 10107530 1020A500 \
         101E4FC0 101E4C60 100E95D0 101E3000 101C8A90 100E9480 101CB2D0 1062F9EC 1062F9F0 1062F9F4 1062F9F5 \
-        102062B0 10206020 10205F80 101DCBE0 101FE930 \
+        102062B0 10206020 10205F80 101DCBE0 101FE930 1062F278 101C63D0 101C63A0 \
         1015040A 10150446 \
         10151490 10151050 101511C0 101511F0 10151C40 10370D68 100EB9A0 100FC260 10151B60 10577480 1047FAE8 \
         101398E0 10139CD0 10139B70 10139CB0 105771EC 104DED90 194B8 19300 9860 41B4 104DED8C 43E2C 11E \

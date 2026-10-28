@@ -1,9 +1,5 @@
-// core.h - the parts of the hideui engine that read no game memory: the menu
-// inventory, name and key lookup, hold accounting, the session memory of
-// positions and sizes, the two queues between the Lua thread and the game
-// thread, the errors the game thread reports to a handle, the signature
-// scanner, the glyph decoder and the reply writer. The engine and the offline
-// test compile this one file.
+// The parts of the hideui engine that read no game memory; the engine and the
+// offline test both compile this file.
 //
 // Every object here is plain data with no constructor or destructor: the
 // engine keeps them at namespace scope, where anything non-trivial would run
@@ -26,14 +22,10 @@
 
 namespace hu {
 
-// ---------------------------------------------------------------------------
-// Breadcrumbs, in a build made with -DHU_BREADCRUMBS alone: each thread's
-// steps through the engine, entered and not yet left, and its last marks,
-// in the exported hideui_crumbs, so a frozen client's memory names the step
-// each thread is in. A mark is the shared counter's value then; a step's
-// name is a string in this image. Lua bindings never nest but through a
-// __gc, so a binding entered from Lua drops what a Lua error's longjmp left
-// open.
+// Breadcrumbs (-DHU_BREADCRUMBS): each thread's open steps and last marks,
+// exported as hideui_crumbs so a frozen client's memory names each thread's
+// step. Lua bindings nest only through a __gc, so a binding entered from Lua
+// drops what a Lua error's longjmp left open.
 
 #ifdef HU_BREADCRUMBS
 const int kCrumbThreads = 8;
@@ -67,14 +59,9 @@ struct Crumbs {
 };
 #endif
 
-// ---------------------------------------------------------------------------
-// Heap checks, in a build made with -DHU_HEAPCHECK and -DHU_BREADCRUMBS:
-// every heap of the process validated around the engine's game calls and
-// once a second on the game thread, the first failure kept in the exported
-// hideui_heapcheck with the last check that passed before it and every
-// thread's crumbs as the failure found them. The process keeps the labels
-// and the failure in a section of its own that outlives this image, so the
-// next image names an earlier one's failure, or its last check that passed.
+// Heap checks (-DHU_HEAPCHECK): the first failed heap validation, exported as
+// hideui_heapcheck with every thread's crumbs. A per-process section outlives
+// this image, so the next image reports an earlier one's failure.
 
 #ifdef HU_HEAPCHECK
 #ifndef HU_BREADCRUMBS
@@ -246,8 +233,6 @@ struct CrumbScope {
 #endif
 
 #ifdef HU_HEAPCHECK
-// The failed check's report: its image when an earlier one's, then the last
-// check that passed, its image when another, and how long before.
 inline void heap_describe(HeapCheck& h) {
     char lead[48];
     if (h.fail_image == h.image) {
@@ -268,10 +253,8 @@ inline void heap_describe(HeapCheck& h) {
     snprintf(h.report, sizeof(h.report), "%s%s (last good: %s)", lead, h.fail, good);
 }
 
-// The magic, this image's number and the process's section, at its first
-// check. The section stays mapped for the life of the process, as the
-// election's does. An earlier image's failure becomes this one's (failed 2),
-// reported by the drain a second on, once the handle new() is making can
+// The section stays mapped for the life of the process. An earlier image's
+// failure is reported a second later, once the handle new() is making can
 // read it.
 inline void heap_open(HeapCheck& h) {
     memcpy(h.magic, "hideui heap 1", 14);
@@ -312,11 +295,8 @@ inline void heap_open(HeapCheck& h) {
     }
 }
 
-// Every heap of the process validated, `context` following the label in
-// parentheses on a failure. HeapValidate takes each heap's own lock, so a
-// check waits out an allocation in progress; a check on another thread is
-// spun out. The first failure is reported by the drain: at once when it
-// came on the drain's thread, a second on from any other.
+// HeapValidate takes each heap's own lock, so a check waits out an allocation
+// in progress.
 inline void heap_run(const char* label, const char* context) {
     HeapCheck& h = hideui_heapcheck;
     while (InterlockedCompareExchange(&h.busy, 1, 0) != 0) {
@@ -407,7 +387,6 @@ inline void heap_check(const char* format, ...) {
 #define HU_HEAP_CHECK(...) ((void)0)
 #endif
 
-// ---------------------------------------------------------------------------
 // The inventory the live registry is verified against.
 
 struct RowSpec {
@@ -457,12 +436,10 @@ struct NameEntry {
     }
 };
 
-// Registry names that are another window under a second name, folded into
-// it: the game's open and close of mcr1edit and mcr2edit rewrite the name to
-// mcr1edlo and mcr2edlo under one interface layout, one controller each, and
-// a Japanese client opens the job list as jobcsel where every other opens
-// jobcselu. Every verb takes either name, and the events, reads and lists
-// carry the first.
+// A window's second registry name: the game renames mcr1edit and mcr2edit
+// to mcr1edlo and mcr2edlo under one interface layout, and a Japanese client
+// opens jobcselu as jobcsel. Verbs take either name; events and reads carry
+// the first.
 struct AliasSpec {
     const char* name;
     const char* alias;
@@ -501,20 +478,9 @@ const GroupSpec kGroups[] = {
 };
 const int kGroupCount = 3;
 
-// Names that may be hidden but never blocked or closed, by any engine abi's
-// slots, each with the reason a refusal gives. The game reads query's and
-// comyn's windows right after their opens with no null check, and frees
-// gmtell's controller on a refused open before writing into it; while the
-// KO window (dead) is down the game declines every raise offered, and a
-// refused open of it or of Monstrosity's (mp_dead) acts on the choice an
-// earlier KO left in its controller; a refused open of the raise question
-// (the resyn family) keeps it from the player, and the game asks it again
-// every frame; an NPC dialogue box (rem4line, rem4li2) with no window has
-// nothing advance its dialogue, its timed pages and the script's own advance
-// included, and the NPC's script waits on it forever; the outgoing box gives
-// up when its name entry (stringdl) cannot open, which ends the delivery
-// session. cancel('query') closes query once the answer is written, as the
-// event's wait does on its next tick.
+// Names no slot of any abi blocks or closes, only hides; the reason is the
+// refusal's text. The game reads query's window right after its open with no
+// null check.
 struct HideOnlySpec {
     const char* name;
     const char* reason;
@@ -564,9 +530,8 @@ inline bool hide_only(const char* name) {
     return hide_only_reason(name) != NULL;
 }
 
-// Names no engine abi's close slots close, beyond the hide-only ones, each
-// with the reason a refusal gives: the game's error screen waits on ok's
-// acknowledgment, which a closed ok never gives. A block still holds them.
+// Names no close slot closes, beyond the hide-only ones; a block still holds
+// them.
 const HideOnlySpec kCloseRefused[] = {
     {"ok", "ok cannot be closed: the game waits until it is acknowledged, and closed, it waits forever;"
            " answer('ok') acknowledges it"},
@@ -584,17 +549,9 @@ inline const char* close_refusal(const char* name) {
     return reason;
 }
 
-// Names open refuses, each from the engine abi whose open slots first
-// refuse it, with the reason a refusal gives. From abi 1, every slot: an
-// open by name alone can crash the client, or the game opens the window
-// only for a message from the server or an NPC's script, and opened alone
-// it sends the server a request made of nothing, closes on its first
-// frame, or cannot be dismissed. A window "has no controller" when its
-// registry slot holds none until the game's own opener makes one: the
-// open binds the new instance to that controller with no test for NULL.
-// From abi 9: it is a set's main window, which opens only with its set, or
-// it opens empty or with what an earlier open of the game's left in it.
-// The windows kRoutes names open through their routes instead.
+// Names the open slots of engine abi `since` and later refuse. "No
+// controller": the registry slot holds none until the game's own opener makes
+// one, and an open binds the new window to it with no NULL test.
 struct OpenRefusedSpec {
     const char* name;
     uint32_t since;
@@ -687,8 +644,7 @@ const OpenRefusedSpec kOpenRefused[] = {
                    " the open would crash the client; the game opens it at the Mog House's door"},
     {"bankmenu", 1, "bankmenu cannot be opened alone: it has no controller until the game's own opener makes one,"
                     " and the open would crash the client; the game opens it for its Mog Safe question"},
-    // the server's or an NPC's: a request made of nothing, a close on the
-    // first frame, or a window that cannot be dismissed
+    // opened only for the server or an NPC
     {"chocobor", 1, "chocobor cannot be opened alone: it would ask the server for a race made of nothing; the game"
                     " opens it for an NPC's race"},
     {"racecard", 1, "racecard cannot be opened alone: its open asks the server for a race made of nothing; the game"
@@ -731,19 +687,17 @@ const OpenRefusedSpec kOpenRefused[] = {
 };
 const int kOpenRefusedCount = static_cast<int>(sizeof(kOpenRefused) / sizeof(kOpenRefused[0]));
 
-// A window every close slot refuses while another window, `other`, is open:
-// the other reads it through its menu with no test for it, and the client
-// crashes.
+// A window every close slot refuses while `other` is open: the other reads it
+// through its menu with no test, and the client crashes.
 struct PairSpec {
     const char* name;
     const char* other;
     const char* reason;
 };
 
-// The windows that act on another window's selection or state: each opens
-// only while one of its parents is open, as the game opens it from there,
-// and every open slot refuses it otherwise with "<name> needs <parents>
-// open" and, where opening it alone would crash the client, why.
+// Windows that act on a parent's selection or state: every open slot refuses
+// one while none of its parents is open, adding `why` where an open alone
+// would crash the client.
 struct ChildSpec {
     const char* name;
     const char* parents[9];
@@ -846,12 +800,9 @@ inline const ChildSpec* child_spec(const char* name) {
 }
 
 // The kChildren pairs whose parent's close, as close() runs it, closes the
-// child itself: its begin-close (vtable +0x08) by name or by instance, or
-// its Escape where close() runs that (map0, the palettes, textcol1,
-// mp_mncst, cnqframe). ability closes abisortw and subwindo only while it
-// shows its sort window and its pane; close() closes the rest of a closed
-// parent's children itself, each before the parent where no other parent of
-// it is open.
+// child itself (ability only while it shows abisortw and subwindo). close()
+// closes a parent's other children before it, where no other parent of the
+// child is open.
 struct ParentCloses {
     const char* parent;
     const char* children[13];
@@ -907,8 +858,6 @@ inline bool child_of(const ChildSpec& c, const char* parent) {
     return false;
 }
 
-// "<name> needs <parents> open", and why where opening it alone would
-// crash the client.
 inline void child_reason(const ChildSpec& c, char* out, size_t size) {
     size_t used = static_cast<size_t>(snprintf(out, size, "%s needs ", c.name));
     for (int i = 0; c.parents[i] && used < size; ++i) {
@@ -936,9 +885,7 @@ inline const PairSpec* pair_spec(const PairSpec* table, int count, const char* n
     return NULL;
 }
 
-// Names no block slot blocks, beyond the hide-only ones, each with the
-// reason a refusal gives: trade's input moves gift's cursor through gift's
-// window, and a blocked gift does not open with the next trade.
+// Names no block slot blocks, beyond the hide-only ones.
 const HideOnlySpec kBlockRefused[] = {
     {"gift", "gift cannot be blocked: it would not open with the next trade, whose input moves gift's cursor"
              " through gift's window, and the player's keys on trade would crash the client; hide it instead"},
@@ -966,12 +913,9 @@ inline const char* open_refusal(const char* name, uint32_t abi) {
     return NULL;
 }
 
-// The windows the game opens with the open routine's last argument 1: its
-// reopen of the registry rows of policy bit 0x400 passes it, and so do the
-// target window's and the action menus' own openers. With it a window opens
-// dormant while another window of its overlap group shows, and comes out
-// when that one goes. Every other window's every opener passes 0, and an
-// open by name passes what the game passes.
+// The windows the game's openers open with the open routine's last argument
+// 1; every other gets 0. With 1 a window opens dormant while another of its
+// overlap group shows, and comes out when that one goes.
 const char* const kOpenParked[] = {"gaugewin", "targetwi", "playermo", "mp_pmode"};
 
 inline int32_t open_overlap(const char* name) {
@@ -983,10 +927,9 @@ inline int32_t open_overlap(const char* name) {
     return 0;
 }
 
-// The lists the ability window and the magic window show, by the category
-// their openers take: the one name each has in every verb and event. The
-// game checks no category; one past a window's table reads and writes past
-// its controller's arrays. Ability's 0, 5 and 7 name no list.
+// The ability and magic windows' lists by the category their openers take.
+// The game checks no category: one past a window's table reads and writes
+// past its controller's arrays. Ability's 0, 5 and 7 name no list.
 struct ListName {
     int32_t category;
     const char* name;
@@ -1001,6 +944,12 @@ const ListName kAbilityLists[] = {
 };
 const int kAbilityListCount = static_cast<int>(sizeof(kAbilityLists) / sizeof(kAbilityLists[0]));
 const int32_t kAbilityListMax = 23;
+
+// The slots before engine abi 8 name only the lists 1 to kNamedBefore8, and
+// 20, the weapon skill list's Monstrosity form, as weapon_skills.
+const int32_t kNamedBefore8 = 4;
+const int32_t kWeaponSkills = 3;
+const int32_t kMonstrosityWeaponSkills = 20;
 
 const ListName kMagicLists[] = {
     {1, "white_magic"}, {2, "black_magic"}, {3, "summoning"}, {4, "ninjutsu"},
@@ -1019,8 +968,7 @@ inline const char* list_name(const ListName* lists, int count, int32_t category)
     return NULL;
 }
 
-// Whether `name` is `low`, which is already lowercase, in any case: the
-// game's own names keep their capitals.
+// `low` is already lowercase; the game's own names keep their capitals.
 inline bool same_lowercase(const char* name, const char* low) {
     for (; *name && *low; ++name, ++low) {
         if (lower_ascii(*name) != *low) {
@@ -1224,10 +1172,9 @@ inline void choice_names(const ListName* choices, int count, char* out, size_t s
     }
 }
 
-// The choices the argument windows and sets take, each by its name or its
-// number in the table. Each table's numbers count from 1, as the player
-// sees the rows, but the bags', which are Windower's bag ids, and the jobs',
-// which are Windower's job ids.
+// The choices the argument windows and sets take, by name or number. The
+// numbers count from 1 as the player sees the rows, except the bags' and the
+// jobs', which are Windower's ids.
 const ListName kMogpostModes[] = {{1, "mog_house"}, {2, "nomad"}};
 const ListName kJobChangeRows[] = {{1, "main"}, {2, "support"}};
 const ListName kJobs[] = {
@@ -1235,13 +1182,11 @@ const ListName kJobs[] = {
     {9, "bst"}, {10, "brd"}, {11, "rng"}, {12, "sam"}, {13, "nin"}, {14, "drg"}, {15, "smn"}, {16, "blu"},
     {17, "cor"}, {18, "pup"}, {19, "dnc"}, {20, "sch"}, {21, "geo"}, {22, "run"},
 };
-// quest00's modes 2 and 3 by the titles the game gives them (its message
-// category 12, 0x18B and 0x18C); mode 1 has no title in the game's text.
+// quest00's modes 2 and 3 by their titles in the game's text; mode 1 has none.
 // quest01's lists go by number: lists 1 and 3 both read "Current".
 const ListName kQuestModes[] = {{1, "1"}, {2, "Unity Information"}, {3, "Ranking Information"}};
 const ListName kQuestLists[] = {{1, "1"}, {2, "2"}, {3, "3"}, {4, "4"}, {5, "5"}, {6, "6"}, {7, "7"}};
-// The mission logs by the names the game's mission list takes from its
-// message category 13 into its table of them (FFXiMain.dll+0x22D7A0).
+// The mission logs by the names the game's mission list shows.
 const ListName kMissionLogs[] = {
     {1, "San d'Oria"}, {2, "Bastok"}, {3, "Windurst"}, {4, "Rise of the Zilart"}, {5, "Chains of Promathia"},
     {6, "Assault"}, {7, "Treasures of Aht Urhgan"}, {8, "Campaign"}, {9, "Wings of the Goddess"},
@@ -1260,8 +1205,7 @@ const ListName kBags[] = {
     {12, "wardrobe4"}, {13, "wardrobe5"}, {14, "wardrobe6"}, {15, "wardrobe7"}, {16, "wardrobe8"},
     {17, "recycle"},
 };
-// The Region Info map's kinds by the titles its setup gives each points
-// window (FFXiMain.dll+0x1E7DC8: message category 13, 0x8E, 0x8C, 0x8F, 0xA2).
+// The Region Info map's kinds by the titles of their points windows.
 const ListName kRegionKinds[] = {{1, "Conquest"}, {2, "Besieged"}, {3, "Campaign"}, {4, "Colonization"}};
 #define HU_CHOICES(table) table, static_cast<int>(sizeof(table) / sizeof(table[0]))
 
@@ -1273,11 +1217,10 @@ const int32_t kCommentModeComment = 0;  // comgenre's and its sub-lists' modes: 
 const int32_t kCommentModeRefine = 2;   // a narrowing of the search on screen
 const int32_t kCommentBaseStep = 16;    // a comment category's base in the sub-lists: category x 16
 
-// How the windows that take an argument open: each through the game's own
-// opener of it, or what the game's own route writes before its open. A
-// plain open of one with a default runs its route with it in every open
-// slot; one with none (kArgRequired) is refused in every slot. A choice
-// reaches the route as its number in its table.
+// How the windows that take an argument open: through the game's own opener,
+// or by writing what the game's route writes before the open. Every open slot
+// runs the route with the default on a plain open, or refuses it without one
+// (kArgRequired). A choice reaches the route as its number.
 enum {
     kRouteStorage = 1,  // the storage list's opener; x 0 the Mog House's, 1 the Nomad Moogle's
     kRouteMogpost,      // the post menu's opener with the mode
@@ -1433,9 +1376,7 @@ inline bool parse_item_arg(const char* window, const OpenArg& a, RouteArgs* out,
     return true;
 }
 
-// The route's values for `spec` from `a`, its default for none; false with
-// `why` filled when the argument is not one the window takes, or none is
-// given to one that needs it.
+// `spec`'s default for no argument; false with `why` filled.
 inline bool route_args(const RouteSpec& spec, const OpenArg& a, RouteArgs* out, char* why, size_t size) {
     memset(out, 0, sizeof(*out));
     char names[400];
@@ -1550,14 +1491,10 @@ inline bool route_args(const RouteSpec& spec, const OpenArg& a, RouteArgs* out, 
     return false;
 }
 
-// The windows open_set opens together, by the set's name: the game's own
-// opener for them, run as one call. `windows` are those a block of any
-// refuses the set for up front, with the one of `by_choice` the choice
-// opens beside them; `opens` the one that must be open once the opener
-// returns. A set takes nothing, one list of its window, the inventory
-// index of the item its opener is run for (the crystal of a synthesis, the
-// tabula of a maze), an item as the item panel takes one, or one of its
-// choices.
+// The sets open_set opens through the game's own opener of them. A block of
+// any of `windows`, or of the `by_choice` window the choice opens, refuses the
+// set up front; `opens` must be open once the opener returns. kTakesItem: the
+// inventory index of the item the opener runs for.
 const uint8_t kTakesNothing = 0;
 const uint8_t kTakesList = 1;
 const uint8_t kTakesItem = 2;
@@ -1622,11 +1559,10 @@ const SetSpec kSets[] = {
 };
 const int kSetCount = static_cast<int>(sizeof(kSets) / sizeof(kSets[0]));
 
-// The item types the game's item use runs a set's opener for: a crystal's
-// synthesis, and the M and the R Maze Tabulae, whose editor opens in mode 0
-// and mode 1. The item panel reads the extra data of an item of the types
-// from kItemPanelExtraFirst to kItemPanelExtraLast with no test for none:
-// one shown by its id alone, which has none, crashes the client.
+// The item types whose use runs a set's opener; the M and R Maze Tabulae open
+// the editor in mode 0 and 1. The item panel reads the extra data of types
+// kItemPanelExtraFirst..Last with no test for none, so one shown by its id
+// alone crashes the client.
 const uint16_t kItemCrystal = 8;
 const uint16_t kItemTabulaM = 0x16;
 const uint16_t kItemTabulaR = 0x17;
@@ -1642,17 +1578,11 @@ inline int find_set(const char* name) {
     return -1;
 }
 
-// The windows that ask the player something and wait on the reply, each
-// from the engine abi whose verbs first count it: open refuses them (the
-// game opens each for its own question), close refuses the ones cancel ends
-// and a hide-only or close-refused one with its own reason (confyn and
-// comment, which have no cancel and are neither, close as any window), and a
-// block leaves an open one to its reply. While the engine hides one that
-// asks now (game.h's prompt_asks()), the player's keys and the menu mouse
-// mode are held off it; any other hidden window keeps its keys, a prompt
-// that asks nothing now among them. `yesno` marks the game's yes/no class,
-// `cancels` a prompt cancel() ends, `boolean` one answered true or false
-// whose default is the row it opens on.
+// Windows that ask the player and wait on the reply, prompts from engine abi
+// `since` on: open refuses them, close refuses those cancel() ends, and a
+// block leaves an open one to its reply. A hidden prompt that asks now
+// (game.h's prompt_asks()) loses the player's keys and the menu mouse mode.
+// `boolean`: answered true or false, its default the row it opens on.
 struct PromptSpec {
     const char* name;
     uint32_t since;
@@ -1718,12 +1648,7 @@ inline int box_named(const char* name) {
     return -1;
 }
 
-// The other prompts of engine abi 8, each answered by its own reply: the
-// item and sort confirmations (sortyn), the key item confirmation
-// (evitem01), the config's "restore defaults" (confyn), the Mog Safe
-// picker (bankmenu), the map list (maplist), a GM's question (gmtell), the
-// Monstrosity KO window (mp_dead), the error notice (ok) and the Mog House
-// exit (mogdoor).
+// The other engine abi 8 prompts, each answered by its own reply.
 enum Asked {
     kAskedSortyn,
     kAskedEvitem,
@@ -1748,11 +1673,9 @@ inline int asked_named(const char* name) {
     return -1;
 }
 
-// The NPC dialogue boxes among the prompts, each showing the pages of its
-// own text object: rem4line over the chat log, rem4li2 over the second.
-// They show one dialogue, the same page in both: a hold or a reply on
-// either is one on both (Inventory::dialogue_twin()), a move or a size each
-// box's own.
+// The NPC dialogue boxes, rem4line over the chat log and rem4li2 over the
+// second. Both show one dialogue, so a hold or a reply on either is on both
+// (Inventory::dialogue_twin()); a move or a size is each box's own.
 const int kDialogueCount = 2;
 const char* const kDialogueNames[kDialogueCount] = {"rem4line", "rem4li2"};
 
@@ -1765,11 +1688,7 @@ inline int dialogue_named(const char* name) {
     return -1;
 }
 
-// The text-entry windows among the prompts, each answered with what the
-// player would type: the outgoing box's recipient (stringdl), the bazaar,
-// search and linkshell messages (comment), a PlayOnline friend message
-// (msgline), the player search's name (scname) and a new linkshell's name
-// and colors (link11).
+// The text-entry prompts, each answered with what the player would type.
 enum Text {
     kTextStringdl,
     kTextComment,
@@ -1789,12 +1708,9 @@ inline int text_named(const char* name) {
     return -1;
 }
 
-// What each takes, in bytes as the game holds them: the recipient's name,
-// letters only, as the outgoing box's check takes it; the comment's three
-// lines; msgline's text, by the field its mode gives it, of which the
-// long field keeps one byte less: the commit zeroes its last; the searched
-// name; the linkshell's name, which its encoder takes below 20 bytes, and
-// each of its three colors.
+// Lengths in bytes as the game holds them. msgline's long field keeps one
+// byte less: the commit zeroes its last. link11's name encoder takes below 20
+// bytes.
 const int kStringdlMin = 3;
 const int kStringdlMax = 15;
 const int kCommentLines = 3;
@@ -1806,10 +1722,9 @@ const int kScnameMax = 15;
 const int kLink11Max = 19;
 const int kLink11ColorMax = 15;
 
-// A text window's answer as the Lua thread checked it, handed to the game
-// thread through the engine's slot for that window: a reply to a window
-// counts against it until the drain carries it out, and another is refused
-// meanwhile, so the slot is never written while a queued reply reads it.
+// A text window's checked answer, passed to the game thread in that window's
+// slot. A second reply is refused until the drain carries out the first, so
+// the slot is never written while a queued reply reads it.
 struct TextAnswer {
     int32_t yes;                            // stringdl's confirm: 1 yes, 0 no; -1 its name
     char text[kMsglineLong + 1];            // stringdl's, msgline's, scname's or link11's text
@@ -1818,9 +1733,8 @@ struct TextAnswer {
     uint8_t colored;                        // link11: 0 keeps the colors the window holds
 };
 
-// The windows an item is offered in: the trade with another player (trade)
-// and the trade with an NPC (handover). offer() and withdraw() reply to them
-// beside answer() and cancel().
+// The windows an item is offered in: trade (with a player) and handover
+// (with an NPC).
 const int kOfferCount = 2;
 const int kOfferTrade = 0;
 const int kOfferHandover = 1;
@@ -1881,10 +1795,8 @@ inline bool open_hook_places(const char* name) {
 }
 
 // A frame the game hangs from the default rect's bottom edge: its controller
-// keeps the bottom at origin.y + the default height and moves the top with
-// its content (log lines, the roster), and keeps whatever bottom a
-// SetPosition or SetFrameRect leaves. A template window's frame is its
-// default rect.
+// keeps the bottom at origin.y + the default height, or wherever SetPosition
+// or SetFrameRect left it, and moves the top with its content.
 inline bool hangs_from_bottom(int top, int bottom, int default_top, int default_bottom) {
     return bottom == default_bottom && top != default_top;
 }
@@ -1901,12 +1813,10 @@ inline bool reads_bottom_anchored(const char* name, int top, int bottom, int def
     return bottom_anchored_class(name) || hangs_from_bottom(top, bottom, default_top, default_bottom);
 }
 
-// The compass is no registry row: the game draws it outside the menu
-// system. The engine names it all the same, on an entry with no row and a
-// key of 16 NUL bytes, which no open key (space-padded, cut at the first
-// NUL) and no live resource key can equal. targetarrow, the arrows the
-// target window draws over the target, is named the same way: they are
-// pieces of that window's drawing, not a window.
+// The compass and the target window's arrows are no registry rows: the game
+// draws them outside the menu system. Their entries have no row and a key of
+// 16 NUL bytes, which no open key (space-padded, cut at the first NUL) and no
+// live resource key can equal.
 const char kCompassName[] = "compass";
 const char kTargetArrowName[] = "targetarrow";
 
@@ -1918,6 +1828,8 @@ struct Inventory {
     int16_t targetarrow;    // the target arrows' entry's index; -1 until built
     int16_t targetwi;       // the target window's, whose drawing carries the arrows; -1 until built
     int16_t ability;        // the ability entry's index, whose events and blocks carry a category; -1 until built
+    int16_t delivery;       // the post boxes' entries, whose words the session watch reads each frame; -1 until built
+    int16_t post1;
     uint8_t prompt[kMaxNames];  // kPrompts by index, for the hook handlers
     uint8_t first_row[kMaxNames];   // a boolean prompt: its default is the row its open shows first
     int16_t box_window[kBoxCount];  // each number box's index
@@ -1926,17 +1838,16 @@ struct Inventory {
     int16_t text_window[kTextCount];
     int16_t offer_window[kOfferCount];
 
-    // Every record, whatever its type, then the compass and the target
-    // arrows; rows share an entry only when type and name both match. Fails
-    // on an inventory the engine cannot index, which only a broken
-    // menu_table.inc can produce: one name under two types could not be told
-    // apart by name.
+    // Rows share an entry only when type and name both match. Fails only on a
+    // broken menu_table.inc: one name under two types could not be told apart.
     bool build() {
         count = 0;
         compass = -1;
         targetarrow = -1;
         targetwi = -1;
         ability = -1;
+        delivery = -1;
+        post1 = -1;
         // The aliases' rows last, each its window's second.
         for (int pass = 0; pass < 2; ++pass) {
             for (int r = 0; r < kRowCount; ++r) {
@@ -1987,6 +1898,8 @@ struct Inventory {
             return false;
         }
         ability = static_cast<int16_t>(find_exact("ability"));
+        delivery = static_cast<int16_t>(find_exact("delivery"));
+        post1 = static_cast<int16_t>(find_exact("post1"));
         targetwi = static_cast<int16_t>(find_exact("targetwi"));
         if (targetwi < 0 || names[targetwi].row_count != 1) {
             return false;
@@ -2200,11 +2113,9 @@ inline int find_group_any(const char* text) {
     return Inventory::lower_name(text, low) ? find_group(low) : -1;
 }
 
-// Every piece a move of group `g` carries: its anchor, each piece whose
-// policy has the group's bit, the anchor of the group it carries, and the
-// same again for every group whose anchor is in. `policy[n]` is the dock word
-// to go by: the live menu's, 0 for one that is not open, for a move; the
-// registry's, for the list of members.
+// Every piece a move of group `g` carries, through the groups it carries.
+// `policy[n]`: the live menu's dock word (0 when not open) for a move, the
+// registry's for the member list.
 inline void group_closure(const Inventory& inv, int g, const uint32_t* policy, uint8_t* in_set) {
     memset(in_set, 0, kMaxNames);
     const int anchor = inv.find_exact(kGroups[g].anchor);
@@ -2256,10 +2167,9 @@ inline int dock_reset_group(uint32_t policy, bool target_open) {
     return -1;
 }
 
-// ---------------------------------------------------------------------------
 // Resize families: the templates a window's own controller swaps between by
-// row count. Keys are the template names the game passes, cut to the eight
-// characters its 16-byte compare reads.
+// row count. Keys are cut to the eight characters the game's 16-byte compare
+// reads.
 
 const char* const kActionKeys[] = {
     "actionm1", "actionm2", "actionm3", "actionm4", "actionm5",
@@ -2332,9 +2242,8 @@ inline bool family_key(const Family& f, int rows, char out[32]) {
     return true;
 }
 
-// ---------------------------------------------------------------------------
-// Registry verification. The live table must be the expected one, row for
-// row: the inventory gives the engine every original byte it restores.
+// The live table must be the expected one, row for row: the inventory gives
+// the engine every original byte it restores.
 
 inline bool verify_registry(const uint8_t* table, int rows, char* error, size_t size) {
     if (rows < kRowCount + 1) {
@@ -2383,8 +2292,7 @@ inline bool verify_registry(const uint8_t* table, int rows, char* error, size_t 
     return true;
 }
 
-// ---------------------------------------------------------------------------
-// Signatures. Mask 'x' is an exact byte, anything else a wildcard.
+// Signature masks: 'x' is an exact byte, anything else a wildcard.
 
 inline int hex_digit(char c) {
     if (c >= '0' && c <= '9') return c - '0';
@@ -2466,14 +2374,9 @@ inline void scan(const uint8_t* base, size_t size, const uint8_t* sig, const cha
     }
 }
 
-// ---------------------------------------------------------------------------
-// Answers given as tables.
-
-// A table answer as the binding encodes it (hideui_engine_abi.h's
-// HU_ANSWER_TABLE), its entries in the order they came: each key's parts,
-// a whole number's as '#' and its digits, and the value's type ('s', 'n',
-// 'b', 't' or 'o'); a string's first kTableBytes bytes and its length, a
-// number or a boolean in `number`.
+// A table answer decoded from HU_ANSWER_TABLE's encoding, entries in order. A
+// string keeps its first kTableBytes bytes and its full length; a number or a
+// boolean is in `number`.
 const int kTableEntries = 16;
 const int kTableBytes = 128;
 
@@ -2575,22 +2478,17 @@ inline bool parse_answer_table(const char* text, AnswerTable* out) {
     return true;
 }
 
-// ---------------------------------------------------------------------------
-// Settings: each control the player finds on a page of the game's Config
-// menu (a toggle, a group of choice rows, a slider, a color, a key), in the
-// menu's order, named after its label there: an ON/OFF row a bool, true for
-// ON; a row of other buttons a choice of them in the page's order. Each is
-// kept in the game's config store, character_information in the player's
-// flags the server keeps; game.h reads and sets them as the pages do, and
-// the game saves the store as the player leaves the game.
+// The game's Config menu controls in the menu's order, named after their
+// labels: an ON/OFF row is a bool, true for ON; a row of other buttons a
+// choice in the page's order. The game saves its config store only as the
+// player leaves the game.
 
 enum SettingValue { kValueNumber, kValueBool, kValueChoice, kValueColor, kValueKey };
 
 // Where a setting is kept. kStoreWord: the store word `id`. kStoreBit: bit
 // `bit` of the words from `id` on, 32 to a word. kStoreFilter: a row of the
 // chat filter page, its bits the game's row table gives. kStoreLock,
-// kStoreIdle and kStoreFlag: set through the routines their pages call (the
-// equipment lock's request, the idle timer, the player flag's request).
+// kStoreIdle and kStoreFlag: set through the routines their pages call.
 enum SettingStore { kStoreWord, kStoreBit, kStoreFilter, kStoreLock, kStoreIdle, kStoreFlag };
 
 // The game's table whose list `list` holds the setting at `row`, its text
@@ -3036,13 +2934,13 @@ inline uint32_t bit_mask(int bit) {
     return 1u << (bit % 32);
 }
 
-// The chat filter page's words: two masks of kFilterBitsPerWord bits each,
-// the second states' mask, the system level and Tell's flag, written back in
-// this order as the page closes. A row of its table is a mask bit (none:
-// kFilterNoBit), then a second state's bit (none: kFilterOneState; a level
-// row's minus its level), its states 0 (neither), 1 (the mask bit), 2 (the
-// second's); the row whose second state is kFilterFlagged's and that has no
-// mask bit cycles through four, the second's bit and the flag word.
+// The chat filter page's words, written back in this order as the page
+// closes: two masks of kFilterBitsPerWord bits, the second states' mask, the
+// system level and Tell's flag. A table row is a mask bit (kFilterNoBit for
+// none) and a second state's bit (kFilterOneState, or negative on a level
+// row, for none). States: 0 neither, 1 the mask bit, 2 the second; a row with
+// no mask bit and second kFilterFlagged cycles through four, its second bit
+// and the flag word.
 const uint8_t kFilterWords[5] = {0x32, 0x33, 0x34, 0x35, 0x47};
 const int kFilterBitsPerWord = 30;
 const uint8_t kFilterNoBit = 0x33;
@@ -3118,9 +3016,8 @@ inline void filter_compose(const FilterRow& r, int state, FilterWords* w) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Holds: which handles hide or block which names. Lua-thread state; the game
-// thread reads only the published want words.
+// Which handles hide or block which names: Lua-thread state. The game thread
+// reads only the published want words.
 
 const uint8_t kHoldHide = 1;
 const uint8_t kHoldBlock = 2;
@@ -3305,7 +3202,6 @@ struct Holds {
     }
 };
 
-// ---------------------------------------------------------------------------
 // Session memory of positions and sizes. Written only by the game thread;
 // the Lua thread reads a consistent copy through the sequence word.
 
@@ -3433,8 +3329,7 @@ struct Memory {
 };
 
 // A group move made while its anchor was closed, kept until the game opens
-// the anchor. Written only by the game thread; the Lua thread reads a
-// consistent copy through the sequence word, as Memory's.
+// the anchor. Threaded as Memory is.
 struct GroupWait {
     volatile LONG seq;
     int16_t x;
@@ -3499,7 +3394,6 @@ struct Waiting {
     }
 };
 
-// ---------------------------------------------------------------------------
 // Commands: Lua thread -> game thread. One producer (the caller holds the
 // engine's Lua lock), one consumer (the per-frame drain).
 
@@ -3597,21 +3491,13 @@ inline const char* op_name(int op) {
 }
 #endif
 
-// Command flags. A reply is counted against its window until the drain has
-// carried it out; a listed reply is checked again on the game thread against
-// the list the player would pick from; a group move that may wait is kept
-// for the anchor's next open when the anchor is closed; a reply naming its
-// prompt is refused once another open of the window has come, or with
-// kCmdSession once another invite or post-box session has; a move's x, y
-// are the frame's top-left with kCmdFrame, else the origin; a close of a
-// prompt cancel() ends is refused while the prompt asks with kCmdPrompt.
-const uint8_t kCmdReply = 1;
-const uint8_t kCmdListed = 2;
-const uint8_t kCmdWait = 4;
-const uint8_t kCmdInstance = 8;
-const uint8_t kCmdSession = 16;
-const uint8_t kCmdFrame = 32;
-const uint8_t kCmdPrompt = 64;
+const uint8_t kCmdReply = 1;       // counted against its window until the drain carries it out
+const uint8_t kCmdListed = 2;      // checked again on the game thread against the list the player picks from
+const uint8_t kCmdWait = 4;        // a group move kept for a closed anchor's next open
+const uint8_t kCmdInstance = 8;    // refused once another open of the window has come
+const uint8_t kCmdSession = 16;    // refused once another invite or post-box session has come
+const uint8_t kCmdFrame = 32;      // x, y are the frame's top-left, else the origin
+const uint8_t kCmdPrompt = 64;     // a close refused while the prompt asks
 
 // The prompts that open no window of their own: a party invite, and a
 // post-box session. A reply to one names the session, counted by the drain
@@ -3695,16 +3581,14 @@ struct CommandRing {
     uint32_t taken() const { return static_cast<uint32_t>(tail); }
 };
 
-// ---------------------------------------------------------------------------
 // Events: game thread -> Lua thread. Any thread may post; every handle reads
 // the same ring with its own cursor. A reader that falls a lap behind loses
 // the oldest events and is told how many.
 
-// kEvError carries the position of its ErrorRecord in place of a name,
-// kEvPending what changed and whether it is pending now, kEvCursor the
-// window and its row packed by pack_cursor. The other five on the ability
-// window carry its list, packed by pack_event_category. kEvPage, a dialogue
-// box showing a new page, reaches engine abi 8's poll alone.
+// kEvError carries its ErrorRecord's position in place of a name, kEvPending
+// pack_pending's bits, kEvCursor pack_cursor's. The other five, on the
+// ability window, carry its list (pack_event_category). Only engine abi 8's
+// poll reports kEvPage.
 enum EventType {
     kEvOpened = 1,
     kEvClosed = 2,
@@ -3855,11 +3739,9 @@ struct EventRing {
     }
 };
 
-// ---------------------------------------------------------------------------
 // Errors: what the game thread refused of a queued command, kept for the
-// handle that queued it. The game thread alone writes; the event that names a
-// record follows it, and a reader that finds the record overwritten, or
-// mid-write, drops it.
+// handle that queued it. The game thread alone writes, before the event that
+// names the record; a reader drops a record overwritten or mid-write.
 
 const uint32_t kErrorCapacity = 256;    // divides 0x10000, the event's 16 bits
 const size_t kErrorName = 48;           // the longest window, group, set or setting name, whole
@@ -3912,7 +3794,6 @@ struct ErrorLog {
     }
 };
 
-// ---------------------------------------------------------------------------
 // Open calls in progress, so a post handler finds what its pre decided and a
 // show nested inside an open is not reported twice. Only the main thread and
 // the lobby worker open menus, and they run in lockstep, so the spin lock is
@@ -4004,14 +3885,12 @@ struct OpenStack {
     }
 };
 
-// ---------------------------------------------------------------------------
-// Glyph text: a parsed title or option as the game's text converter leaves it,
-// int16 codes (the choice list's parsed options).
-// 0..0x5F is the character 0x20 more, so a space is 0 and the codes are read
-// by their count; 0x60 and up is a two-byte Shift-JIS character, given back
-// as its two bytes through the table below, or as '?', counted, where the
-// table has none; -0x1FF..-0x100 is color 1E nn with nn = -0x100 - g, -0x200
-// and below color 1F nn with nn = -0x200 - g; -0xFF..-1 is not drawn.
+// Glyph text: a parsed title or option as the game's text converter leaves
+// it, int16 codes. 0..0x5F is the character less 0x20, so a space is 0 and
+// codes are read by count; 0x60 and up a two-byte Shift-JIS character,
+// decoded through GlyphTable or as a counted '?'; -0x1FF..-0x100 is color
+// 1E nn with nn = -0x100 - g, -0x200 and below color 1F nn with
+// nn = -0x200 - g; -0xFF..-1 is not drawn.
 
 const int kGlyphMax = 127;              // a title or option holds at most this many, then a 0
 const int16_t kGlyphTwoByte = 0x60;     // the first code of a two-byte character
@@ -4197,13 +4076,11 @@ inline bool text_lead_byte(uint8_t b) {
     return (b >= 0x81 && b <= 0x9F) || (b >= 0xE0 && b <= 0xEF) || (b >= 0xFA && b <= 0xFC);
 }
 
-// The game's own text, NUL-terminated within `bytes`, as its text-to-glyph
-// converter reads it into codes and decode_glyphs decodes those: 1E nn and
-// 1F nn switch the color; a 7F escape is skipped, drawn as nothing but the
-// space a 7F 00 makes; a lead byte and the byte after it are a two-byte
-// character, kept as the text's own bytes, so none is undecoded; any other
-// byte is drawn from 0x20 to 0x7E alone. At most kGlyphMax codes, as
-// decode_glyphs reads. A sequence the terminator cuts short ends the text.
+// The game's own text as its text-to-glyph converter reads it: 1E nn and
+// 1F nn switch the color; a 7F escape draws nothing, but 7F 00 a space; a
+// lead byte and the next are one two-byte character, kept as is; of the
+// other bytes only 0x20..0x7E draw. At most kGlyphMax codes; a sequence the
+// terminator cuts short ends the text.
 inline void decode_text(const uint8_t* text, size_t bytes, GlyphText* out) {
     uint8_t escape = kColorTable;
     uint16_t color = kColorDefault;
@@ -4256,9 +4133,7 @@ inline void decode_text(const uint8_t* text, size_t bytes, GlyphText* out) {
     out->text[length] = '\0';
 }
 
-// ---------------------------------------------------------------------------
-// Replies: what a read returns to Lua, in the format hideui_engine_abi.h
-// defines, written the way the Lua calls that push it would run.
+// Replies: what a read returns to Lua, in hideui_engine_abi.h's format.
 
 struct ReplyWriter {
     HuEngineReply* out;

@@ -198,9 +198,10 @@ What happens to keys depends on the window:
 
 - A prompt, one of the windows where the game asks the player something,
   takes no keyboard or gamepad input while it is hidden and asking, and
-  Escape does not close it. Your addon draws the question its own way, reads
-  the keys through Windower and replies with `answer` or `cancel`, described
-  under [Prompts](#prompts).
+  Escape does not close it. While it has the focus, the mouse pointer stays
+  in world mode, the mode it is in with no menu up. Your addon draws the
+  question its own way, reads the keys through Windower and replies with
+  `answer` or `cancel`, described under [Prompts](#prompts).
 - A hidden prompt that is not asking anything takes the player's keys as it
   would if shown.
 - Any other hidden window still takes the keys the game sends it. The party
@@ -226,8 +227,13 @@ own, not in the window, so the library ends the typing as the window itself
 would. The same happens when such a window opens hidden with its field
 already active, and whenever its field starts while the window is hidden; the
 player's keys can start one in a hidden window that is not asking anything.
-Unhiding `passinpu`, `comment` or `msgline` opens the field again, as the game
-does when it opens them.
+
+Unhiding `passinpu`, `comment` or `msgline` opens the field again and sends
+the player's typing to it, as the game does when it opens them; `comment`'s
+field reopens on the line the player was on. If the player is writing a
+message in `msgline` when one of them is unhidden, the message keeps its text,
+but `msgline` stops taking keys. When several of these windows are unhidden at
+once, the one that has the game's focus gets the typing.
 
 A blocked window never opens. The open is refused before anything is drawn,
 and every addon gets a `blocked` event, described under [Events](#events).
@@ -259,7 +265,7 @@ to open them:
 | window | if blocked |
 |---|---|
 | `trade` | the trade is canceled |
-| `handover`, the NPC trade | the NPC trade does not start |
+| `handover`, the NPC trade | the NPC trade does not start; nothing waits on a reply, so replies to it are refused |
 | `targetwi` | the target window and the arrows over your target never appear; see [The target arrows](#the-target-arrows) |
 | `delivery`, the outgoing delivery box | the player cannot move until you call `ui:cancel('delivery')` and the server answers. See [Everything else](#everything-else) |
 | `post1` and `post2`, the incoming delivery box | the delivery-box session stays open until `ui:cancel('post1')` |
@@ -338,7 +344,9 @@ ui:reset_group('chat_log')                -- undo a group move
 ```
 
 If a group's anchor is closed when you call `move_group`, the move waits and
-happens when the game opens it.
+happens when the game opens it. A group holds only one waiting move: when a
+`move_group` from another handle replaces yours, your handle gets an `error`
+event with `e.verb` `'move_group'`, so you know your move will not happen.
 
 Three windows grow upward from a fixed bottom: the chat log `logwindo`, the
 second chat log `logwin2` and the party list `partywin`. You still pass the
@@ -483,6 +491,10 @@ ui:open('mogpost', 'nomad')
 ui:open('fp_cat2', 3)
 ui:open('casttime', {seconds = 10, style = 'countdown'})
 ```
+
+A string argument, or a string field of a table, may hold neither `=` nor `;`,
+and `open` and `open_set` raise on a string that holds either. The argument
+reaches the engine as one string, with those two characters as its separators.
 
 When you name no argument, a window with a default opens with it. One without
 a default is refused, and the reason gives an example.
@@ -856,6 +868,10 @@ from `hide`: arrows hidden by `block` stay hidden after `unhide`. `move` and
 `ui:info('targetarrow')` and `ui:rects()` give no box for it. Its `opened` and
 `closed` events say when the game starts and stops drawing an arrow.
 
+Hiding or blocking `targetarrow` posts no event. The game goes on drawing the
+arrows under either hold, and the library only keeps that drawing off the
+screen, so `opened` and `closed` keep reporting the game's arrows.
+
 Blocking `targetwi` takes the arrows away too: the game computes them as part
 of the target window, and a blocked window never opens.
 
@@ -876,6 +892,9 @@ While the block is on, pressing Ctrl or Alt shows no bar and Ctrl+number and
 Alt+number do nothing; a bar that is showing when you call `block_macros`
 closes. The block stays on until you call `unblock_macros` or your addon
 unloads.
+
+A blocked window's open posts `blocked`, but a macro key the block stops posts
+nothing: the macro keys are not a window, so no event reports them.
 
 ## Events
 
@@ -906,10 +925,10 @@ handler to that list.
 | `uncovered` | it came back out |
 | `blocked` | the game tried to open a window some addon blocked; `e.mine` is true when the block is yours, and `e.by` lists every addon holding one |
 | `error` | the game refused something you asked for, or one of your own callbacks raised. `e.verb` names the call, or is `'callback'`. `e.name` is what the call named: the window, the set for `open_set`, the group for `move_group` and `reset_group`, or the setting for `set_setting`. It is `''` for a call that names none. `e.reason` says why |
-| `cursor` | the game's cursor in an open window moved to row `e.row`; for `query` and `arealist`, `e.row` is the index into the list `options()` returns |
+| `cursor` | the game's cursor in an open window moved to row `e.row`; for `query` and `arealist`, `e.row` is the index into the list `options()` returns, so it also fires when the list scrolls under a cursor that stays put on screen |
 | `page` | an NPC dialogue box, `rem4line` or `rem4li2`, shows a new page; read it with `options(e.name)`. When the dialogue ends, the box's `closed` follows |
 | `pending` | a question with no window to show it appeared or went away: a party invite, a delivery-box session, or a blocked question of the windows listed under [Questions with no window](#questions-with-no-window). `e.what` is `'invite'`, `'post'` or the window's name, `e.pending` true or false |
-| `resync` | events were lost because your addon fell more than 4096 events behind; `e.dropped` says how many. Re-read `opened()`, `info()` and `pending()` to catch up |
+| `resync` | events were lost because your addon fell more than 4096 events behind; `e.dropped` says how many. It arrives last among that frame's events; re-read `opened()`, `info()` and `pending()` to catch up |
 
 Callbacks run on the frame after the event, so a window may already be gone by
 the time `opened` reaches you; check `ui:info(name).open` before acting on it.
@@ -1105,6 +1124,10 @@ which does nothing with them while a hidden list is up.
 
 Answer with an option's `value`, never its position: "Yes" is not always 1.
 
+`ui:cancel(q)` writes the list's cancel answer, as the game's own cancel does.
+The NPC's script then closes `query` itself when it reads the answer, so the
+`closed` event follows a moment after the cancel.
+
 ### The NPC dialogue
 
 An NPC's dialogue is a series of messages, each shown as one or more pages.
@@ -1252,18 +1275,18 @@ would refuse is refused with the reason.
 | window | `ui:answer(name, ...)` | `ui:cancel(name)` |
 |---|---|---|
 | `passinpu`, an NPC's password | the text, up to `max_length` bytes | answers with no text |
-| `stringdl`, the delivery box's recipient | a name of 3 to 15 letters, A to Z. When `mode` is `'confirm'`, the window asks about a delivery slot and takes `true` or `false` instead | backs out, as the window's own cancel |
+| `stringdl`, the delivery box's recipient | a name of 3 to 15 letters, A to Z; the game sets the case. When `mode` is `'confirm'`, the window asks about a delivery slot and takes `true` or `false` instead | backs out, as the window's own cancel |
 | `scname`, the player search by name | a name of up to 15 letters, A to Z; starts the search | closes it |
-| `msgline`, a PlayOnline friend message | the message, 1 to `max_length` bytes: 299, or 15 in some modes; refused while the previous one is still on its way | closes it, sending nothing |
+| `msgline`, a PlayOnline friend message | the message, 1 to `max_length` bytes: 299, or 15 in modes 2 and 7; refused while the previous one is still on its way | closes it, sending nothing |
 | `comment`, the bazaar, search and linkshell messages | `{'first line', 'second', 'third'}`, up to 40 bytes each; a line left out is empty. Sends the message. When `mode` is `'view'`, showing another player's message, it takes none | refused: no cancel. Outside `'view'`, Escape and `close` both send the message |
-| `link11`, a new linkshell | `{name = 'MyShell', color = {r, g, b}}`: a name of 1 to 19 letters, A to Z, and each of `r`, `g` and `b` 0 to 15. `color` can be left out | backs out |
+| `link11`, a new linkshell in the row selected in `link5` | `{name = 'MyShell', color = {r, g, b}}`: a name of 1 to 19 letters, A to Z, and each of `r`, `g` and `b` 0 to 15. Without `color`, the window keeps its own | backs out to `link6` |
 
 `options(name)` gives each window's limits and what it holds now:
 
 | window | `ui:options(name)` |
 |---|---|
 | `passinpu` | `{max_length}` |
-| `stringdl` | `{mode, prompt, min_length, max_length}`; `mode` is `'name'` or `'confirm'` |
+| `stringdl` | `{mode, prompt, min_length, max_length}`; `mode` is `'name'` or `'confirm'`, `prompt` the line over the field |
 | `scname` | `{max_length, text}` |
 | `msgline` | `{mode, max_length, recipient}` |
 | `comment` | `{mode, lines, category}`; `mode` is `'bazaar'`, `'view'`, `'search'` or `'linkshell'`, `lines` the three lines as `{text, raw}`, `category` for a search comment |
@@ -1289,13 +1312,19 @@ refused, with a reason, before anything reaches the game:
   is another item
 - a count below 1 or above what that inventory slot holds; gil below 0 or
   above what the player has
-- an item the game grays out in its own list for that window
+- an item the game grays out in its own list for that window; the reason is
+  "that item cannot be traded", or for `handover` "that item cannot be handed
+  to an NPC"
 - an item outside the main inventory
 - `withdraw` of an item that is not offered
 - any change once the player's own OK is in
 - for `trade`, more than one change a second, and for `handover`, more than
   one OK a second: the game itself sends no faster. The reason says how long
   to wait.
+
+The grayed-out check runs again when the game makes the change on its next
+frame, so an item that changed after your call is still refused, through an
+`error` event.
 
 `ui:options('trade')` returns:
 
@@ -1304,16 +1333,16 @@ refused, with a reason, before anything reaches the game:
 | `partner` | the other player's name |
 | `mine`, `theirs` | each `{gil, items}`; an item is `{slot, id, count}`, with `id` its number in `res.items`; yours also carry `item`, the inventory index, and `pending = true` until the server takes the change |
 | `ok_mine`, `ok_theirs` | whether each side has pressed OK |
-| `next_change` | seconds until the next change can go, 0 for now |
-| `gray` | the inventory indexes the game grays out, so you can gray them too |
+| `next_change` | seconds until the next change can go, 0 for now, or nil while the game's clock cannot be read |
+| `gray` | the inventory indexes the game grays out, so you can gray them too; nil until the library has run the game's test since the window opened |
 
 An item still marked `pending` counts as offered, and it cannot be withdrawn
 until the server takes it.
 
 `ui:options('handover')` returns `{npc, items, gil, next_ok, gray}`, with
 `items` in the same form as a trade's `mine.items` and `next_ok` the seconds
-until the OK can go. Nothing reaches the NPC until the OK, which sends the
-whole offer.
+until the OK can go, or nil while the game's clock cannot be read. Nothing
+reaches the NPC until the OK, which sends the whole offer.
 
 No event reports a change in a trade; re-read `ui:options('trade')` while it
 is open, each frame or on your own schedule.
@@ -1337,7 +1366,7 @@ same list the search menu shows. `ui:options('arealist')` returns
 - `zone`: an area; `id` is its number in Windower's `res.zones`
 - `region`: a heading the player can open; `id` is the region's number, negated
 - `current_area`, `current_region` and `all`: the list's rows for the current area, the current region and all areas
-- `other`: any row that is none of the above
+- `other`: every row of mode 4's list, whose rows are not areas
 
 A row may also carry `label`, the text beside it, with its bytes in
 `label_raw`, or `count`, a region's number of zones.
@@ -1352,17 +1381,35 @@ any zone id, 0 to 511.
 |---|---|---|---|
 | `prtyjoin`, a party invite | `{inviter = 'Somebody', alliance = false}` | `true` accept, `false` decline | declines |
 | `link5`, the linkshell list | `{slots = {{slot = 1, name = 'MyShell'}, ...}}` | a `slot` from the list | closes it, no choice |
-| `delivery`, the outgoing box | refused | refused | ends the session; the windows close when the server answers |
+| `delivery`, the outgoing box | refused | refused | takes back what was staged and ends the session; the windows close when the server answers |
 | `post1`, `post2`, the incoming box | refused | refused | ends the session; the windows close when the server answers |
 | `gmtell`, a GM's question | `{gm, title, options = {{text, value}, ...}, cancellable}` | an option's `value` | declines |
-| `sortyn`, dropping an item or sorting | `{text, title, default, cancellable}` | `true` or `false` | as the window's cancel |
+| `sortyn`, dropping an item, or sorting a bag or a spell list | `{text, title, default, cancellable}` | `true` or `false` | as the window's cancel |
 | `evitem01`, using a key item | `{text, default, cancellable}` | `true` or `false` | as the window's cancel |
-| `confyn`, restoring a config page's defaults | `{default}` | `true` restores, `false` leaves them | refused: no cancel |
-| `bankmenu`, which Mog Safe | `{containers = {{id = 1, available = true}, {id = 9, ...}}}` | a container `id` | backs out |
-| `maplist`, the map list | `{rows = {{text, value, kind}, ...}, top, level}`. A map row has `zone` and `map`, and a row may carry `label` or `count`. `level` is `'top'`, `'region'` or `'zone'`: the list shown | a row's `value`. A map row picks that map, the closing row closes the list, and a row whose `kind` is `'list'` opens its sub-list. Each list is a prompt of its own, with a new `id`, and when blocked, a `pending` event of its own | closes the list at its top level; inside a sub-list, goes back up a level |
-| `mogdoor`, the Mog House door | `{title, level, options, areas}`. `level` is `'top'` or `'areas'`: the list the window shows. Each entry of `options` and `areas` is `{text, kind, enabled}`, plus `value` on a row that is an exit; the stay row, the row that opens the areas, and the floor row while it has no exit have none. An area also has `zone` | an enabled `value` from either list | closes it, as Escape does |
-| `mp_dead`, the Monstrosity KO | `{options = {{text, value}, ...}, seconds}` | `1` or `2` | refused: no cancel |
+| `confyn`, restoring a config page's defaults | `{default}` | `true` restores, `false` leaves them; nothing in the game waits on the answer | refused: no cancel |
+| `bankmenu`, which Mog Safe | `{containers = {{id = 1, available = true}, {id = 9, ...}}}`: 1 is the Mog Safe, and 9 the Mog Safe 2, which is not `available` until the player has one | a container `id` | backs out |
+| `maplist`, the map list | `{rows = {{text, value, kind}, ...}, top, level}`. A row whose `kind` is `'map'` has `zone` and `map`, and any row may carry `label` or `count`. `level` is `'top'`, `'region'` or `'zone'`: the list shown. `top` is true at the first level | a row's `value`. A map row picks that map, a row whose `kind` is `'list'` opens its sub-list, and the row whose `kind` is `'close'` closes the list. Each list is a prompt of its own, with a new `id`, and when blocked, a `pending` event of its own | closes the list at its top level; inside a sub-list, goes back up a level |
+| `mogdoor`, the Mog House door | `{title, level, options, areas}`. `level` is `'top'` or `'areas'`: the list the window shows. Each entry of `options` and `areas` is `{text, kind, enabled}`, plus `value` on a row that is an exit; the stay row, the row that opens the areas, and the floor row while it has no exit have none. An area also has `zone` | an enabled `value` from either list | closes it at either level, as Escape does at the top |
+| `mp_dead`, the Monstrosity KO | `{options = {{text, value}, ...}, seconds}` | `1` or `2`. When `seconds` runs out, the game chooses 2 itself | refused: no cancel |
 | `ok`, the notice shown when the connection is lost | `{text}` | no value; acknowledges it | refused: no cancel |
+
+A cancel of a delivery box is refused at the times the box itself refuses one:
+the outgoing box while it is closing, under another window or busy, and the
+incoming box while it is closing, under another window or not yet taking
+input.
+
+`mogdoor`'s `options` are the rows of its top level, told apart by `kind`:
+
+- `stay` keeps the player in the Mog House, as `cancel` does
+- `back`, value 0, leaves for the area the player came from
+- `floor`, value 125 or 126, goes to the house's other floor
+- `areas` opens the list of areas
+
+In `areas`, each row is an `area`, except the Mog Garden's, which is
+`garden`, value 127.
+
+The game can still refuse a `mogdoor` answer the library accepted; it then
+shows its own message saying why, and your handle gets an `error` event.
 
 ### Questions with no window
 
@@ -1395,6 +1442,8 @@ The game drops each question when it would have closed the window:
 
 - the number boxes, `sortyn`, `evitem01` and `maplist`: when the window that
   asked closes or moves on
+- `evitem01` also when the cursor in the key item list moves to another item
+- `maplist` also when the game builds the list again
 - `mogdoor`: when the player leaves the Mog House or uses the door again
 - `msgline`: when another message is set up, or `msgline` opens
 - `bankmenu`: never; it waits for an answer or a cancel, and the game opens
@@ -1403,7 +1452,8 @@ The game drops each question when it would have closed the window:
 
 While a number box is blocked, the window that asked for the number stays open
 and keeps taking the player's keys. An answer is refused while that window's
-cursor is off the row that asked, or while it is busy with another step.
+cursor is off the row that asked, or while it is busy with another step; a
+cancel is taken either way.
 
 A blocked `moneyctr` asked by an auction house bid takes only a cancel,
 because a new search can replace the item it asks about.
@@ -1587,6 +1637,10 @@ config.save(settings, 'all')
 `ui:layout()` is a plain table of what your addon asked for, which the config
 library can save as it is. It is yours alone: another addon moving the same
 window later does not change it.
+
+`ui:layout()` still answers after the handle is released. Your unload handler
+needs that to save the layout: the library's own unload handler runs before
+yours and releases the handle.
 
 `ui:apply()` refuses a layout saved at a different UI size, which the table
 records. When some entries cannot be placed, it places the rest and returns

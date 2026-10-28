@@ -264,6 +264,7 @@ const void* vt_status[0x20];
 const void* vt_door[0x20];
 const void* vt_rem4[0x20];
 const void* vt_text[0x20];
+const void* vt_pass[0x20];
 
 int g_setpos_calls;
 int g_open_calls;
@@ -1415,14 +1416,18 @@ void __fastcall fake_door_open(void* actor, void*, int32_t arg) {
     g_door.exit_at_open = controller("mogdoor")[kDoorExit];
 }
 
-// The NPC dialogue boxes: two controllers, each with its text object, its
-// chat log and its list of lines; the text dispatch records what it was
-// given last, the chat log's release and the text object's clear what each
-// of their first two calls was given.
+// The NPC dialogue boxes: two controllers, each with its text object, named
+// by the game's two globals, its chat log and its list of lines; the text
+// dispatch records what it was given last, the text advance, the chat log's
+// release and the text object's clear what each of their first two calls
+// was given, the page-turn sound its calls.
 struct DialogueLog {
     int dispatches;
     void* dispatch_text;
     int32_t dispatch_code;
+    int advances;
+    void* advance_text[2];
+    int sounds;
     int releases;
     void* release_log[2];
     uint32_t release_line[2];
@@ -1433,6 +1438,7 @@ struct DialogueLog {
 DialogueLog g_talk;
 uint8_t g_wait;
 uint8_t g_texts[2][kTextBytes];
+uint8_t* g_text_objects[2] = {g_texts[0], g_texts[1]};
 uint8_t g_log_ctls[2][0x20];
 uint8_t g_log_objects[2][0x20];
 uint8_t g_messages[4][kMessageBytes];
@@ -1444,6 +1450,19 @@ void __fastcall fake_text_dispatch(void* text, void*, int32_t code) {
     ++g_talk.dispatches;
     g_talk.dispatch_text = text;
     g_talk.dispatch_code = code;
+}
+
+void __fastcall fake_text_advance(void* text, void*) {
+    logged('V');
+    if (g_talk.advances < 2) {
+        g_talk.advance_text[g_talk.advances] = text;
+    }
+    ++g_talk.advances;
+}
+
+void __cdecl fake_page_sound() {
+    logged('p');
+    ++g_talk.sounds;
 }
 
 void __fastcall fake_log_release(void* log, void*, uint32_t line) {
@@ -1470,18 +1489,22 @@ uint32_t __fastcall fake_text_clear(void* text, void*) {
 // The text-entry windows' routines as the game's behave, as far as the
 // engine relies on them: each field's end clears what the window's own
 // clears, the starts open fields (comment's on the line given), the open
-// hook of comment and msgline (vt_text's +4) starts theirs; each call a
-// letter in `order` (s a field's end, P passinpu's start, o comment's
-// start, M msgline's start, f focus, z sanitize, t trim, n the POL
-// number, c the clock, S a send, m the mark, C and N the criteria cleared
-// and named, Q the search, k the slot test, L link5's selection, e the
-// encoding, R the request, I the item) and what it was given.
+// hooks of comment, msgline and passinpu (their vtables' +4) start theirs; each
+// call a letter in `order` (s a field's end, P passinpu's start, o comment's
+// start, M msgline's start, u and b the manager's unbind and bind the engine
+// calls itself, f focus, z sanitize, t trim, n the POL number, c the clock,
+// S a send, m the mark, C and N the criteria cleared and named, Q the
+// search, k the slot test, L link5's selection, e the encoding, R the
+// request, I the item) and what it was given.
 struct TextLog {
     char order[64];
     int ends[6];
     int keep;
     int starts;
     int start_line;             // comment's start's line, the last
+    int deletes;                // fields deleted, and those deleted while bound
+    int bound_deletes;
+    int kept[6];                // what each field's last end was told
     void* focus_menu;
     uint32_t pol_word;
     int send_mode;
@@ -1500,7 +1523,13 @@ struct TextLog {
     uint32_t create_answer;
 };
 TextLog g_text;
-uint8_t g_text_box[16];                 // the field a start opens
+// The text entry's manager as the game's keeps it: +4 the field its last
+// bind gave the line, +8 set by every bind, a bind of NULL too, until an
+// unbind. Each window's field, in the fields' order, its first byte its own
+// bound flag, which the unbind clears and a delete tests before it unbinds.
+uint8_t g_line[0x14];
+uint8_t* g_line_ptr = g_line;
+uint8_t g_text_boxes[6][16];
 uint8_t g_pol[0x100];
 uint8_t* g_pol_ptr = g_pol;
 uint8_t g_msgline_player[8];
@@ -1523,53 +1552,115 @@ void text_logged(char c) {
     }
 }
 
+void line_unbind() {
+    if (!g_line[kLineBound]) {
+        return;
+    }
+    g_line[kLineBound] = 0;
+    if (uint8_t* field = rdptr(g_line, kLineField)) {
+        field[0] = 0;
+    }
+}
+
+void line_bind(uint8_t* field) {
+    memcpy(g_line + kLineField, &field, 4);
+    g_line[kLineBound] = 1;
+    if (field) {
+        field[0] = 1;
+    }
+}
+
+void __fastcall fake_unbind(void*, void*) {
+    text_logged('u');
+    line_unbind();
+}
+
+void __fastcall fake_bind(void*, void*, void* field) {
+    text_logged('b');
+    line_bind(static_cast<uint8_t*>(field));
+}
+
+// A field's delete: its destructor unbinds while the field is bound.
+void field_deleted(uint8_t* ctl, size_t at) {
+    uint8_t* field = rdptr(ctl, at);
+    if (!field) {
+        return;
+    }
+    ++g_text.deletes;
+    if (field[0]) {
+        ++g_text.bound_deletes;
+        line_unbind();
+    }
+    wr32(ctl, at, 0);
+}
+
 void text_ended(int f, int keep) {
     text_logged('s');
     ++g_text.ends[f];
     g_text.keep = keep;
+    g_text.kept[f] = keep;
 }
 
 void __fastcall fake_stringdl_stop(void* ctl, void*) {
     text_ended(kTextStringdl, -1);
     static_cast<uint8_t*>(ctl)[kStringdlEditing] = 0;
+    line_unbind();
+    line_bind(NULL);
 }
 
 void __fastcall fake_comment_stop(void* ctl, void*, int32_t keep) {
     text_ended(kTextComment, keep);
     static_cast<uint8_t*>(ctl)[kCommentEditing] = 0xFF;
-    wr32(static_cast<uint8_t*>(ctl), kCommentField, 0);
+    field_deleted(static_cast<uint8_t*>(ctl), kCommentField);
+    line_bind(NULL);
 }
 
 void __fastcall fake_msgline_stop(void* ctl, void*, int32_t keep) {
     text_ended(kTextMsgline, keep);
-    wr32(static_cast<uint8_t*>(ctl), kMsglineField, 0);
+    field_deleted(static_cast<uint8_t*>(ctl), kMsglineField);
+    line_bind(NULL);
 }
 
 void __fastcall fake_scname_stop(void* ctl, void*, int32_t keep) {
     text_ended(kTextScname, keep);
-    wr32(static_cast<uint8_t*>(ctl), kScnameField, 0);
+    field_deleted(static_cast<uint8_t*>(ctl), kScnameField);
+    line_bind(NULL);
 }
 
 void __fastcall fake_link11_stop(void* ctl, void*, int32_t keep) {
     text_ended(kTextLink11, keep);
-    wr32(static_cast<uint8_t*>(ctl), kLink11Editing, 0);
-    wr32(static_cast<uint8_t*>(ctl), kLink11Field, 0);
+    uint8_t* c = static_cast<uint8_t*>(ctl);
+    if (rd32(c, kLink11Editing) == 1) {
+        field_deleted(c, kLink11Field);
+        line_bind(NULL);
+    }
+    wr32(c, kLink11Editing, 0);
 }
 
 void __fastcall fake_passinpu_stop(void* ctl, void*, int32_t keep) {
     text_ended(kTextCount, keep);
-    wr32(static_cast<uint8_t*>(ctl), kPassField, 0);
+    field_deleted(static_cast<uint8_t*>(ctl), kPassField);
+    line_bind(NULL);
 }
 
-void open_field(uint8_t* ctl, size_t at) {
+// Field f's start in its window's controller: the field there kept, or
+// field f's box, then the line taken from the field holding it and given to
+// it.
+void open_field(uint8_t* ctl, size_t at, int f) {
     ++g_text.starts;
-    uint8_t* box = g_text_box;
-    memcpy(ctl + at, &box, 4);
+    uint8_t* field = rdptr(ctl, at);
+    if (!field) {
+        field = g_text_boxes[f];
+        field[0] = 0;
+        memcpy(ctl + at, &field, 4);
+    }
+    line_unbind();
+    line_bind(field);
 }
 
 void __fastcall fake_passinpu_start(void* ctl, void*) {
     text_logged('P');
-    open_field(static_cast<uint8_t*>(ctl), kPassField);
+    open_field(static_cast<uint8_t*>(ctl), kPassField, kTextCount);
 }
 
 void __fastcall fake_comment_start(void* ctl, void*, int32_t line) {
@@ -1577,24 +1668,51 @@ void __fastcall fake_comment_start(void* ctl, void*, int32_t line) {
     g_text.start_line = line;
     uint8_t* c = static_cast<uint8_t*>(ctl);
     c[kCommentEditing] = static_cast<uint8_t>(line);
-    open_field(c, kCommentField);
+    open_field(c, kCommentField, kTextComment);
 }
 
 void __fastcall fake_msgline_start(void* ctl, void*) {
     text_logged('M');
-    open_field(static_cast<uint8_t*>(ctl), kMsglineField);
+    open_field(static_cast<uint8_t*>(ctl), kMsglineField, kTextMsgline);
 }
 
-// comment's and msgline's open hooks: their fields started at once,
-// comment's on its line 0 but on another player's message.
+// The open hooks: comment's, msgline's and passinpu's fields started at
+// once, comment's on its line 0 but on another player's message.
 void __fastcall fake_text_open(void* p, void*) {
     uint8_t* ctl = static_cast<uint8_t*>(p);
     if (ctl == controller("comment") && ctl[kCommentMode] != kCommentView) {
         ctl[kCommentEditing] = 0;
-        open_field(ctl, kCommentField);
+        open_field(ctl, kCommentField, kTextComment);
     } else if (ctl == controller("msgline")) {
-        open_field(ctl, kMsglineField);
+        open_field(ctl, kMsglineField, kTextMsgline);
+    } else if (ctl == controller("passinpu")) {
+        open_field(ctl, kPassField, kTextCount);
     }
+}
+
+// The begin-closes: a field still open ended, comment's keeping its line,
+// the others dropping their text; stringdl's field is its for good.
+void __fastcall fake_text_close(void* p, void*) {
+    uint8_t* ctl = static_cast<uint8_t*>(p);
+    if (ctl == controller("comment") && rdptr(ctl, kCommentField)) {
+        fake_comment_stop(ctl, NULL, 1);
+    } else if (ctl == controller("msgline") && rdptr(ctl, kMsglineField)) {
+        fake_msgline_stop(ctl, NULL, 0);
+    } else if (ctl == controller("scname") && rdptr(ctl, kScnameField)) {
+        fake_scname_stop(ctl, NULL, 0);
+    } else if (ctl == controller("link11") && rdptr(ctl, kLink11Field)) {
+        fake_link11_stop(ctl, NULL, 0);
+    } else if (ctl == controller("passinpu") && rdptr(ctl, kPassField)) {
+        fake_passinpu_stop(ctl, NULL, 0);
+    }
+}
+
+// stringdl's start, as a key on its row runs it: +0x164 set, then its field
+// given the line.
+void stringdl_edits(uint8_t* sd) {
+    sd[kStringdlEditing] = 1;
+    line_unbind();
+    line_bind(rdptr(sd, kStringdlField));
 }
 
 void __fastcall fake_focus(void*, void*, void* menu, int32_t) {
@@ -1699,7 +1817,7 @@ uint32_t __cdecl fake_slot_taken(int32_t, int32_t, int32_t, int32_t) {
 
 const uint8_t* __fastcall fake_selected(void* link5, void*) {
     text_logged('L');
-    return link5_selected(static_cast<uint8_t*>(link5));
+    return link5_selected(kPlain, static_cast<uint8_t*>(link5));
 }
 
 const char* __cdecl fake_encode(const char* name) {
@@ -1875,8 +1993,9 @@ void* __fastcall fake_open(void*, void*, const char* key, int, int overlap) {
         menu[kMenuParked] = 1;
         return menu;
     }
-    // comment's and msgline's open hooks start their fields.
-    if (rdptr(ctl, 0) == reinterpret_cast<const uint8_t*>(vt_text)) {
+    // comment's, msgline's and passinpu's open hooks start their fields.
+    if (rdptr(ctl, 0) == reinterpret_cast<const uint8_t*>(vt_text)
+        || rdptr(ctl, 0) == reinterpret_cast<const uint8_t*>(vt_pass)) {
         fake_text_open(ctl, NULL);
     }
     // A yes/no window or an Asked window of two rows: the cursor on the
@@ -2772,7 +2891,7 @@ struct Linked {
     bool high;              // layer 5 or more at its relink
     int focus;              // its focus since the last relink, in order; 0 for none
 };
-Linked g_linked[256];
+Linked g_linked[512];
 int g_linked_count;
 int g_focuses;
 
@@ -3062,10 +3181,6 @@ void set_clock(uint32_t ms) {
 
 uint32_t clock_now() {
     return rd32(g_clock_object, kClockSeconds) * 1000 + rd32(g_clock_object, kClockMs);
-}
-
-uint32_t __cdecl fake_clock() {
-    return clock_now();
 }
 
 // The allocator's throttle for packet `id`, as the game's runs it.
@@ -4079,6 +4194,9 @@ int main() {
     {
         TextSites& t = g_e.game.text;
         t.stringdl_stop = &fake_stringdl_stop;
+        t.line = &g_line_ptr;
+        t.unbind = &fake_unbind;
+        t.bind = &fake_bind;
         t.focus = &fake_focus;
         t.comment_stop = &fake_comment_stop;
         t.comment_start = &fake_comment_start;
@@ -4137,7 +4255,6 @@ int main() {
         o.intervals = &g_intervals_ptr;
         o.interval = kIntervalAt;
         o.packets = 0x11E;
-        o.clock = &fake_clock;
         o.clock_object = &g_clock_ptr;
         o.item = &fake_item_record;
         o.cache = &g_cache_ptr;
@@ -4171,7 +4288,12 @@ int main() {
     }
     {
         DialogueSites& t = g_e.game.dialogue;
-        t.dispatch = &fake_text_dispatch;
+        t.dispatch = reinterpret_cast<const uint8_t*>(&fake_text_dispatch);
+        t.advance = &fake_text_advance;
+        t.page_sound = &fake_page_sound;
+        for (int d = 0; d < kDialogueCount; ++d) {
+            t.texts[d] = &g_text_objects[d];
+        }
         t.release = &fake_log_release;
         t.clear = &fake_text_clear;
         t.wait = &g_wait;
@@ -4229,7 +4351,7 @@ int main() {
         g_open_fixed[5] = 0xC3;
     }
     const char* self_classes[] = {"logwindo", "ability", "partywin", "targetwi", "subwindo",
-                                  "persona", "buff", "passinpu", "prtyjoin", "link5",
+                                  "persona", "buff", "prtyjoin", "link5",
                                   "scsibori", "delivery", "post1", "post2", "playermo",
                                   "mcr1pall", "mcr2pall"};
     for (size_t i = 0; i < sizeof(self_classes) / sizeof(self_classes[0]); ++i) {
@@ -4287,12 +4409,22 @@ int main() {
         vt_door[5] = g_nop_code;
         give_controller("mogdoor", vt_door);
     }
-    // The text-entry windows; comment's and msgline's open hooks start
-    // their fields.
+    // The text-entry windows and passinpu; comment's, msgline's and
+    // passinpu's open hooks start their fields, the begin-closes end them;
+    // stringdl's field is its for good.
     vt_text[5] = g_nop_code;
     vt_text[1] = reinterpret_cast<const void*>(&fake_text_open);
+    vt_text[2] = reinterpret_cast<const void*>(&fake_text_close);
     for (int t = 0; t < kTextCount; ++t) {
         give_controller(kTextNames[t], vt_text);
+    }
+    memcpy(vt_pass, vt_self, sizeof(vt_pass));
+    vt_pass[1] = reinterpret_cast<const void*>(&fake_text_open);
+    vt_pass[2] = reinterpret_cast<const void*>(&fake_text_close);
+    give_controller("passinpu", vt_pass);
+    {
+        uint8_t* field = g_text_boxes[kTextStringdl];
+        memcpy(controller("stringdl") + kStringdlField, &field, 4);
     }
     give_controller("link6", vt_self);
     // The dialogue boxes, each its text object and its chat log's.
@@ -4666,7 +4798,7 @@ int main() {
                     s.part = static_cast<int>((rdptr(m, 8) - g_parts[0]) / 0x40);
                 }
                 s.bound = m != NULL;
-                s.open = open_menu(g_e, q, NULL) != NULL;
+                s.open = open_menu(g_e, kPlain, q, NULL) != NULL;
                 s.pixels = g_pixels - before;
                 const int got = events(&cursor, ev, 64);
                 for (int i = 0; i < got; ++i) {
@@ -4836,9 +4968,9 @@ int main() {
         int16_t box[4];
         compass_frame(compass, box);
         check(is_compass(g_e, n) && !is_compass(g_e, name("buff")) && !is_compass(g_e, -1)
-                && live_menu(g_e, n, NULL) == NULL && open_menu(g_e, n, NULL) == NULL
-                && controller_global(g_e, "compass") == NULL && controller_at(g_e, n) == NULL
-                && compass_object(g_e) == compass && compass_open(compass) && !compass_open(NULL)
+                && live_menu(g_e, kPlain, n, NULL) == NULL && open_menu(g_e, kPlain, n, NULL) == NULL
+                && controller_at(g_e, g_e.inv.find_exact("compass")) == NULL && controller_at(g_e, n) == NULL
+                && compass_object(g_e, kPlain) == compass && compass_open(compass) && !compass_open(NULL)
                 && box[0] == 16 && box[1] == 1016 && box[2] == 104 && box[3] == 1058,
             "the compass: no live menu, no controller through any slot; its object through the global, open while"
             " its state byte is not 0, its box 88 x 42 ending on its anchor");
@@ -4940,7 +5072,7 @@ int main() {
             "the drain posts closed{compass} as the state byte reaches 0, once, and opened{compass} as it leaves 0;"
             " 1 to 3, still shown, posts nothing");
         compass_ptr = NULL;
-        const bool no_object = hook_compass_pre(&f) == 0 && compass_object(g_e) == NULL;
+        const bool no_object = hook_compass_pre(&f) == 0 && compass_object(g_e, kPlain) == NULL;
         run(move);
         hook_compass_pre(&f);
         drain(g_e);
@@ -4979,8 +5111,8 @@ int main() {
         g_e.game.arrow_return[1] = kPick;
         check(is_targetarrow(g_e, t) && synthetic(g_e, t) && synthetic(g_e, g_e.inv.compass) && !synthetic(g_e, tw)
                 && !is_targetarrow(g_e, tw) && !is_targetarrow(g_e, -1) && g_e.inv.targetwi == tw
-                && controller_global(g_e, "targetarrow") == NULL && controller_at(g_e, t) == NULL
-                && live_menu(g_e, t, NULL) == NULL,
+                && controller_at(g_e, g_e.inv.find_exact("targetarrow")) == NULL && controller_at(g_e, t) == NULL
+                && live_menu(g_e, kPlain, t, NULL) == NULL,
             "targetarrow: a name on no row, with no controller and no live menu");
 
         // opened and closed: what the target window's draw paints, read by
@@ -5177,7 +5309,8 @@ int main() {
         g_e.holds.set(h1, tw, kHoldBlock, true);
         drain(g_e);
         events(&cursor, ev, 64);
-        const bool refused = open_now("targetwi") == NULL && !targetarrow_drawn(g_e) && arrows(kEvOpened) == 0;
+        const bool refused = open_now("targetwi") == NULL && !targetarrow_drawn(g_e, kPlain, NULL)
+            && arrows(kEvOpened) == 0;
         g_e.holds.set(h1, tw, kHoldBlock, false);
         drain(g_e);
         check(strcmp(blocked, "dd-d-d|ddd") == 0 && refused,
@@ -5488,8 +5621,8 @@ int main() {
         n = events(&cursor, ev, 64);
         const bool missing = none && n == 1
             && is_error(ev[0], s1, gen1, "", "fulllog", "fulllog has no controller now")
-            && g_open_calls == calls && controller_missing(g_e, name("fulllog"))
-            && !controller_missing(g_e, name("equip"));
+            && g_open_calls == calls && controller_missing(g_e, kPlain, name("fulllog"))
+            && !controller_missing(g_e, kPlain, name("equip"));
         check(table && missing, "the drain's open: a window the table refuses from abi 1, and one whose slot holds"
             " no controller, refused with an error and never handed to the game's open");
 
@@ -5611,7 +5744,7 @@ int main() {
         auto opened_now = [&](char* out, size_t size) {
             out[0] = '\0';
             for (int i = 0; i < count; ++i) {
-                if (open_menu(g_e, name(family[i]), NULL)) {
+                if (open_menu(g_e, kPlain, name(family[i]), NULL)) {
                     const size_t used = strlen(out);
                     snprintf(out + used, size - used, "%s%s", used ? " " : "", family[i]);
                 }
@@ -5679,7 +5812,7 @@ int main() {
         run(magic);
         n = events(&cursor, ev, 64);
         g_e.holds.set(h2, sub, kHoldBlock, false);
-        check(n == 1 && is_event(ev[0], kEvOpened, "magic") && open_menu(g_e, name("magic"), NULL),
+        check(n == 1 && is_event(ev[0], kEvOpened, "magic") && open_menu(g_e, kPlain, name("magic"), NULL),
             "with subwindo blocked, open('magic', 1) opens the list and posts no blocked{subwindo}");
         close_all();
 
@@ -5954,10 +6087,20 @@ int main() {
         check(g_set.calls == 6 && g_set.checks == checks && strcmp(g_route.order, "items_view inventor_open") == 0
                 && n >= 1 && is_error(ev[n - 1], s1, gen1, "open_set", "synthesis",
                 "the game's Items row left inventor with no list of the game's")
-                && !live("tskill1"),
+                && !live("tskill1") && !live("inventor") && !live("iteminfo"),
             "open_set('synthesis', 5) runs the main menu's Items row first; a row's list that is no list of the"
-            " game's, which the synthesis's cancel would reopen inventor with: an error, the check and the opener"
-            " unrun");
+            " game's, which the synthesis's cancel would reopen inventor with: what the row opened closed again by"
+            " the game's close, then an error, the check and the opener unrun");
+        open_now("inventor");
+        events(&cursor, ev, 64);
+        memset(&g_route, 0, sizeof(g_route));
+        run(set_cmd("tskill1", kSetSynthesis, 5));
+        n = events(&cursor, ev, 64);
+        check(n >= 1 && is_error(ev[n - 1], s1, gen1, "open_set", "synthesis",
+                "the game's Items row left inventor with no list of the game's")
+                && live("inventor") && !live("iteminfo"),
+            "the same refusal with inventor open before the Items row: inventor left open, iteminfo, which the row"
+            " opened, closed again");
         close_all();
         g_policy = reinterpret_cast<uint8_t*>(const_cast<void**>(kList));
         wr32(inventor, kInventorList, 0xBAADF00Du);
@@ -6544,6 +6687,17 @@ int main() {
             " with Alt in use already, the pick alone");
         g_macro_editor[0x0C] = 1;
         close_all();
+        uint8_t*& macro_slot = g_ctl_global[g_e.inv.names[name("macro")].rows[0]];
+        uint8_t* const macro_ctl = macro_slot;
+        macro_slot = NULL;
+        n = route("macro", "palette=alt;row=2");
+        macro_slot = macro_ctl;
+        check(n == 1 && is_error(ev[0], s1, gen1, "open", "macro",
+                  "macro has no controller now, and the game's open would crash the client")
+                && g_route.order[0] == '\0' && !live("macro"),
+            "open('macro', ...) with macro's slot holding no controller: refused on the game thread as on the Lua"
+            " thread, before the editor's pick, whose open of macro would bind to that slot");
+        close_all();
 
         n = route("scanlist", NULL);
         const bool unmapped = n == 1 && is_error(ev[0], s1, gen1, "open", "scanlist", "scanlist needs map0 open");
@@ -6559,6 +6713,10 @@ int main() {
             && g_dead.message_args[0] == 0x0E && g_dead.message_args[1] == 0x45 && g_dead.ask_args[0] == 0
             && g_dead.ask_args[1] == 0 && g_dead.ask_args[2] == 0 && g_dead.ask_args[3] == 1 && g_dead.ask_args[4] == 0
             && strcmp(opened_events(seen, sizeof(seen), n), "comyn") == 0 && !live("scanlist");
+        n = route("scanlist", NULL);
+        const bool refused_ask = g_dead.ask_calls == asks + 2 && n == 1
+            && is_error(ev[0], s1, gen1, "open", "scanlist", "the game refused comyn's open; nothing was asked")
+            && !live("scanlist");
         game_closes("comyn");
         destroy("comyn");
         wr32(yes_no, kYesNoCallback, 0);
@@ -6567,11 +6725,12 @@ int main() {
         g_route.tracking = 0;
         g_route.order[0] = '\0';
         n = route("scanlist", NULL);
-        check(unmapped && asked && strcmp(g_route.order, "tracking scanlist") == 0
+        check(unmapped && asked && refused_ask && strcmp(g_route.order, "tracking scanlist") == 0
                 && strcmp(opened_events(seen, sizeof(seen), n), "scanlist") == 0,
             "open('scanlist'): with map0 open and the map not tracking, scanlist's opener, as map0's Wide Scan row"
             " runs it; while it tracks, the row's own question on comyn whether to stop (message 0x0E/0x45, its"
-            " callback, no first, cancellable), and no scanlist");
+            " callback, no first, cancellable), and no scanlist; an ask the game refuses, comyn's question still"
+            " pending, an error event");
         close_all();
 
         wr32(g_route_player, kRouteArea, 230);
@@ -7068,7 +7227,8 @@ int main() {
         const int rn = name("resyn");
         const int us = name("resynus");
         uint8_t* shared = controller("resyn");
-        check(yesno_ask("resyn", "Return?", true, false, 0) && live_menu(g_e, us, NULL) && !live_menu(g_e, rn, NULL)
+        check(yesno_ask("resyn", "Return?", true, false, 0) && live_menu(g_e, kPlain, us, NULL)
+                && !live_menu(g_e, kPlain, rn, NULL)
                 && !yesno_asks(g_e, rn, shared, why, sizeof(why)) && strcmp(why, "the game asks through resynus, not resyn") == 0
                 && yesno_asks(g_e, us, shared, why, sizeof(why)),
             "the resyn family asks through resynus: resyn is refused naming it, resynus asks");
@@ -7735,7 +7895,8 @@ int main() {
         bool blocked = false;
         auto pending_now = [&](int a) {
             char buf[kErrorReason];
-            return !asked_pending(g_e, a, g_e.asked[a], asked_now(g_e, a), &blocked, buf, sizeof(buf));
+            return !asked_pending(g_e, a, g_e.asked[a], asked_now(g_e, kPlain, a, g_e.asked[a]), &blocked, buf,
+                sizeof(buf));
         };
 
         check(g_e.inv.asked_window[kAskedSortyn] == name("sortyn") && g_e.inv.asked_of(name("ok")) == kAskedOk
@@ -8101,7 +8262,8 @@ int main() {
         active(map0);
         seen();
         up = maplist_setup(100);
-        check(up && pending_now(kAskedMaplist) && !blocked && map_count(maplist) == 4 && map_top(maplist) && !mr.active,
+        check(up && pending_now(kAskedMaplist) && !blocked && map_count(kPlain, maplist) == 4 && map_top(maplist)
+                && !mr.active,
             "maplist asked: pending with its callback, rows and window; showing the regions");
         answer("maplist", 5);
         const bool past = refused("answer", "maplist", "maplist has no row 5");
@@ -8152,7 +8314,7 @@ int main() {
         check(live("maplist") == up && rd16(maplist, kMapBack) == 0 && rd16(maplist, kMapRegion) == 2
                 && rd16(maplist, kMapZone) == -1 && rd16(maplist, kMapSelection) == 1 && g_map.rebuilds == 1
                 && g_map.selects == 1 && g_map.row == 0 && g_map.flag == 0 && strcmp(g_log.order, "uv") == 0
-                && rdptr(maplist, kMapRows) == g_map_region_rows && map_count(maplist) == 2
+                && rdptr(maplist, kMapRows) == g_map_region_rows && map_count(kPlain, maplist) == 2
                 && map_level(maplist) == kMapLevelRegion && !map_top(maplist) && region_id == first_id + 1
                 && pending_now(kAskedMaplist) && !blocked && g_asked.calls == calls + 1,
             "answer on a region's row: the key handler's step down, no sound -- the list shown kept to go back to"
@@ -8189,7 +8351,7 @@ int main() {
         const LONG top_id = g_e.instance[nmap];
         check(rd16(maplist, kMapRegion) == 0 && rd16(maplist, kMapBack) == 0 && rd16(maplist, kMapZone) == -1
                 && g_map.rebuilds == 4 && g_map.row == 1 && strcmp(g_log.order, "uv") == 0
-                && rdptr(maplist, kMapRows) == g_map_rows && map_count(maplist) == 4 && map_top(maplist)
+                && rdptr(maplist, kMapRows) == g_map_rows && map_count(kPlain, maplist) == 4 && map_top(maplist)
                 && top_id == back_id + 1 && live("maplist") == up && g_asked.calls == calls + 1,
             "cancel inside a region: back to the top -- +0x58 and +0x5E 0, the regions built again, the cursor"
             " put on the row kept; a new id");
@@ -8371,7 +8533,8 @@ int main() {
         up = gmtell_ask(1);
         check(up && pending_now(kAskedGmtell) && !blocked, "gmtell asked: pending while its result word is 0");
         reply(kOpAskedAnswer, "gmtell", 5, kCmdListed);
-        const bool unlisted = refused("answer", "gmtell", "no option in the list has the value 5");
+        const bool unlisted = refused("answer", "gmtell",
+            "no option in the list has the value 5 (options('gmtell') lists them)");
         reply(kOpAskedAnswer, "gmtell", 2, kCmdListed);
         check(unlisted && rd16(gm, kQueryResult) == 2 && rd16(gm, kQueryCursor) == 1 && live("gmtell") == up
                 && !pending_now(kAskedGmtell),
@@ -8424,8 +8587,9 @@ int main() {
         up = ok_notice(true, &context, false);
         check(up && pending_now(kAskedOk) && !blocked && !orec.active, "ok up: pending until acknowledged");
         run(cmd(kOpClose, "ok", 0, 0, s1, gen1));
+        run(cmd(kOpBlockClose, "ok", 0, 0, s1, gen1));
         check(live("ok") == up && menu_is_open(up) && pending_now(kAskedOk) && rd32(okc, kOkAnswered) == 0,
-            "the drain closes no ok: it stays up, unacknowledged");
+            "the drain closes no ok, by close or by a block's close: it stays up, unacknowledged");
         memset(&g_asked, 0, sizeof(g_asked));
         cancel("ok");
         const bool ok_cancel = refused("cancel", "ok", "ok has no cancel; answer('ok') acknowledges it");
@@ -8533,8 +8697,8 @@ int main() {
         check(strcmp(texts.rows[1], "Text 70") == 0, "the back row's text follows the draw's condition, al alone");
         {
             uint16_t zones[kDoorListMax];
-            const AskedNow now = asked_now(g_e, kAskedDoor);
-            const int count = door_areas(g_e, door, true, 0, zones);
+            const AskedNow now = asked_now(g_e, kPlain, kAskedDoor, g_e.asked[kAskedDoor]);
+            const int count = door_areas(g_e, kPlain, door, true, 0, zones);
             char buf[kErrorReason];
             check(count == 4 && zones[0] == 230 && zones[3] == 280 && door_area_exit(g_e, zones[2], 2) == 3
                     && door_area_exit(g_e, zones[3], 3) == kDoorGardenExit && door_floor_exit(now) == kDoorFloorUp
@@ -8640,7 +8804,7 @@ int main() {
         drain(g_e);
         check(g_door.ticks == ticks + 2 && drec.active, "while it stands the drain runs the tick each frame");
         {
-            const AskedNow now = asked_now(g_e, kAskedDoor);
+            const AskedNow now = asked_now(g_e, kPlain, kAskedDoor, g_e.asked[kAskedDoor]);
             char buf[kErrorReason];
             check(!door_offer_refusal(g_e, now, false, 1, 2, buf, sizeof(buf))
                     && door_offer_refusal(g_e, now, false, 1, 4, buf, sizeof(buf)),
@@ -8777,7 +8941,8 @@ int main() {
             check(live("rem4line") == box1 && menu_is_open(box1), "the drain closes no dialogue box, by close or by"
                 " block");
 
-            // one page on through the text dispatch; the box's own cancel
+            // one page on through the gate's advance and sound, no code handed
+            // to the text dispatch; the box's own cancel
             clear_log();
             memset(&g_talk, 0, sizeof(g_talk));
             auto talk = [&](uint8_t op, const char* nm) {
@@ -8786,10 +8951,22 @@ int main() {
                 run(c);
             };
             talk(kOpDialogueAnswer, "rem4li2");
-            check(g_talk.dispatches == 1 && g_talk.dispatch_text == g_texts[1] && g_talk.dispatch_code == 5
-                    && strcmp(g_log.order, "T") == 0,
-                "answer('rem4li2'): the text dispatch once, on rem4li2's own text object, with code 5; nothing"
+            check(g_talk.dispatches == 0 && g_talk.advances == 2 && g_talk.advance_text[0] == g_texts[1]
+                    && g_talk.advance_text[1] == g_texts[0] && g_talk.sounds == 2
+                    && strcmp(g_log.order, "VpVp") == 0,
+                "answer('rem4li2'): no code handed to the text dispatch; rem4li2's own text object advanced, then the"
+                " page-turn sound, then rem4line's, whose page waits for a key too, and the sound again; nothing"
                 " else");
+            show(0, g_messages[3], 27, kPageTimed, 1);
+            clear_log();
+            memset(&g_talk, 0, sizeof(g_talk));
+            talk(kOpDialogueAnswer, "rem4li2");
+            check(g_talk.dispatches == 0 && g_talk.advances == 1 && g_talk.advance_text[0] == g_texts[1]
+                    && g_talk.sounds == 1 && strcmp(g_log.order, "Vp") == 0,
+                "answer('rem4li2') while rem4line's page goes on by its timer: rem4li2's own text object advanced"
+                " and the sound once; rem4line's left to its timer");
+            show(0, g_messages[3], 27, kPageKey, 1);
+            memset(&g_talk, 0, sizeof(g_talk));
             show(1, g_messages[2], -1, kPageTimed, 1);
             talk(kOpDialogueAnswer, "rem4li2");
             const bool timed = refused("answer", "rem4li2", "the page rem4li2 shows does not wait for a key: it goes"
@@ -8802,14 +8979,15 @@ int main() {
             talk(kOpDialogueCancel, "rem4li2");
             const bool no_cancel = refused("cancel", "rem4li2", "rem4li2 cannot be canceled now: the event allows no"
                 " cancel");
-            check(timed && none && no_cancel && g_talk.dispatches == 1 && g_talk.releases == 0,
+            check(timed && none && no_cancel && g_talk.advances == 0 && g_talk.sounds == 0 && g_talk.dispatches == 0
+                    && g_talk.releases == 0,
                 "refused: a page that goes on by itself, no message shown, a cancel the event allows not");
             g_query_cancel_allowed = 1;
 
-            // either name's answer is the one dialogue's, the game's dispatch
-            // handing the code on to the twin's text object; both names'
-            // prompt is the pair's count of opens, and an id either box's own
-            // count gives, or the pair's before, is gone
+            // either name's answer is the one dialogue's, the gate run on the
+            // twin's text object too; both names' prompt is the pair's count
+            // of opens, and an id either box's own count gives, or the pair's
+            // before, is gone
             const uint32_t pair = static_cast<uint32_t>(g_e.dialogue_opens);
             const uint32_t own1 = static_cast<uint32_t>(g_e.instance[name("rem4line")]);
             const uint32_t own2 = static_cast<uint32_t>(g_e.instance[name("rem4li2")]);
@@ -8819,11 +8997,13 @@ int main() {
             named.flags = kCmdInstance;
             named.instance = pair;
             run(named);
-            const bool line_pair = g_talk.dispatches == 1 && g_talk.dispatch_text == g_texts[0]
-                && g_talk.dispatch_code == 5;
+            const bool line_pair = g_talk.advances == 2 && g_talk.advance_text[0] == g_texts[0]
+                && g_talk.advance_text[1] == g_texts[1] && g_talk.sounds == 2;
+            memset(&g_talk, 0, sizeof(g_talk));
             named.target = static_cast<int16_t>(name("rem4li2"));
             run(named);
-            const bool li2_pair = g_talk.dispatches == 2 && g_talk.dispatch_text == g_texts[1];
+            const bool li2_pair = g_talk.advances == 2 && g_talk.advance_text[0] == g_texts[1]
+                && g_talk.advance_text[1] == g_texts[0] && g_talk.sounds == 2;
             bool gone = true;
             const uint32_t stale[3] = {own1, own2, pair - 1};
             for (int i = 0; i < 3; ++i) {
@@ -8836,11 +9016,12 @@ int main() {
             }
             check(own1 != pair && own2 != pair && open_count(g_e, name("rem4line")) == pair
                     && open_count(g_e, name("rem4li2")) == pair && line_pair && li2_pair && gone
-                    && g_talk.dispatches == 2 && open_count(g_e, name("query")) == static_cast<uint32_t>(
-                        g_e.instance[name("query")]),
-                "answer('rem4line') and answer('rem4li2') under the pair's id: the text dispatch once on the named"
-                " box's own text object, with code 5; under either box's own count of opens or the pair's before:"
-                " that prompt is gone; any other window's prompt its own count");
+                    && g_talk.advances == 2 && g_talk.dispatches == 0 && open_count(g_e, name("query"))
+                        == static_cast<uint32_t>(g_e.instance[name("query")]),
+                "answer('rem4line') and answer('rem4li2') under the pair's id: the named box's own text object"
+                " advanced, then its twin's, each with the sound, no code handed to the text dispatch; under either"
+                " box's own count of opens or the pair's before: that prompt is gone; any other window's prompt its"
+                " own count");
 
             // a cancel each box's own: refused whole while the twin shows a
             // message it could not cancel; else the named box's, then the
@@ -9013,80 +9194,244 @@ int main() {
             " kTableEntries entries too large; any other text refused");
     }
 
-    // the text-entry windows' fields: a hide ends the field the window
-    // edits with the window's own end, told to drop it; an open of a hidden
-    // window whose hook starts the field ends it too; a show starts
-    // passinpu's, comment's (on the line it edited) and msgline's again with
-    // their own starts, and no other's
+    // the text-entry windows' fields: a hide takes the line from the
+    // window's own field alone, passinpu's suspended, any other's ended
+    // with the window's own end, told to drop it; a show starts passinpu's,
+    // comment's (on the line it edited) and msgline's again, in the order
+    // the next update leaves their menus, msgline's field ended first,
+    // keeping its text, when it holds the line
     {
         memset(&g_text, 0, sizeof(g_text));
+        memset(g_line, 0, sizeof(g_line));
         auto hide = [&](const char* nm, bool on) {
             g_e.holds.set(h1, name(nm), kHoldHide, on);
             drain(g_e);
         };
-        uint8_t* box = g_text_box;
+        auto holder = [&]() {
+            return g_line[kLineBound] ? rdptr(g_line, kLineField) : NULL;
+        };
         uint8_t* sd = controller("stringdl");
         uint8_t* cm = controller("comment");
         uint8_t* ml = controller("msgline");
         uint8_t* sc = controller("scname");
         uint8_t* lk = controller("link11");
         uint8_t* pi = controller("passinpu");
+        uint8_t* pass_box = g_text_boxes[kTextCount];
+        wr32(cm, kCommentField, 0);
+        wr32(ml, kMsglineField, 0);
+        wr32(sc, kScnameField, 0);
+        wr32(lk, kLink11Field, 0);
+        wr32(pi, kPassField, 0);
         open_now("stringdl");
-        sd[kStringdlEditing] = 1;
+        stringdl_edits(sd);
+        hide("stringdl", true);
         cm[kCommentMode] = 0;
         open_now("comment");
+        const bool started = rdptr(cm, kCommentField) == g_text_boxes[kTextComment] && cm[kCommentEditing] == 0
+            && holder() == g_text_boxes[kTextComment];
+        cm[kCommentEditing] = 2;
+        hide("comment", true);
         open_now("msgline");
+        hide("msgline", true);
         open_now("scname");
-        memcpy(sc + kScnameField, &box, 4);
+        open_field(sc, kScnameField, kTextScname);
+        hide("scname", true);
         open_now("link11");
         wr32(lk, kLink11Editing, 1);
-        memcpy(lk + kLink11Field, &box, 4);
+        open_field(lk, kLink11Field, kTextLink11);
+        hide("link11", true);
         open_now("passinpu");
-        memcpy(pi + kPassField, &box, 4);
-        const bool started = rdptr(cm, kCommentField) == box && cm[kCommentEditing] == 0
-            && rdptr(ml, kMsglineField) == box && g_text.starts == 2;
-        cm[kCommentEditing] = 2;
+        const int deletes = g_text.deletes;
+        hide("passinpu", true);
+        bool ended = strcmp(g_text.order, "sssssub") == 0 && !sd[kStringdlEditing] && !rdptr(cm, kCommentField)
+            && !rdptr(ml, kMsglineField) && !rdptr(sc, kScnameField) && !rdptr(lk, kLink11Field);
+        for (int f = 0; f < 5; ++f) {
+            ended = ended && g_text.ends[f] == 1 && g_text.kept[f] == (f == kTextStringdl ? -1 : 0);
+        }
+        for (int f = 0; f < 6; ++f) {
+            ended = ended && g_e.field_ended[f] == 1;
+        }
+        const bool suspended = rdptr(pi, kPassField) == pass_box && pass_box[0] == 0 && g_text.ends[kTextCount] == 0
+            && g_text.deletes == deletes && g_line[kLineBound] == 1 && !rdptr(g_line, kLineField);
+        check(started && ended && suspended,
+            "a hide of each text window while its field holds the line ends it with the window's own end, told to"
+            " drop it; passinpu's is suspended instead, the manager's unbind then its bind of NULL, the field kept");
+        // Shown in one pass, passinpu the game's active menu: started in
+        // inventory order, passinpu's last, so that it keeps the line;
+        // msgline's field, holding it, ended keeping its text before
+        // passinpu's start, which drops the field its hide suspended.
+        const uint8_t* active = game_active();
+        g_text.order[0] = '\0';
+        const int pass_deletes = g_text.deletes;
         static const char* const fields[] = {"stringdl", "comment", "msgline", "scname", "link11", "passinpu"};
         for (int f = 0; f < 6; ++f) {
-            hide(fields[f], true);
+            g_e.holds.set(h1, name(fields[f]), kHoldHide, false);
         }
-        bool ended = strcmp(g_text.order, "ssssss") == 0 && g_text.keep == 0 && !sd[kStringdlEditing]
-            && !rdptr(cm, kCommentField) && !rdptr(ml, kMsglineField) && !rdptr(sc, kScnameField)
-            && !rdptr(lk, kLink11Field) && !rdptr(pi, kPassField);
-        for (int f = 0; f < 6; ++f) {
-            ended = ended && g_text.ends[f] == 1 && g_e.field_ended[f] == 1;
-        }
-        g_text.order[0] = '\0';
-        for (int f = 0; f < 6; ++f) {
-            hide(fields[f], false);
-        }
-        bool shown = strcmp(g_text.order, "oMP") == 0 && rdptr(pi, kPassField) == box && rdptr(ml, kMsglineField) == box
-            && rdptr(cm, kCommentField) == box && g_text.start_line == 2 && cm[kCommentEditing] == 2
-            && !sd[kStringdlEditing] && !rdptr(sc, kScnameField) && !rdptr(lk, kLink11Field);
+        drain(g_e);
+        bool shown = active == live("passinpu") && strcmp(g_text.order, "oMsusP") == 0
+            && rdptr(cm, kCommentField) == g_text_boxes[kTextComment] && g_text_boxes[kTextComment][0] == 0
+            && cm[kCommentEditing] == 2 && g_text.start_line == 2 && !rdptr(ml, kMsglineField)
+            && g_text.kept[kTextMsgline] == 1 && g_text.kept[kTextCount] == 0 && g_text.deletes == pass_deletes + 2
+            && rdptr(pi, kPassField) == pass_box && holder() == pass_box && !sd[kStringdlEditing]
+            && !rdptr(sc, kScnameField) && !rdptr(lk, kLink11Field);
         for (int f = 0; f < 6; ++f) {
             shown = shown && g_e.field_ended[f] == 0;
         }
-        check(started && ended && shown,
-            "a hide of each text window and passinpu while it edits ends its field with the window's own end, told"
-            " to drop it; the show starts comment's field again on the line it edited (2), msgline's and"
-            " passinpu's, each with the start its open hook calls, and no other's");
-        // Their begin-closes end the fields the show started.
-        wr32(cm, kCommentField, 0);
-        wr32(ml, kMsglineField, 0);
+        check(shown,
+            "the show of all six in one pass, passinpu the game's active menu, starts comment's field on line 2,"
+            " msgline's, then passinpu's: msgline's, holding the line, ended keeping its text first; passinpu's"
+            " suspended field dropped, a new one started holding the line");
+        game_closes("comment");
+        game_closes("msgline");
+        game_closes("stringdl");
+        game_closes("scname");
+        game_closes("link11");
+        game_closes("passinpu");
+
+        // The active menu's field started last whatever its place in the
+        // inventory: comment's, the first, after msgline's and passinpu's.
+        cm[kCommentMode] = 0;
+        open_now("comment");
+        hide("comment", true);
+        open_now("passinpu");
+        hide("passinpu", true);
+        open_now("msgline");
+        hide("msgline", true);
+        focus(live("comment"));
+        active = game_active();
         g_text.order[0] = '\0';
+        g_e.holds.set(h1, name("comment"), kHoldHide, false);
+        g_e.holds.set(h1, name("passinpu"), kHoldHide, false);
+        g_e.holds.set(h1, name("msgline"), kHoldHide, false);
+        drain(g_e);
+        const bool focused = active == live("comment") && strcmp(g_text.order, "MsusPo") == 0
+            && holder() == g_text_boxes[kTextComment] && !rdptr(ml, kMsglineField) && g_text.kept[kTextMsgline] == 1
+            && pass_box[0] == 0;
+        check(focused, "comment, the game's active menu, shown with msgline and passinpu: msgline's field started,"
+            " then passinpu's after msgline's is ended keeping its text, then comment's, which holds the line");
+        game_closes("comment");
+        game_closes("passinpu");
+        game_closes("msgline");
+
+        // None of them the active menu: started in inventory order, the last
+        // keeping the line.
+        cm[kCommentMode] = 0;
+        open_now("comment");
+        hide("comment", true);
+        open_now("msgline");
+        hide("msgline", true);
+        wr32(g_mcb, kMcbActive, 0);
+        g_text.order[0] = '\0';
+        g_e.holds.set(h1, name("comment"), kHoldHide, false);
+        g_e.holds.set(h1, name("msgline"), kHoldHide, false);
+        drain(g_e);
+        const bool unfocused = strcmp(g_text.order, "oM") == 0 && holder() == g_text_boxes[kTextMsgline]
+            && rdptr(cm, kCommentField) == g_text_boxes[kTextComment] && g_text_boxes[kTextComment][0] == 0;
+        check(unfocused, "comment and msgline shown with neither the game's active menu: comment's field started,"
+            " then msgline's, last in inventory order, which holds the line");
+        game_closes("comment");
+        game_closes("msgline");
+
+        // One shown while msgline holds the line: msgline's field ended
+        // keeping its text, then passinpu's started.
+        open_now("passinpu");
+        hide("passinpu", true);
+        open_now("msgline");
+        g_text.order[0] = '\0';
+        hide("passinpu", false);
+        const bool taken = strcmp(g_text.order, "susP") == 0 && !rdptr(ml, kMsglineField)
+            && g_text.kept[kTextMsgline] == 1 && holder() == pass_box && live("msgline");
+        check(taken, "passinpu shown while msgline's field holds the line: msgline's ended keeping its text,"
+            " then passinpu's dropped and started, holding the line");
+        game_closes("msgline");
+        game_closes("passinpu");
+
+        // The line held by another window's field: a hide, and the drain
+        // after it, leave the hidden window's alone.
+        open_now("msgline");
+        open_now("stringdl");
+        sd[kStringdlEditing] = 1;
+        g_text.order[0] = '\0';
+        hide("stringdl", true);
+        drain(g_e);
+        const bool other = g_text.order[0] == '\0' && sd[kStringdlEditing] == 1
+            && holder() == g_text_boxes[kTextMsgline] && g_e.field_ended[kTextStringdl] == 0;
+        hide("stringdl", false);
+        const bool other_shown = g_text.order[0] == '\0';
+        sd[kStringdlEditing] = 0;
+        game_closes("msgline");
+        game_closes("stringdl");
+        cm[kCommentMode] = 0;
+        open_now("comment");
+        open_now("passinpu");
+        g_text.order[0] = '\0';
+        hide("comment", true);
+        const bool unbound = g_text.order[0] == '\0' && rdptr(cm, kCommentField) == g_text_boxes[kTextComment]
+            && g_e.field_ended[kTextComment] == 0;
+        hide("comment", false);
+        check(other && other_shown && unbound && g_text.order[0] == '\0',
+            "hidden stringdl editing while msgline's field holds the line: its end is never called, msgline keeps"
+            " the line; hidden comment whose field passinpu's start let go: left alone, and nothing at the show");
+        game_closes("comment");
+        game_closes("passinpu");
+
+        // A bind of NULL leaves the manager bound with no field: no window
+        // with none is taken for the one holding the line, neither hidden
+        // passinpu at the drain nor msgline at passinpu's show.
+        hide("passinpu", true);
+        open_now("passinpu");
+        open_now("msgline");
+        fake_msgline_stop(ml, NULL, 0);
+        uint8_t* suspended_box = rdptr(pi, kPassField);
+        wr32(pi, kPassField, 0);
+        g_text.order[0] = '\0';
+        const int message_ends = g_text.ends[kTextMsgline];
+        drain(g_e);
+        const bool no_field = g_text.order[0] == '\0' && g_line[kLineBound] == 1 && !rdptr(g_line, kLineField);
+        memcpy(pi + kPassField, &suspended_box, 4);
+        hide("passinpu", false);
+        const bool no_message = strcmp(g_text.order, "usP") == 0 && g_text.ends[kTextMsgline] == message_ends
+            && holder() == pass_box;
+        check(no_field && no_message, "the manager bound to no field: hidden passinpu with no field gets no unbind"
+            " and no bind; passinpu shown with msgline open but its field gone ends nothing of msgline's");
+        game_closes("msgline");
+        game_closes("passinpu");
+        hide("passinpu", true);
+
+        // Opened hidden: its open hook's field suspended at once, and again
+        // each drain that finds it holding the line; the answer's close
+        // drops it once, and the show starts none.
+        g_text.order[0] = '\0';
+        g_text.deletes = 0;
+        g_text.bound_deletes = 0;
+        open_now("passinpu");
+        const bool hidden_open = strcmp(g_text.order, "ub") == 0 && rdptr(pi, kPassField) == pass_box
+            && pass_box[0] == 0 && g_e.field_ended[kFieldPassinpu] == 1;
+        open_field(pi, kPassField, kTextCount);
+        drain(g_e);
+        drain(g_e);
+        const bool again = strcmp(g_text.order, "ubub") == 0 && pass_box[0] == 0;
+        int context = 0;
+        wr32(pi, kPassCallback, reinterpret_cast<uint32_t>(&fake_text_callback));
+        wr32(pi, kPassContext, reinterpret_cast<uint32_t>(&context));
+        run(cmd(kOpPassinpuCancel, NULL, 0, 0, s1, gen1));
+        const bool canceled = strcmp(g_text.order, "ububs") == 0 && g_text.deletes == 1 && g_text.bound_deletes == 0
+            && !rdptr(pi, kPassField) && !live("passinpu");
+        hide("passinpu", false);
+        check(hidden_open && again && canceled && strcmp(g_text.order, "ububs") == 0
+                && g_e.field_ended[kFieldPassinpu] == 0,
+            "passinpu opened hidden: its field suspended at once and at each drain that finds it bound again;"
+            " cancel('passinpu') while hidden: its begin-close drops the field once; the show starts none");
+
+        // A window that edits nothing is left alone; msgline opened hidden
+        // has its hook's field ended at once; comment's another player's
+        // message has none, its search comment's is ended.
+        g_text.order[0] = '\0';
+        open_now("scname");
         hide("scname", true);
         hide("scname", false);
         const bool idle = g_text.order[0] == '\0';
-        hide("passinpu", true);
-        game_closes("passinpu");
-        hide("passinpu", false);
-        const bool closed = strcmp(g_text.order, "s") == 0 && g_e.field_ended[kFieldPassinpu] == 0;
-        check(idle && closed, "a window that edits nothing is left alone; passinpu closed while hidden gets no new"
-            " field at the show");
-        for (int f = 0; f < 5; ++f) {
-            game_closes(fields[f]);
-        }
-        g_text.order[0] = '\0';
+        game_closes("scname");
         hide("msgline", true);
         open_now("msgline");
         const bool message = strcmp(g_text.order, "s") == 0 && !rdptr(ml, kMsglineField)
@@ -9099,14 +9444,14 @@ int main() {
         cm[kCommentMode] = 2;
         open_now("comment");
         const bool search = strcmp(g_text.order, "ss") == 0 && !rdptr(cm, kCommentField)
-            && g_text.ends[kTextComment] == 2;
-        check(message && view && search,
-            "an open of hidden msgline, whose hook starts its field, ends it at once; comment's another player's"
-            " message has none to end; its search comment's is ended");
-        hide("msgline", false);
-        hide("comment", false);
+            && g_text.ends[kTextComment] >= 1;
+        check(idle && message && view && search,
+            "a window that edits nothing is left alone; an open of hidden msgline, whose hook starts its field,"
+            " ends it at once; comment's another player's message has none to end; its search comment's is ended");
         game_closes("msgline");
         game_closes("comment");
+        hide("msgline", false);
+        hide("comment", false);
 
         // A field the player's key starts again in a hidden window that asks
         // nothing (Enter on the empty stringdl after a delivery is sent): the
@@ -9116,21 +9461,22 @@ int main() {
         open_now("stringdl");
         hide("stringdl", true);
         const bool idle_hidden = g_text.order[0] == '\0';
-        sd[kStringdlEditing] = 1;
+        stringdl_edits(sd);
         drain(g_e);
-        const bool key_field = strcmp(g_text.order, "s") == 0 && !sd[kStringdlEditing]
+        const bool key_started = strcmp(g_text.order, "s") == 0 && !sd[kStringdlEditing]
             && g_text.ends[kTextStringdl] == 1 && g_e.field_ended[kTextStringdl] == 1;
         drain(g_e);
         const bool once = strcmp(g_text.order, "s") == 0;
         hide("stringdl", false);
-        sd[kStringdlEditing] = 1;
+        stringdl_edits(sd);
         drain(g_e);
         const bool shown_kept = strcmp(g_text.order, "s") == 0 && sd[kStringdlEditing] == 1;
-        check(idle_hidden && key_field && once && shown_kept,
+        check(idle_hidden && key_started && once && shown_kept,
             "a hidden stringdl whose field a passed key starts: the next drain ends it with the window's own end,"
             " once; shown, the field it edits is left alone");
         sd[kStringdlEditing] = 0;
         game_closes("stringdl");
+        cm[kCommentMode] = 0;
         open_now("comment");
         open_now("msgline");
         open_now("passinpu");
@@ -9138,26 +9484,30 @@ int main() {
         hide("msgline", true);
         hide("passinpu", true);
         memset(&g_text, 0, sizeof(g_text));
-        memcpy(cm + kCommentField, &box, 4);
+        open_field(cm, kCommentField, kTextComment);
         cm[kCommentEditing] = 1;
-        memcpy(ml + kMsglineField, &box, 4);
-        memcpy(pi + kPassField, &box, 4);
         drain(g_e);
-        const bool restarted_ended = strcmp(g_text.order, "sss") == 0 && !rdptr(cm, kCommentField)
-            && !rdptr(ml, kMsglineField) && !rdptr(pi, kPassField) && g_text.keep == 0
+        open_field(ml, kMsglineField, kTextMsgline);
+        drain(g_e);
+        open_field(pi, kPassField, kTextCount);
+        drain(g_e);
+        const bool restarted_ended = strcmp(g_text.order, "ssub") == 0 && !rdptr(cm, kCommentField)
+            && !rdptr(ml, kMsglineField) && rdptr(pi, kPassField) == pass_box && g_text.keep == 0
             && g_e.field_ended[kTextComment] == 1 && g_e.field_ended[kTextMsgline] == 1
             && g_e.field_ended[kFieldPassinpu] == 1;
         g_text.order[0] = '\0';
-        hide("comment", false);
-        hide("msgline", false);
-        hide("passinpu", false);
-        const bool restarted_shown = strcmp(g_text.order, "oMP") == 0 && rdptr(cm, kCommentField) == box
-            && g_text.start_line == 1 && rdptr(ml, kMsglineField) == box && rdptr(pi, kPassField) == box;
+        game_active();
+        g_e.holds.set(h1, name("comment"), kHoldHide, false);
+        g_e.holds.set(h1, name("msgline"), kHoldHide, false);
+        g_e.holds.set(h1, name("passinpu"), kHoldHide, false);
+        drain(g_e);
+        const bool restarted_shown = strcmp(g_text.order, "oMsusP") == 0
+            && rdptr(cm, kCommentField) == g_text_boxes[kTextComment] && g_text.start_line == 1
+            && rdptr(pi, kPassField) == pass_box && holder() == pass_box;
         check(restarted_ended && restarted_shown,
-            "hidden comment, msgline and passinpu whose fields keys start again: the drain ends each, told to drop"
-            " it; the show starts each again with its own start, comment's on the line it edited (1)");
-        wr32(cm, kCommentField, 0);
-        wr32(ml, kMsglineField, 0);
+            "hidden comment, msgline and passinpu whose fields keys start again: each drain ends comment's and"
+            " msgline's, told to drop them, and suspends passinpu's; the show starts each again with its own"
+            " start, comment's on the line it edited (1)");
         game_closes("comment");
         game_closes("msgline");
         game_closes("passinpu");
@@ -9193,7 +9543,6 @@ int main() {
             memset(&g_text, 0, sizeof(g_text));
             clear_log();
         };
-        uint8_t* box = g_text_box;
 
         // stringdl: the name, as row 2 commits it; a yes or no on a slot;
         // their cancels
@@ -9203,7 +9552,7 @@ int main() {
         open_now("stringdl");
         wr16(delivery, kDeliveryState, kDeliveryAsksName);
         sd[kStringdlMode] = kStringdlAsksName;
-        sd[kStringdlEditing] = 1;
+        stringdl_edits(sd);
         memset(sd + kStringdlName, 'x', kStringdlNameBytes);
         wr16(sd, kStringdlReply, 0);
         answer(kTextStringdl, "Rolanberry");
@@ -9241,13 +9590,25 @@ int main() {
         const bool asks_name = refused("answer", "stringdl", "stringdl asks for the recipient's name now:"
             " answer('stringdl', name)");
         fresh();
-        sd[kStringdlEditing] = 1;
+        stringdl_edits(sd);
         reply(kOpTextCancel, "stringdl");
         const bool named_cancel = rd16(sd, kStringdlReply) == kStringdlCanceled && strcmp(g_text.order, "sff") == 0;
         check(unread && slot_mode && yes && no && name_mode && asks_name && named_cancel,
             "stringdl: refused while the box has not read the last reply, a name while it asks about a slot and a"
             " yes or no while it asks the name, anything in another state; on a slot +0x15C 3 for yes, 4 for its"
             " cancel, the box raised once; the name's cancel ends the field and writes 2");
+        wr16(sd, kStringdlReply, 0);
+        open_now("msgline");
+        sd[kStringdlEditing] = 1;
+        fresh();
+        answer(kTextStringdl, "Rolanberry");
+        reply(kOpTextAnswer, "stringdl");
+        check(strcmp(g_text.order, "ff") == 0 && rd16(sd, kStringdlReply) == kStringdlNamed && sd[kStringdlEditing] == 1
+                && g_line[kLineBound] && rdptr(g_line, kLineField) == g_text_boxes[kTextMsgline],
+            "answer('stringdl', name) while msgline's field holds the line: stringdl's end, which would take it,"
+            " is not called; the name written and the box raised");
+        sd[kStringdlEditing] = 0;
+        game_closes("msgline");
         wr16(delivery, kDeliveryState, 0);
         game_closes("stringdl");
         game_closes("delivery");
@@ -9369,16 +9730,17 @@ int main() {
         fresh();
         answer(kTextMsgline, "a\x07" "b");
         g_text.send_result = 2;
+        events(&cursor, ev, 64);
         reply(kOpTextAnswer, "msgline");
         a = g_text.send_args;
         check(strcmp(g_text.order, "scnS") == 0 && g_text.send_mode == 2 && strcmp(g_text.send_text, "a") == 0
                 && a[2] == reinterpret_cast<uintptr_t>(ml + kMsglineText)
                 && strcmp(g_text.clocks[0], "clock 1") == 0
                 && a[4] == reinterpret_cast<uintptr_t>(ml + kMsglineName) && a[6] == 0x14 && g_busy == 0
-                && !live("msgline"),
+                && !live("msgline") && refused("answer", "msgline", "the game could not queue the message"),
             "mode 2: each 7 in the text zeroed, the clock's text 1, the sender given +0x198, the number, the text, the"
             " clock, the name, the first callback and 0x14; a sender's nonzero answer marks nothing and leaves the"
-            " busy byte, and msgline still closes");
+            " busy byte, msgline still closes, and an error event says the message was not queued");
         g_text.send_result = 0;
         g_busy = 0;
         for (int i = 0; i < 5; ++i) {
@@ -9484,7 +9846,7 @@ int main() {
         fresh();
         uint8_t* sc = controller("scname");
         open_now("scname");
-        memcpy(sc + kScnameField, &box, 4);
+        open_field(sc, kScnameField, kTextScname);
         memset(sc + kScnameName, 'x', kScnameBytes - kScnameName);
         answer(kTextScname, "Rolan");
         reply(kOpTextAnswer, "scname");
@@ -9529,7 +9891,7 @@ int main() {
         uint8_t* lk = controller("link11");
         open_now("link11");
         wr32(lk, kLink11Editing, 1);
-        memcpy(lk + kLink11Field, &box, 4);
+        open_field(lk, kLink11Field, kTextLink11);
         lk[kLink11Colors] = 7;
         lk[kLink11Colors + 1] = 7;
         lk[kLink11Colors + 2] = 7;
@@ -9642,7 +10004,7 @@ int main() {
         };
         auto view = [&](int w) {
             static OfferView v;
-            offer_view(g_e, w, offer_now(g_e, w), &g_e.trade_pending, &v);
+            offer_view(g_e, w, offer_now(g_e, kPlain, w), &g_e.trade_pending, &v);
             return &v;
         };
         // Time on past the last send, so the next change goes at once.
@@ -9738,10 +10100,11 @@ int main() {
             char npc[kActorNameBytes + 1];
             check(v.open && v.data && v.target == 3 && v.target_id == 0x01000003 && v.gil == 0 && v.their_gil == 50
                     && v.theirs[2].id == 4321 && v.theirs[2].count == 7 && v.theirs[1].id == 0 && v.held_gil == 1000
-                    && v.wait == 0 && v.pending_count == 0 && actor_name(g_e.game.offer, 3, partner, sizeof(partner))
-                    && strcmp(partner, "Partner") == 0 && actor_name(g_e.game.offer, 5, npc, sizeof(npc))
-                    && strcmp(npc, "Titled NPC") == 0 && !actor_name(g_e.game.offer, 4, npc, sizeof(npc))
-                    && !actor_name(g_e.game.offer, 0, npc, sizeof(npc)),
+                    && v.wait == 0 && v.pending_count == 0
+                    && actor_name(kGuarded, g_e.game.offer, 3, partner, sizeof(partner))
+                    && strcmp(partner, "Partner") == 0 && actor_name(kGuarded, g_e.game.offer, 5, npc, sizeof(npc))
+                    && strcmp(npc, "Titled NPC") == 0 && !actor_name(kGuarded, g_e.game.offer, 4, npc, sizeof(npc))
+                    && !actor_name(kGuarded, g_e.game.offer, 0, npc, sizeof(npc)),
                 "the trade read: the partner's offer from the player's data, the gil held, the wait 0 before any send;"
                 " names through the actor table, a titled one while its length word is set, none for an empty slot");
         }
@@ -10315,7 +10678,7 @@ int main() {
         errors = g_e.drain_errors;
         run(cmd(kOpQueryCancel, "query", 0, 0, s1, gen1));
         check(rd16(qc, kQueryResult) == 0xFF && g_log.count == 0 && g_close_calls == closes && live("query") == q
-                && open_menu(g_e, name("query"), NULL) && g_e.drain_errors == errors,
+                && open_menu(g_e, kPlain, name("query"), NULL) && g_e.drain_errors == errors,
             "query_cancel while it is 1: the word 0xFF and nothing else; no close, query still open");
         events(&cursor, ev, 64);
         game_closes("query");
@@ -10358,7 +10721,8 @@ int main() {
         run(a);
         int n = events(&cursor, ev, 64);
         const bool hidden = rd16(qc, kQueryResult) == 0 && n == 1
-            && is_error(ev[0], s1, gen1, "answer", "query", "no option in the list has the value 2")
+            && is_error(ev[0], s1, gen1, "answer", "query",
+                "no option in the list has the value 2 (options('query') lists them)")
             && g_e.replies[q] == 0;
         a.value = 3;
         InterlockedIncrement(&g_e.replies[q]);
@@ -10551,6 +10915,22 @@ int main() {
         run(cmd(kOpPostClose, "post1", 0, 0, s1, gen1));
         check(g_log.count == 0 && g_e.drain_errors == errors + 1 && strstr(g_e.error, "no incoming"),
             "post_close post1 with no session sends nothing");
+        open_now("post2");
+        static const char* const closers[] = {"post1", "post2"};
+        bool ended = true;
+        for (size_t i = 0; i < sizeof(closers) / sizeof(closers[0]); ++i) {
+            wr32(pc, kPostState, 3);
+            clear_log();
+            errors = g_e.drain_errors;
+            run(cmd(kOpPostClose, closers[i], 0, 0, s1, gen1));
+            ended = ended && strcmp(g_log.order, "BY") == 0 && g_log.post_command == 0x0F
+                && rd32(pc, kPostState) == kPostClosing && g_e.drain_errors == errors;
+        }
+        check(ended && live("post2"),
+            "post_close post1 and post2 with post2 live and post1 not: request 15, then post1's request-close sets"
+            " 0x12, no error; post2's window, which has no tick, is left to the server's reply");
+        run(cmd(kOpClose, "post2", 0, 0, s1, gen1));
+        wr32(pc, kPostState, 0);
     }
 
     // link5_cancel: the family close, only with a choice pending: the event's
@@ -10635,13 +11015,18 @@ int main() {
         run(listed);
         const int n = events(&cursor, ev, 64);
         const bool refused = g_log.count == 0 && n == 1
-            && is_error(ev[0], s1, gen1, "answer", "link5", "slot 4 is not in the list");
+            && is_error(ev[0], s1, gen1, "answer", "link5", "slot 4 is not in the list (options('link5') lists them)");
         listed.value = 15;
         run(listed);
-        check(refused && strcmp(g_log.order, "JL") == 0 && g_log.link5_slot == 15 && link5_lists(g_e, lc, 3)
-                && !link5_lists(g_e, lc, 0),
+        check(refused && strcmp(g_log.order, "JL") == 0 && g_log.link5_slot == 15 && link5_lists(g_e, kPlain, lc, 3)
+                && !link5_lists(g_e, kPlain, lc, 0),
             "a listed link5 answer: slot 4, which no row holds, refused with an error event; slot 15 answered;"
             " the header row's empty record lists no slot 0");
+        wr32(lc, kLink5Count, kLink5RowMax + 1);
+        const bool past = !link5_lists(g_e, kPlain, lc, 3) && !link5_lists(g_e, kGuarded, lc, 3);
+        wr32(lc, kLink5Count, 3);
+        check(past && link5_lists(g_e, kGuarded, lc, 3),
+            "a link5 count past the 81 rows its array holds lists no slot, in either read mode");
     }
 
     // arealist on the game's layout (fake_arealist.h): the reader, then the
@@ -10668,9 +11053,10 @@ int main() {
         int at = 0;
         int top = 0;
         const bool position = area_position(ac, am, area_count(ac), &at, &top) && at == 1 && top == 1;
-        check(area_count(ac) == 45 && position && area_row_of(ac, 4) == 0 && area_row_of(ac, -1) == 1
-                && area_row_of(ac, 0) == 2 && area_row_of(ac, -2) == 3 && area_row_of(ac, -4) == 5
-                && area_row_of(ac, -43) == 44 && area_row_of(ac, 5) == -1,
+        check(area_count(ac) == 45 && position && area_row_of(kPlain, ac, 4) == 0 && area_row_of(kPlain, ac, -1) == 1
+                && area_row_of(kPlain, ac, 0) == 2 && area_row_of(kPlain, ac, -2) == 3
+                && area_row_of(kPlain, ac, -4) == 5
+                && area_row_of(kPlain, ac, -43) == 44 && area_row_of(kPlain, ac, 5) == -1,
             "arealist, the search's top level: 45 rows, Current Area (4), Current Region (-1) and All Areas (0)"
             " first, then regions -2 .. -43; the cursor on row 1, row 1 the first shown");
 
@@ -10718,25 +11104,26 @@ int main() {
         fake_area::opened(ac);
         drain(g_e);
         events(&cursor, ev, 64);
-        const bool regions = area_count(ac) == 42 && area_row_of(ac, -4) == 2;
+        const bool regions = area_count(ac) == 42 && area_row_of(kPlain, ac, -4) == 2;
         memset(&fake_area::g_log, 0, sizeof(fake_area::g_log));
         clear_log();
         answer.value = static_cast<uint32_t>(-4);
         run(answer);
         n = events(&cursor, ev, 64);
         const bool region_refused = n == 1 && is_error(ev[0], s1, gen1, "answer", "arealist",
-            "no zone row of the list has the id -4");
+            "the row with the id -4 is not a zone; the answer takes a zone row's id");
         answer.value = 6;
         run(answer);
         n = events(&cursor, ev, 64);
         check(regions && region_refused && n == 1
-                && is_error(ev[0], s1, gen1, "answer", "arealist", "no zone row of the list has the id 6")
+                && is_error(ev[0], s1, gen1, "answer", "arealist",
+                    "no row of the list has the id 6 (options('arealist') lists them)")
                 && g_log.count == 0 && fake_area::g_log.closes == 0 && ac[kAreaLatch] == 1 && live("arealist") == am,
             "mode 1, grouped: 42 region rows; answer -4 (a region) and 6 (no row at this level) refused with error"
             " events, nothing called, the list open");
         fake_area::select_index(ac, 2, 0);
         fake_area::input(ac, NULL, 5, 0);
-        const bool drilled = rd16(ac, kAreaLevel) == 4 && area_row_of(ac, 6) == 2 && ac[kAreaLatch] == 1;
+        const bool drilled = rd16(ac, kAreaLevel) == 4 && area_row_of(kPlain, ac, 6) == 2 && ac[kAreaLatch] == 1;
         const int inputs = fake_area::g_log.inputs;
         drain(g_e);
         events(&cursor, ev, 64);
@@ -10777,7 +11164,9 @@ int main() {
         answer.value = 600;
         run(answer);
         n = events(&cursor, ev, 64);
-        const bool out_of_range = n == 1 && is_error(ev[0], s1, gen1, "answer", "arealist", "600 is not a zone id")
+        const bool out_of_range = n == 1
+            && is_error(ev[0], s1, gen1, "answer", "arealist", "the area list is blocked, so there are no rows to"
+                " check 600 against; the answer takes a zone id, 0..511")
             && g_log.count == 0 && ac[kAreaLatch] == 1 && rd16(ac, kAreaZone) == 231;
         answer.value = 12;
         run(answer);
@@ -10802,7 +11191,7 @@ int main() {
         fake_area::prepare(ac, 2, true);
         am = open_now("arealist");
         fake_area::opened(ac);
-        const bool flat = area_count(ac) == 84 && area_row_of(ac, 1) == 0;
+        const bool flat = area_count(ac) == 84 && area_row_of(kPlain, ac, 1) == 0;
         memset(&fake_area::g_log, 0, sizeof(fake_area::g_log));
         clear_log();
         run(cmd(kOpArealistCancel, "arealist", 0, 0, s1, gen1));
@@ -11498,8 +11887,8 @@ int main() {
     // ending the incoming post-box session with a box window live: the box's
     // own cancel, request 15 alone, for post1 and post2 alike, never its
     // input; refused while the window is covered or takes no input yet, its
-    // busy byte no bar; the game's reply and tick then close it. With none
-    // live, the window-less close
+    // busy byte no bar; the game's reply and tick then close it. With post1's
+    // window not live, post2's or not, the window-less close
     {
         uint8_t* pc = controller("post1");
         const void* box = vt_box;
@@ -11568,14 +11957,20 @@ int main() {
         run(cmd(kOpPostEnd, "post1", 0, 0, s1, gen1));
         check(strcmp(g_log.order, "BY") == 0 && g_log.post_command == 0x0F && rd32(pc, kPostState) == kPostClosing,
             "with no box window live: request 15, then post1's request-close sets 0x12, as before");
-        wr32(pc, kPostState, 3);
         open_now("post2");
-        clear_log();
-        errors = g_e.drain_errors;
-        run(cmd(kOpPostEnd, "post1", 0, 0, s1, gen1));
-        check(g_log.count == 0 && rd32(pc, kPostState) == 3 && g_e.drain_errors == errors + 1
-                && strstr(g_e.error, "incoming box is open"),
-            "with post2 live and post1 not: nothing is sent and nothing set, and a drain error says why");
+        static const char* const enders[] = {"post1", "post2"};
+        bool ended = true;
+        for (size_t i = 0; i < sizeof(enders) / sizeof(enders[0]); ++i) {
+            wr32(pc, kPostState, 3);
+            clear_log();
+            errors = g_e.drain_errors;
+            run(cmd(kOpPostEnd, enders[i], 0, 0, s1, gen1));
+            ended = ended && strcmp(g_log.order, "BY") == 0 && g_log.post_command == 0x0F
+                && rd32(pc, kPostState) == kPostClosing && g_e.drain_errors == errors;
+        }
+        check(ended && live("post2"),
+            "with post2 live and post1 not, for post1 and post2: request 15, then post1's request-close sets 0x12, no"
+            " error; post2's window, which has no tick, is left to the server's reply");
         run(cmd(kOpClose, "post2", 0, 0, s1, gen1));
         wr32(pc, kPostState, 0);
         memcpy(pc, &self, 4);
@@ -11739,7 +12134,7 @@ int main() {
         game_closes("query");
         int n = events(&cursor, ev, 64);
         check(n == 1 && is_event(ev[0], kEvClosed, "query") && live("query") == qm && qm[kMenuClosing] == 1
-                && qm[kMenuPendingDestroy] == 0 && !open_menu(g_e, q, NULL),
+                && qm[kMenuPendingDestroy] == 0 && !open_menu(g_e, kPlain, q, NULL),
             "the game closes query by instance: closed{query} from its staged close; the instance stays bound,"
             " marked closing, and is not open");
         clear_log();
@@ -11775,7 +12170,7 @@ int main() {
         n = events(&cursor, ev, 64);
         errors = g_e.drain_errors;
         run(cmd(kOpQueryAnswer, "query", 0, 0, s1, gen1, 4));
-        check(again == qm && n == 1 && is_event(ev[0], kEvOpened, "query") && open_menu(g_e, q, NULL) == qm
+        check(again == qm && n == 1 && is_event(ev[0], kEvOpened, "query") && open_menu(g_e, kPlain, q, NULL) == qm
                 && g_e.drain_errors == errors && rd16(qc, kQueryResult) == 4,
             "the game opens query again before the closed instance is freed: the open reuses it with both marks"
             " cleared, opened{query}, and it is open and answered");
@@ -11786,7 +12181,8 @@ int main() {
         cover(eq);
         n = events(&cursor, ev, 64);
         drain(g_e);
-        const bool covered_open = n == 1 && is_event(ev[0], kEvCovered, "equip") && open_menu(g_e, eqn, NULL) == eq
+        const bool covered_open = n == 1 && is_event(ev[0], kEvCovered, "equip")
+            && open_menu(g_e, kPlain, eqn, NULL) == eq
             && events(&cursor, ev, 64) == 0;
         game_closes("equip");
         const bool marked = events(&cursor, ev, 64) == 0 && eq[kMenuClosing] == 1 && eq[kMenuPendingDestroy] == 1
@@ -11794,7 +12190,7 @@ int main() {
         drain(g_e);
         n = events(&cursor, ev, 64);
         const bool noticed = n == 1 && is_event(ev[0], kEvClosed, "equip") && !g_e.covered[eqn] && live("equip") == eq
-            && !open_menu(g_e, eqn, NULL);
+            && !open_menu(g_e, kPlain, eqn, NULL);
         drain(g_e);
         drain(g_e);
         const bool once = events(&cursor, ev, 64) == 0;
@@ -12045,11 +12441,11 @@ int main() {
         g_log.party_pending = 0;
         drain(g_e);
         events(&cursor, ev, 64);
-        const uint32_t before = current_session(g_e, kSessionInvite);
+        const uint32_t before = current_session(g_e, kPlain, kSessionInvite);
         g_log.party_pending = 1;
-        const uint32_t unseen = current_session(g_e, kSessionInvite);
+        const uint32_t unseen = current_session(g_e, kPlain, kSessionInvite);
         drain(g_e);
-        const uint32_t seen = current_session(g_e, kSessionInvite);
+        const uint32_t seen = current_session(g_e, kPlain, kSessionInvite);
         events(&cursor, ev, 64);
         check(unseen == before + 1 && seen == unseen && session_seen(g_e.invite_watch)
                 && session_count(g_e.invite_watch) == seen,
@@ -12070,7 +12466,7 @@ int main() {
             "a reply naming the invite before is refused, that prompt is gone; one naming this one is sent");
         drain(g_e);
         g_log.party_pending = 1;
-        const uint32_t next = current_session(g_e, kSessionInvite);
+        const uint32_t next = current_session(g_e, kPlain, kSessionInvite);
         a.instance = next;
         clear_log();
         run(a);
@@ -12079,9 +12475,9 @@ int main() {
             " it");
         drain(g_e);
         uint8_t* dc = controller("delivery");
-        const uint32_t post = current_session(g_e, kSessionPost);
+        const uint32_t post = current_session(g_e, kPlain, kSessionPost);
         wr16(dc, kDeliveryState, 5);
-        const uint32_t up = current_session(g_e, kSessionPost);
+        const uint32_t up = current_session(g_e, kPlain, kSessionPost);
         drain(g_e);
         Command c = cmd(kOpPostClose, "delivery", 0, 0, s1, gen1);
         c.verb = kVerbCancel;
@@ -12271,7 +12667,7 @@ int main() {
         run(b);
         g_close_refuses = false;
         n = events(&cursor, ev, 64);
-        check(live("equip") && open_menu(g_e, name("equip"), NULL) && n == 1
+        check(live("equip") && open_menu(g_e, kPlain, name("equip"), NULL) && n == 1
                 && is_error(ev[0], s1, gen1, "block", "equip", "the game did not close it; the block holds"),
             "a close the game refuses: equip stays open, and an error with verb block reaches the blocking handle");
     }
@@ -12939,6 +13335,65 @@ int main() {
             "a row of a second state alone takes 0 and 1; one of a mask bit alone too, bit 46 the second mask word's"
             " bit 16 (30 bits to a word)");
 
+        // The chat filter's row table as the resolution reads it: a mask bit
+        // past the two mask words, or a second state's bit past its word,
+        // refuses the settings with the row named.
+        {
+            AskedInputs none;
+            memset(&none, 0, sizeof(none));
+            SettingSites rows_only;
+            memset(&rows_only, 0, sizeof(rows_only));
+            uint8_t table[4 * kFilterRows + 12];
+            memset(table, 0, sizeof(table));
+            rows_only.filter_rows = table;
+            const int say_i = find_setting("filter_say");
+            SettingSlot slot;
+            char buf[192];
+            auto row = [&](uint8_t bit, uint8_t sub) {
+                table[4 * kSettings[say_i].row] = bit;
+                table[4 * kSettings[say_i].row + 1] = sub;
+                return setting_row(none, rows_only, say_i, &slot, buf, sizeof(buf));
+            };
+            const bool edges = row(59, 31) == NULL && slot.row.mask == 59 && slot.row.second == 31;
+            const char* mask_past = row(60, 0);
+            const bool mask_refused = mask_past && strstr(mask_past, "the chat filter's row 1 is not a bit of its words")
+                == mask_past;
+            const char* second_past = row(0, 32);
+            const bool second_refused = second_past
+                && strstr(second_past, "the chat filter's row 1 is not a bit of its words") == second_past;
+            const char* high = row(0x90, 0);
+            check(kSettings[say_i].from == kFromFilter && edges && mask_refused && second_refused && high,
+                "a chat filter row: mask bit 59 and second state 31 taken; mask bit 60 (past two words of 30), 0x90"
+                " and second state 32 (past its 32-bit word) refused at resolution, the row named");
+        }
+
+        // A vtable's slot read only where the data section holding the
+        // vtable holds it: a slot past the section's end gives no routine,
+        // whatever lies there.
+        {
+            static uint8_t code[16];
+            static uint32_t data[16];
+            AskedInputs in;
+            memset(&in, 0, sizeof(in));
+            in.text = code;
+            in.size = sizeof(code);
+            in.data[0] = reinterpret_cast<const uint8_t*>(data);
+            in.data_size[0] = 12 * 4;
+            in.data_count = 1;
+            for (int k = 0; k < 16; ++k) {
+                data[k] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(code + k % 8));
+            }
+            const uint8_t* vtable = reinterpret_cast<const uint8_t*>(data + 4);
+            const bool inside = asked_slot_routine(in, vtable, 7) == code + 3;
+            const bool past = asked_slot_routine(in, vtable, 8) == NULL;
+            const bool elsewhere = asked_slot_routine(in, reinterpret_cast<const uint8_t*>(data + 13), 0) == NULL;
+            data[10] = 0x10;
+            const bool not_code = asked_slot_routine(in, vtable, 6) == NULL;
+            check(inside && past && elsewhere && not_code,
+                "asked_slot_routine: a slot inside the vtable's data section is read, one past its end is not, nor a"
+                " vtable outside every section; a routine outside the code is none");
+        }
+
         // The drain's sets against a store laid out as the game's.
         SettingSites& st = g_e.game.settings;
         st.store = &g_cfg_store_ptr;
@@ -13181,26 +13636,52 @@ int main() {
         int32_t lo = 0;
         int32_t hi = 0;
         const int tell_i = find_setting("filter_tell");
-        const bool reads = setting_raw(st, music, false, &raw) && raw == 40 && setting_raw(st, music, true, &raw)
-            && raw == 100 && setting_raw(st, tell_i, false, &raw) && raw == 1 && setting_raw(st, tell_i, true, &raw)
-            && raw == 2 && setting_raw(st, find_setting("target_expressions"), false, &raw) && raw == 1;
+        const bool reads = setting_raw(kPlain, st, music, false, &raw) && raw == 40
+            && setting_raw(kPlain, st, music, true, &raw) && raw == 100 && setting_raw(kPlain, st, tell_i, false, &raw)
+            && raw == 1 && setting_raw(kPlain, st, tell_i, true, &raw) && raw == 2
+            && setting_raw(kPlain, st, find_setting("target_expressions"), false, &raw) && raw == 1;
         g_setting_player[kSettingFlags] = kAnonymousBit;
         const int anon = find_setting("character_information");
-        const bool flag = setting_raw(st, anon, false, &raw) && raw == 1 && !setting_raw(st, anon, true, &raw);
+        const bool flag = setting_raw(kPlain, st, anon, false, &raw) && raw == 1
+            && !setting_raw(kPlain, st, anon, true, &raw);
         g_setting_player[kSettingFlags] = 0;
-        const bool ranges = setting_range(st, music, &lo, &hi) && lo == 0 && hi == 100
-            && setting_range(st, tell_i, &lo, &hi) && lo == 0 && hi == 3
-            && setting_range(st, find_setting("filter_say"), &lo, &hi) && hi == 2
-            && setting_range(st, find_setting("color_say"), &lo, &hi) && lo == 0 && hi == 255
-            && setting_range(st, find_setting("auto_disconnect"), &lo, &hi) && lo == -1 && hi == 60
-            && setting_range(st, find_setting("effect_filter_you_to_you"), &lo, &hi) && lo == 0 && hi == 1;
+        const bool ranges = setting_range(kPlain, st, music, &lo, &hi) && lo == 0 && hi == 100
+            && setting_range(kPlain, st, tell_i, &lo, &hi) && lo == 0 && hi == 3
+            && setting_range(kPlain, st, find_setting("filter_say"), &lo, &hi) && hi == 2
+            && setting_range(kPlain, st, find_setting("color_say"), &lo, &hi) && lo == 0 && hi == 255
+            && setting_range(kPlain, st, find_setting("auto_disconnect"), &lo, &hi) && lo == -1 && hi == 60
+            && setting_range(kPlain, st, find_setting("effect_filter_you_to_you"), &lo, &hi) && lo == 0 && hi == 1;
+        bool unbounded = true;
         wr32(cfg_entry(0x0A), kEntryId, 0x0B);
-        const bool foreign = !setting_raw(st, music, false, &raw) && !setting_range(st, music, &lo, &hi);
+        const bool foreign = !setting_raw(kPlain, st, music, false, &raw)
+            && !setting_range(kPlain, st, music, &lo, &hi, &unbounded)
+            && !unbounded;
         wr32(cfg_entry(0x0A), kEntryId, 0x0A);
-        check(reads && flag && ranges && foreign && store_loaded(st),
+        check(reads && flag && ranges && foreign && store_loaded(kPlain, st),
             "the reads: a word, its default from the entry, a filter row's state (Tell's 1, its default 2: the flag),"
             " a bit, character_information from the player's flags with no default; the ranges: the store's, a"
             " row's states, a color's channel, a bit's 0..1; an entry that is not the id's read as none");
+        const int ranged[3] = {music, find_setting("key1_move_up"), find_setting("auto_target")};
+        uint32_t maxes[3];
+        for (int k = 0; k < 3; ++k) {
+            maxes[k] = rd32(cfg_entry(kSettings[ranged[k]].id), kEntryMax);
+            wr32(cfg_entry(kSettings[ranged[k]].id), kEntryMax, 0xFFFFFFFFu);
+        }
+        unbounded = false;
+        const bool number_none = !setting_range(kPlain, st, ranged[0], &lo, &hi, &unbounded) && unbounded;
+        unbounded = false;
+        const bool key_none = !setting_range(kPlain, st, ranged[1], &lo, &hi, &unbounded) && unbounded;
+        unbounded = true;
+        const bool bool_kept = setting_range(kPlain, st, ranged[2], &lo, &hi, &unbounded) && !unbounded;
+        for (int k = 0; k < 3; ++k) {
+            wr32(cfg_entry(kSettings[ranged[k]].id), kEntryMax, maxes[k]);
+        }
+        check(kSettings[ranged[1]].value == kValueKey && kSettings[ranged[1]].store == kStoreWord
+                && kSettings[ranged[2]].value == kValueBool && kSettings[ranged[2]].store == kStoreWord && number_none
+                && key_none && bool_kept,
+            "a number or a key whose store entry has no range (max -1, which the store's set takes any value for):"
+            " no range, said as such, so that set_setting refuses it; a bool in such a word is not refused, its"
+            " value taking no range");
 
         // The labels: read through the message getter once it answers.
         g_label_calls = 0;

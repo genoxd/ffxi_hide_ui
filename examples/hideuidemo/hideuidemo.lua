@@ -1,110 +1,5 @@
--- hideuidemo - the hideui library's calls as commands.
---
---   //hideuidemo help                        every command, one line each
---   //hideuidemo hide|unhide <name>          invisible and open, takes no clicks, and a prompt no keys; a
---                                         text window or passinpu editing has its field ended / back;
---                                         compass and targetarrow take them too: the compass, and the
---                                         arrows over the target (hide targetwi and they stay)
---   //hideuidemo block|unblock <name> [category]  closed if open, never opens again (implies hide) / back;
---                                         ability alone takes a category, one of its lists: job_abilities,
---                                         pet_commands, weapon_skills, job_traits, ready, ... or a number
---   //hideuidemo move <name> <x> <y>         put a window's frame top-left at x,y (undocks it)
---   //hideuidemo group <group> <x> <y>       move chat_log, party_list or target_window with what is docked to it;
---                                         what it carries follows; with the anchor closed, at its next open
---   //hideuidemo reset <name> [position|size]  back to the game's placement and size, or one of them;
---                                         only what this addon placed
---   //hideuidemo resetgroup <group>          the group's window and what this addon's move of it carried
---   //hideuidemo resetall                    reset every window this addon moved or resized last
---   //hideuidemo open <name> [argument]      the game's own open of that window alone; ability and magic
---                                         need a list: open ability pet_commands, open magic white_magic;
---                                         a window that takes an argument its value, or its fields as
---                                         key=value: open jbpcat thf, open miss00 rise of the zilart,
---                                         open iteminfo bag=inventory slot=5
---   //hideuidemo openset <set> [argument]    the game's own opener of a set: equipment, map, set_spells,
---                                         attachments, linkshell, instincts, macros, friend, mail, mount
---                                         or status; ability or magic with a list, opened with its sort
---                                         window and detail pane; synthesis with a crystal's inventory
---                                         index, tabula with a Maze Tabula's; compare with an item as
---                                         open takes one; region with Conquest, Besieged, Campaign or
---                                         Colonization; text_colors with a category 1 to 4
---   //hideuidemo close <name>                the game's own close
---   //hideuidemo resize <name> <rows>        swap to the game's own layout for that many rows
---   //hideuidemo resize <name> <w> <h>       set the frame's size
---   //hideuidemo info <name>                 what the game holds for one window
---   //hideuidemo list [text]                 every window, or with their state those whose name contains text
---   //hideuidemo opened                      the windows that are open now
---   //hideuidemo rects                       every open window's frame
---   //hideuidemo focused                     the window that has the keyboard
---   //hideuidemo remembered                  remembered positions and sizes this session
---   //hideuidemo groups                      the dock groups, their windows and any move waiting
---   //hideuidemo options <name>              what query, link5, arealist, passinpu, prtyjoin, a yes/no
---                                         window (comyn, merityn, resyn, resynus, resynde, resynfr,
---                                         shopbuy, shopsell, sortyn, evitem01, confyn), the KO window
---                                         (dead), a number box (moneyctr, itemctrl), the Mog Safe
---                                         picker (bankmenu), the map list (maplist), a GM's question
---                                         (gmtell), the Monstrosity KO window (mp_dead), the game's
---                                         notice (ok) or the Mog House's door (mogdoor) offers, the
---                                         page an NPC dialogue box (rem4line, rem4li2) shows, what a
---                                         text window (stringdl, comment, msgline, scname, link11) asks
---                                         for, or what a trade (trade, handover) holds and the
---                                         inventory items the game grays out for it
---   //hideuidemo answer <name> <value>       query <value>, link5 <slot>, arealist <zone id> (an NPC's
---                                         prompt; the search menu's list is read-only), passinpu
---                                         <text>, prtyjoin yes|no, a yes/no window yes|no, moneyctr or
---                                         itemctrl <number>, bankmenu <container id>, maplist <row
---                                         value>, gmtell <option value>, mp_dead 1|2, mogdoor <exit
---                                         value>; answer dead, with no value, asks the KO window's
---                                         question through comyn; answer ok, with no value,
---                                         acknowledges the notice; answer rem4line or rem4li2, with no
---                                         value, shows the dialogue's next page; the text windows take
---                                         the text as typed: stringdl <name> (or yes|no while it asks
---                                         about a slot), comment <line1>|<line2>|<line3> (lines split at
---                                         |), msgline <text>, scname <name>, link11 <name> [<r> <g> <b>]
---                                         (colors 0..15, left out the window's own); answer trade or
---                                         handover, with no value, is the trade's OK
---   //hideuidemo cancel <name>               cancel query, passinpu, link5, arealist (an NPC's prompt),
---                                         prtyjoin, a yes/no window, a number box, bankmenu, maplist,
---                                         gmtell, mogdoor (stays in the Mog House), trade or handover
---                                         (the trade canceled and closed) or a dialogue box
---                                         (ends the NPC's event); close the delivery box (its closing
---                                         row) or the post1/post2 box (its own cancel), which closes
---                                         when the server answers (answer and cancel reply to the
---                                         prompt the last options or pending read, and are refused once
---                                         another has come); stringdl, msgline, scname and link11 back
---                                         out as their own cancel does; dead, confyn, mp_dead, ok and
---                                         comment have no cancel
---   //hideuidemo offer <name> <item> <count>  trade or handover: count of the inventory item at index item
---                                         into the first free slot; an item the game grays out is
---                                         refused
---   //hideuidemo offer <name> gil <amount>   trade or handover: the gil offered (0 takes it out)
---   //hideuidemo withdraw <name> <item>      trade or handover: that inventory item back out
---   //hideuidemo pending                     a party invite, post-box session, or a question a block kept
---                                         from its window (a number box, sortyn, evitem01, bankmenu,
---                                         maplist, ok, mogdoor or msgline), waiting
---   //hideuidemo settings [text]             every setting of the game's Config menu, or those whose name
---                                         contains text or whose page is text: its name, page, kind, value,
---                                         range or choices, default and the game's label
---   //hideuidemo setting <name>              one setting's value
---   //hideuidemo set <name> <value>          set it as its page does: a number, on|off, a choice's name, a
---                                         color as <r> <g> <b>, a key's DirectInput code
---   //hideuidemo blockmacros|unblockmacros   stop the game's Ctrl+number and Alt+number macros / back
---   //hideuidemo macros                      whether the macro keys are blocked, and by whom
---   //hideuidemo layout                      what this addon placed, saved to data/settings.xml
---   //hideuidemo apply                       put the saved layout back
---   //hideuidemo events on [name [category]]  print opened/closed/covered/uncovered/blocked/cursor/page as
---                                         they happen, for one window, one list of ability, or for every
---                                         window and pending ones too; a page event prints the page
---   //hideuidemo events off                  stop printing them
---   //hideuidemo debug on|off                the library's own diagnostics, and debug: lines in info and status
---   //hideuidemo status                      engine state and what it holds
---
--- Window names are the game's own, e.g. logwindo, logwin2, targetwi, equip;
--- compass and targetarrow name the compass and the arrows over the target.
--- Errors the game thread reports for this addon's calls, and lost events,
--- are always printed.
---
--- //lua unload hideuidemo undoes everything this addon did: hidden windows
--- come back, blocked ones can open, moved and resized ones go home.
+-- hideuidemo: the hideui library's calls as chat commands, to try them in
+-- game. //hideuidemo help lists the commands.
 
 _addon.name    = 'hideuidemo'
 _addon.author  = 'Geno'
@@ -131,8 +26,6 @@ if not ui then
     say(123, tostring(why_not))
 end
 
--- Whether info and status print the library's detail table, which it only
--- fills while hideui.debug(true) is on.
 local debugging = false
 
 local function report(done, err, text)
@@ -143,7 +36,7 @@ local function report(done, err, text)
     end
 end
 
--- A verb or read, with misuse reported in chat rather than raised.
+-- The library raises on misuse; a typed command reports it in chat instead.
 local function call(verb, ...)
     local results = {pcall(ui[verb], ui, ...)}
     if not results[1] then
@@ -160,14 +53,11 @@ local function print_problem(event)
     end
 end
 
--- The window, and on ability the list the event is about, by its name or
--- number.
 local function event_target(event)
     local list = event.category_name or event.category
     return list and ('%s %s'):format(event.name, tostring(list)) or event.name
 end
 
--- A page's lines on one chat line.
 local function page_text(o)
     return ((o.raw or o.text or ''):gsub('\n', ' / '))
 end
@@ -204,9 +94,8 @@ if ui then
     ui:on('resync', print_problem)
 end
 
--- closeon: close a window on its opened event, for one of its lists only
--- when a category is given. The window is drawn once before the event
--- arrives, which is what this is for showing.
+-- closeon shows that a window is drawn once before its opened event
+-- arrives.
 local closeon = {}
 
 local function close_on_open(event)
@@ -225,8 +114,8 @@ local function close_on_open(event)
         or ('closeon %s failed: %s'):format(event.name, tostring(why)))
 end
 
--- What a block of these windows does to the game. cancel undoes each of them
--- but trade and handover, which never open blocked; unblock is their way out.
+-- trade and handover never open blocked, so unblock, not cancel, is their
+-- way out.
 local block_consequence = {
     delivery = 'the player cannot move until you cancel it and the server answers',
     post1    = 'the post-box session stays open until you cancel it and the server answers',
@@ -248,8 +137,8 @@ local block_consequence = {
     handover = 'the NPC trade does not start',
 }
 
--- The prompt each window's last options or pending read gave, which answer
--- and cancel pass back: its name and id.
+-- Each window's last read prompt. answer and cancel pass it back, so its id
+-- refuses a reply once a newer prompt has come.
 local prompts = {}
 
 local function sorted_keys(t)
@@ -311,8 +200,8 @@ end
 
 local shown_elements = 8
 
--- query's and arealist's cursor is the option or row under it, counted in
--- options(name), and top the first shown; every other window's is the row.
+-- query's and arealist's cursor and top index options(name)'s list, not
+-- the rows on screen.
 local function cursor_text(p)
     if p.name ~= 'query' and p.name ~= 'arealist' then
         return ('cursor %s'):format(tostring(p.cursor))
@@ -321,7 +210,7 @@ local function cursor_text(p)
         return p.name == 'query' and 'cursor on no option' or 'cursor on no row'
     end
     if not p.top then
-        return ('cursor row %d'):format(p.cursor)    -- a resident engine older than 0.7.2 (0.7.3 for arealist)
+        return ('cursor row %d'):format(p.cursor)    -- an older resident engine gives no top
     end
     local o = call('options', p.name)
     local list = o and (o.options or o.rows)
@@ -351,14 +240,19 @@ local function show_info(name)
             resize.min_rows and (', resizes by rows %d..%d'):format(resize.min_rows, resize.max_rows) or ''))
     end
     if p.open then
-        say(207, ('  rect %s, %s'):format(rect(p.rect), cursor_text(p)))
+        -- targetarrow has no rect, and the compass no elements.
+        if p.rect then
+            say(207, ('  rect %s, %s'):format(rect(p.rect), cursor_text(p)))
+        end
         if p.category then
             say(207, p.category_name and ('  category %d (%s)'):format(p.category, p.category_name)
                 or ('  category %d'):format(p.category))
         end
-        local count = #p.elements
-        say(207, ('  %d elements%s%s'):format(count, p.elements_truncated and ', truncated' or '',
-            count > shown_elements and (' (first %d of %d)'):format(shown_elements, count) or ''))
+        local count = p.elements and #p.elements or 0
+        if p.elements then
+            say(207, ('  %d elements%s%s'):format(count, p.elements_truncated and ', truncated' or '',
+                count > shown_elements and (' (first %d of %d)'):format(shown_elements, count) or ''))
+        end
         for i = 1, math.min(count, shown_elements) do
             local e = p.elements[i]
             local text = e.text and e.text ~= '' and (' "' .. (e.raw or e.text) .. '"') or ''
@@ -384,7 +278,7 @@ local function show_info(name)
     end
 end
 
--- The runs the game draws in green, which the plain text does not show.
+-- The plain text loses the runs the game draws in green.
 local function green_note(segments)
     local runs = {}
     for _, segment in ipairs(segments or {}) do
@@ -405,19 +299,15 @@ local function undecoded_note(n)
     return (' (%d two-byte character%s shown as ?)'):format(n, n == 1 and '' or 's')
 end
 
--- A number box's question: the number it shows, the range it takes, the
--- item it counts, and whether a block keeps its window from opening.
 local function number_text(o)
     return ('%s: %d (%d..%d)%s%s, prompt %d'):format(o.name, o.value, o.min, o.max,
         o.item and (' of item ' .. o.item) or '', o.blocked and ', blocked: no window' or '', o.id)
 end
 
--- What a question kept from its window adds to its line.
 local function blocked_note(o)
     return o.blocked and ', blocked: no window' or ''
 end
 
--- What a row of mogdoor's takes: its value's answer, or what it is.
 local function door_row_text(row)
     if not row.enabled then
         return 'turned off now'
@@ -429,8 +319,7 @@ local function door_row_text(row)
     return 'opens the list of areas; answer an area\'s value from either level'
 end
 
--- The Mog House door's question: the rows of the level it shows, and at
--- the top the list of areas too, whose values answer from there as well.
+-- The areas' values answer from the top level too, so it lists them.
 local function show_door(o)
     say(207, ('mogdoor "%s": %s level%s, prompt %d'):format(o.title.raw or o.title.text, o.level, blocked_note(o),
         o.id))
@@ -445,7 +334,6 @@ local function show_door(o)
     say(207, '  answer mogdoor <value> or cancel mogdoor (stays)')
 end
 
--- The windows answered by their own reply, each shown in its own shape.
 local function show_asked(o)
     if o.name == 'sortyn' or o.name == 'evitem01' then
         local first = o.default == nil and '' or (o.default and ', yes first' or ', no first')
@@ -507,7 +395,6 @@ end
 local asked_windows = {sortyn = true, evitem01 = true, confyn = true, bankmenu = true, maplist = true,
                        gmtell = true, mp_dead = true, ok = true, mogdoor = true}
 
--- An NPC dialogue box's page: its lines, what moves it on, what follows.
 local function show_dialogue(o)
     say(207, ('%s: the page waits on %s%s%s, %s, %d queued, %s, prompt %d'):format(o.name, o.waits or 'nothing',
         o.seconds and (' (%.1f s left)'):format(o.seconds) or '', o.auto and ', the script confirms it' or '',
@@ -520,7 +407,6 @@ local function show_dialogue(o)
         .. ' ends the event') or ''))
 end
 
--- A text window: what it asks for, its limits and what it holds.
 local function show_text(o)
     if o.name == 'stringdl' then
         if o.mode == 'name' then
@@ -557,8 +443,6 @@ end
 
 local text_windows = {stringdl = true, comment = true, msgline = true, scname = true, link11 = true}
 
--- An offer's items, each on a line: its slot, the count and id, and for
--- the player's own the inventory index, pending while on its way.
 local function offer_items(items)
     for _, item in ipairs(items) do
         say(207, ('    slot %d: %d of id %d%s%s'):format(item.slot, item.count, item.id,
@@ -566,15 +450,12 @@ local function offer_items(items)
     end
 end
 
--- The inventory indexes the game grays out for a trade window, when any.
 local function gray_items(o)
     if o.gray and #o.gray > 0 then
         say(207, '  grayed out by the game, cannot be offered: inventory ' .. table.concat(o.gray, ', '))
     end
 end
 
--- A trade's offer: both sides of a trade with a player, or what the NPC is
--- handed.
 local function show_offer(o)
     if o.name == 'trade' then
         say(207, ('trade with %s, prompt %d%s%s'):format(tostring(o.partner_raw or o.partner), o.id,
@@ -634,13 +515,12 @@ local function show_options(name)
         say(207, ('arealist mode %d level %d: %d rows, prompt %d'):format(o.mode, o.level, #o.rows, o.id))
         say(207, (o.mode == 1 or o.mode == 2)
             and '  an NPC\'s prompt: answer arealist <zone id> or cancel arealist'
-            or '  read-only: the player\'s keys drive this list while it is not hidden; answer and cancel are for'
-                .. ' an NPC\'s prompt')
+            or '  read-only: the player\'s keys drive this list; answer and cancel are for an NPC\'s prompt')
         for i, row in ipairs(o.rows) do
             local beside = row.label and (' [' .. (row.label_raw or row.label) .. ']') or row.count and (' [' .. row.count .. ']') or ''
             say(207, ('  %d: "%s"%s -- answer %d (%s)'):format(i, row.raw or row.text, beside, row.id, row.kind))
         end
-    elseif o.zones then    -- a resident engine older than 0.7.3
+    elseif o.zones then    -- an older resident engine's arealist
         local zones = {}
         for _, z in ipairs(o.zones) do zones[#zones + 1] = tostring(z.zone) end
         say(207, ('arealist: %d zones: %s'):format(#zones, table.concat(zones, ', ')))
@@ -664,14 +544,11 @@ local function show_options(name)
     end
 end
 
--- The windows whose answer is yes or no.
 local yes_or_no = {prtyjoin = true, comyn = true, merityn = true, resyn = true, resynus = true, resynde = true,
                    resynfr = true, shopbuy = true, shopsell = true, sortyn = true, evitem01 = true, confyn = true}
 
--- The windows whose answer takes no value.
 local no_value = {dead = true, ok = true, rem4line = true, rem4li2 = true, trade = true, handover = true}
 
--- The answer's value as the window takes it: a number, the text, or yes/no.
 local function answer_value(name, args)
     name = name:lower()
     local last = prompts[name]
@@ -685,6 +562,7 @@ local function answer_value(name, args)
         if v == 'no' or v == 'false' then return false end
         return nil
     elseif name == 'comment' then
+        if args[2] == nil then return nil end
         local lines = {}
         for line in (table.concat(args, ' ', 2) .. '|'):gmatch('([^|]*)|') do
             lines[#lines + 1] = line
@@ -694,7 +572,9 @@ local function answer_value(name, args)
         if args[2] == nil then return nil end
         local value = {name = args[2]}
         if args[3] ~= nil then
-            value.color = {tonumber(args[3]), tonumber(args[4]), tonumber(args[5])}
+            local r, g, b = tonumber(args[3]), tonumber(args[4]), tonumber(args[5])
+            if not (r and g and b) then return nil end
+            value.color = {r, g, b}
         end
         return value
     elseif yes_or_no[name] then
@@ -706,7 +586,6 @@ local function answer_value(name, args)
     return tonumber(args[2])
 end
 
--- A setting's value as typed and printed: on|off, a color's r g b.
 local function setting_text(v)
     if type(v) == 'table' then
         return ('%s %s %s'):format(tostring(v.r), tostring(v.g), tostring(v.b))
@@ -746,10 +625,9 @@ local function show_settings(text)
     end
 end
 
--- The value `set` gives a setting, by the kind settings() names: nil for
--- words it does not take, and false and the reason when settings() fails,
--- so that the reason is reported rather than a guess sent. A name not in the
--- list is guessed at, for set_setting to answer.
+-- nil for words the setting's kind does not take. false and the reason
+-- when settings() fails, so the failure is reported rather than a guess
+-- sent. An unknown name is guessed at so set_setting gives its own refusal.
 local function setting_value(name, args)
     local list, err = call('settings')
     if type(list) ~= 'table' then
@@ -832,8 +710,6 @@ local function show_status()
     show_status_detail(s)
 end
 
--- data/settings.xml, read on first use: the layout command writes it, apply
--- reads it.
 local settings
 local function saved()
     settings = settings or config.load({layout = {}})
@@ -991,7 +867,6 @@ windower.register_event('addon command', function(cmd, ...)
         local verb = cmd == 'openset' and 'open_set' or cmd
         local name = args[1]:lower()
         local category = lists and args[2] and args[2]:lower() or nil
-        -- key=value words make a table argument, as open and open_set take one
         if category and (cmd == 'open' or cmd == 'openset') and category:find('=', 1, true) then
             local fields = {}
             for i = 2, #args do
@@ -1003,7 +878,7 @@ windower.register_event('addon command', function(cmd, ...)
             end
             category = fields
         elseif category and (cmd == 'open' or cmd == 'openset') then
-            -- the game's names have spaces: the rest of the words are one name
+            -- the game's names have spaces, so the rest of the words are one name
             category = table.concat(args, ' ', 2):lower()
         end
         local done, err
@@ -1281,10 +1156,14 @@ windower.register_event('addon command', function(cmd, ...)
         if not name or (v ~= 'on' and v ~= 'off') then
             say(123, 'usage: //hideuidemo closeon <name> [n] on|off') return
         end
-        ui:off('opened', name, close_on_open)
-        closeon[name] = nil
+        local off, err = call('off', 'opened', name, close_on_open)
+        if not off then say(123, 'closeon failed: ' .. tostring(err)) return end
+        -- Keyed by the first name, which events carry.
+        local p = call('info', name)
+        local first = p and p.name or name
+        closeon[first] = nil
         if v == 'on' then
-            closeon[name] = n or true
+            closeon[first] = n or true
             local done, err = call('on', 'opened', name, close_on_open)
             if not done then say(123, 'closeon failed: ' .. tostring(err)) return end
         end

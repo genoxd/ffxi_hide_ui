@@ -1,22 +1,17 @@
-// _HideUI - the hideui engine. Resolves FFXiMain by signature, hooks six of
-// its menu routines, the ability opener, the compass draw, the macro key
-// gate, the key test, the template swap, the per-menu and sprite draws and
-// the draw primitive through hideui_daemon.dll, and serves hideui.lua.
+// _HideUI: the hideui engine and its Lua binding. The first copy to install
+// in a client is the resident and holds the hooks; every later copy forwards
+// its Lua calls through the table the resident publishes
+// (hideui_engine_abi.h).
 //
-// Every addon ships its own copy. The first copy to install in a client is
-// the resident and publishes a table of its operations; every later copy
-// forwards its Lua calls through that table (hideui_engine_abi.h). One image
-// holds the hooks, one table holds every handle, and the Lua bindings at the
-// bottom are the same code in both kinds of copy.
+// Lua calls validate, queue and return; only the per-frame drain in game.h
+// changes the game. This thread reads the game's memory beside the game's
+// frame, in game.h's kGuarded mode: a check the drain makes again is
+// game.h's own routine, run here with every pointer checked before it is
+// followed.
 //
-// Lua calls validate, queue and return; the game is changed only by the
-// per-frame drain in game.h. The calls that answer from game memory directly
-// (info, list, options, pending, ...) read from the Lua thread and guard
-// every pointer they follow.
-//
-// Never make a Lua API call while holding a lock or the election mutex: a
-// Lua error longjmps past the release. Lock order: the bind lock, the
-// election mutex, the engine lock.
+// Never make a Lua API call while holding a lock or the election mutex: a Lua
+// error longjmps past the release. Lock order: bind lock, election mutex,
+// engine lock.
 
 #include "signatures.h"
 
@@ -42,8 +37,7 @@ __declspec(dllexport) hu::HeapCheck hideui_heapcheck;
 }
 #endif
 
-// The table this copy publishes when resident. The tests build one copy that
-// publishes engine abi 2's, to stand for an older resident.
+// Overridable so a test build can publish an older resident's table.
 #ifndef HU_ENGINE_ABI_BUILT
 #define HU_ENGINE_ABI_BUILT HU_ENGINE_ABI
 #endif
@@ -63,12 +57,12 @@ const size_t kElementText = 128;
 const uint32_t kAbi = HU_ENGINE_ABI_BUILT;
 const size_t kWhyBytes = 512;
 
-// kClosing: a shutdown has queued the restore and its thread waits for the
-// game thread to run it; the hooks are still set.
+// kClosing: a shutdown queued the restore and waits for the game thread to
+// run it; the hooks are still set.
 enum State { kIdle = 0, kInstalled, kFailed, kClosing };
 
-// What new() answers when the engine cannot install, as a player can act on
-// it; status().detail.error has the failure itself.
+// new()'s answers when the engine cannot install, worded for the player;
+// status().detail.error has the failure itself.
 const char kPlayerVersion[] = "hideui can't work with this version of FFXI; update the addon";
 const char kPlayerRestart[] = "hideui can't work until FFXI is restarted";
 const char kPlayerReinstall[] = "hideui can't work: a file it needs is missing; reinstall the addon";
@@ -131,17 +125,17 @@ struct Runtime {
     LazyLock lock;
 };
 
-// A resident this copy forwards to: its table, copied out of the record, and
-// one reference on its image. Kept, unmoved, until the last Lua state of this
-// copy closes, so nothing made through it can reach an unmapped image.
+// A resident this copy forwards to, holding one reference on its image. Kept,
+// unmoved, until this copy's last Lua state closes, so nothing made through it
+// can reach an unmapped image.
 struct Adopted {
     HMODULE module;
     HuEngineApi api;            // `size` is what the resident published, at most ours
     char path[MAX_PATH];
 };
 
-// The election. The mutex and the record view are kept for the life of the
-// process, like the daemon's: the record outlives every image that reads it.
+// The election's mutex and record view are never closed: the record outlives
+// every image that reads it.
 struct Binding {
     HMODULE self;
     HANDLE mutex;
@@ -189,9 +183,8 @@ bool fail(const char* why, const char* player) {
     return false;
 }
 
-// A daemon error that can pass -- a thread inside a prologue, an allocation
-// -- latches nothing: the engine stays idle and the next new() installs
-// again. status() names it until then.
+// A daemon error that can pass (a thread inside a prologue, an allocation)
+// latches nothing: the engine stays idle and the next new() installs again.
 bool retry_later(const char* why) {
     snprintf(g_rt.failure, sizeof(g_rt.failure), "%s", why);
     g_rt.player = kPlayerRetry;
@@ -202,10 +195,6 @@ bool retry_later(const char* why) {
 bool daemon_error_passes(int32_t error) {
     return error == HU_E_THREADS || error == HU_E_MEMORY;
 }
-
-
-// ---------------------------------------------------------------------------
-// This image, the daemon beside it, and the claim on the hooks.
 
 // From an address inside the image, never by name: every addon ships its own
 // copy of this basename. UNCHANGED_REFCOUNT, or each call leaks a reference.
@@ -252,7 +241,7 @@ void narrow(const WCHAR* wide, char* out, int size) {
     }
 }
 
-// What the election published, for the two refusals acquire() can make.
+// The daemon election's record, to tell an older resident daemon from a refusal.
 bool read_daemon_record(HuDaemonRecord* out) {
     char name[HU_NAME_MAX];
     snprintf(name, sizeof(name), HU_MAPPING_NAME_FORMAT, static_cast<unsigned>(GetCurrentProcessId()));
@@ -320,10 +309,9 @@ bool acquire_daemon(char* why, size_t size, const char** player) {
     return true;
 }
 
-// The claim engines from before forwarding (0.1.0) check. The daemon holds
-// one handler set per site, so a second image setting handlers would take the
-// hooks from the first; the resident holds this claim too, so neither kind
-// ever does.
+// The claim a 0.1.0 engine, which never forwards, checks before it installs.
+// The daemon holds one handler set per site, so a second image setting
+// handlers would take the hooks from the first.
 bool claim_engine(char* why, size_t size) {
     char name[64];
     snprintf(name, sizeof(name), "Local\\hideui_engine_v1_%08X",
@@ -379,7 +367,7 @@ void release_claim() {
 }
 
 // One reference on this image while handlers are set, so the daemon can never
-// call into an unmapped image. Released only past a drain that succeeded.
+// call into an unmapped image. Never released while a handler may still run.
 bool take_self_reference() {
     if (g_rt.self_reference) {
         return true;
@@ -401,7 +389,7 @@ void release_self_reference() {
     FreeLibrary(module);
 }
 
-// This image's base. Cached: it cannot change while the image is mapped.
+// Cached: it cannot change while the image is mapped.
 const void* self_base() {
     if (!g_bind.self) {
         g_bind.self = self_module(NULL, 0);
@@ -422,9 +410,6 @@ void retire_record() {
         g_bind.record->magic = 0;
     }
 }
-
-// ---------------------------------------------------------------------------
-// Resolution. Every signature must match exactly once in the mapped image.
 
 bool text_section(const uint8_t** out, size_t* size) {
     const HMODULE module = GetModuleHandleA("FFXiMain.dll");
@@ -486,8 +471,8 @@ const uint8_t* call_target(const uint8_t* hit, size_t at) {
     return hit + at + 5 + rel;
 }
 
-// How often `bytes` occur inside the first `span` bytes from `at`, the
-// text's end cutting the span short; the last one found in `*last`.
+// Occurrences of `bytes` in the `span` bytes from `at`, clipped at the text's
+// end; the last one found in `*last`.
 int count_within(const uint8_t* text, size_t size, const uint8_t* at, size_t span, const uint8_t* bytes,
                  size_t length, const uint8_t** last) {
     const size_t left = static_cast<size_t>(text + size - at);
@@ -512,11 +497,8 @@ bool in_text(const uint8_t* p, const uint8_t* text, size_t size) {
     return p >= text && p < text + size;
 }
 
-// The yes/no class's confirm keeps its question where the replies read and
-// write it; the KO window's confirm asks through comyn's controller with the
-// class's ask and a callback that marks the KO window's controller, and its
-// tick keeps the countdown options('dead') reads. Any of them otherwise
-// fails the install.
+// The replies read and write the yes/no question and the KO window's ask
+// where these routines keep them; any mismatch fails the install.
 bool resolve_prompts(const uint8_t* text, size_t size, char* why, size_t len) {
     const uint8_t* confirm = find_one(text, size, "yesno_confirm", kSigYesNoConfirm, why, len);
     if (!confirm) {
@@ -625,8 +607,7 @@ bool resolve_plain(const uint8_t* text, size_t size, char* why, size_t len) {
     }
     for (int r = 0; r < kRowCount; ++r) {
         uint8_t** slot = reinterpret_cast<uint8_t**>(rdptr(table + r * kRowStride, kRowSlot));
-        // One row (hnbackwi) carries no controller slot at all; it has no
-        // controller to find, not an unreadable one.
+        // A row without a controller slot (hnbackwi) is valid, not unreadable.
         if (!slot) {
             g_engine.game.slot[r] = NULL;
             continue;
@@ -829,11 +810,7 @@ bool resolve_plain(const uint8_t* text, size_t size, char* why, size_t len) {
     return true;
 }
 
-// The number boxes' confirms and setups, and every asker's callback; after
-// the sites, for the open routine each setup must call. Each confirm closes
-// through the manager; each setup opens its own key through the manager
-// after writing the question; each asker's globals are the registry slots
-// of its box and its own window, and a site's call reaches its box's setup.
+// Runs after the sites resolve: each setup must call the open site's routine.
 bool resolve_boxes(const uint8_t* text, size_t size, char* why, size_t len) {
     static const char* const confirm_names[kBoxCount] = {"moneyctr_confirm", "itemctrl_confirm"};
     static const char* const confirm_sigs[kBoxCount] = {kSigMoneyConfirm, kSigItemConfirm};
@@ -919,8 +896,7 @@ bool resolve_boxes(const uint8_t* text, size_t size, char* why, size_t len) {
     return true;
 }
 
-// FFXiMain's read-only data sections, at most kDataSections of them: where
-// its vtables are.
+// FFXiMain's read-only data sections, where its vtables are.
 bool data_sections(AskedInputs* in) {
     const HMODULE module = GetModuleHandleA("FFXiMain.dll");
     const uint8_t* base = reinterpret_cast<const uint8_t*>(module);
@@ -948,13 +924,8 @@ bool data_sections(AskedInputs* in) {
     return in->data_count > 0;
 }
 
-// The Asked windows', the dialogue boxes', the text windows' and the offer
-// windows' routines and data, the openers of the sets and the magic list,
-// and the routes of the windows open takes an argument for
-// (signatures.h's resolve_asked(), resolve_dialogue(), resolve_text(),
-// resolve_offer(), resolve_openers() and resolve_routes()), after the
-// sites for the open routine and the key test; close by instance is the
-// call close by name ends in.
+// Runs after the sites resolve: it needs the open routine and the key test.
+// Close by instance is the call close by name ends in.
 bool resolve_asked_windows(const uint8_t* text, size_t size, char* why, size_t len) {
     const uint8_t* close;
     memcpy(&close, &g_engine.game.close, sizeof(close));
@@ -995,9 +966,7 @@ bool resolve_asked_windows(const uint8_t* text, size_t size, char* why, size_t l
     return true;
 }
 
-// The daemon's site `id` has this build's shape: the prologue it relocated
-// and the bytes it saved, the stack it copies, the callee popping it. The
-// daemon returns an existing site for a target whatever shape was asked
+// The daemon returns an existing site for a target whatever shape was asked
 // for, and these handlers can run only behind the shape they were built for.
 bool site_matches(int32_t id, const SiteSpec& spec, const uint8_t* prologue, HuSiteInfo* info) {
     memset(info, 0, sizeof(*info));
@@ -1009,9 +978,9 @@ bool site_matches(int32_t id, const SiteSpec& spec, const uint8_t* prologue, HuS
         && info->callee_pops == spec.callee_pops && memcmp(info->original, prologue, spec.prologue) == 0;
 }
 
-// A candidate whose first bytes are already a jump is ours only if the daemon
-// says it patched exactly this prologue there. install() on such a target
-// never writes: it returns the existing site or refuses.
+// A target whose first bytes are already a jump is ours only if the daemon
+// patched exactly this prologue there. install() on it never writes: it
+// returns the existing site or refuses.
 bool daemon_owns(const uint8_t* at, const SiteSpec& spec, const Sig& s) {
     HuSiteDesc desc;
     desc.size = sizeof(desc);
@@ -1024,11 +993,10 @@ bool daemon_owns(const uint8_t* at, const SiteSpec& spec, const Sig& s) {
     return id >= 0 && site_matches(id, spec, s.bytes, &info);
 }
 
-// The compass global, read out of the draw entry's intact copy at +31 and
-// pinned at +2, the prologue's imm32, before the site is scanned for: a jump
-// the daemon has written there covers +2. On an unpatched entry the two
-// copies must agree; on a patched one the daemon's saved prologue says so
-// when the site is accepted.
+// The compass global is read from its second copy and pinned into the
+// prologue's before the site scan: a daemon jump covers the prologue's copy.
+// On a patched entry the daemon's saved prologue is checked when the site is
+// accepted.
 bool pin_compass_global(const uint8_t* text, size_t size, Sig& s, char* why, size_t len) {
     ScanResult r;
     scan(text, size, s.bytes, s.mask, true, &r);
@@ -1057,12 +1025,8 @@ bool pin_compass_global(const uint8_t* text, size_t size, Sig& s, char* why, siz
     return true;
 }
 
-// An imm32 a site's prologue reads that the engine knows from nowhere else
-// (the macro key gate's word at +2, the ability opener's global at +1),
-// pinned at `at` before the site is scanned for: read out of the one hit,
-// or, on a hit the daemon has already patched (the jump covers it), out of
-// the original the daemon saved there, which the site's acceptance compares
-// against the pinned prologue in turn. `*hit_out` is that hit.
+// Pins the prologue's imm32 at `at` before the site scan: read from the one
+// hit or, when the daemon's jump covers it, from the original it saved.
 bool pin_prologue_imm(const uint8_t* text, size_t size, const SiteSpec& spec, Sig& s, size_t at,
                       const uint8_t** hit_out, char* why, size_t len) {
     ScanResult r;
@@ -1101,10 +1065,8 @@ bool pin_prologue_imm(const uint8_t* text, size_t size, const SiteSpec& spec, Si
     return true;
 }
 
-// The ability opener: its global pinned, then the imm32 of its second key
-// push, past the daemon's jump either way, must point at the registry's
-// ability key: the open that routine makes is the one the engine's events
-// and category blocks go by.
+// Its key push must name the registry's ability key: the engine's events and
+// category blocks go by the open this routine makes.
 bool pin_ability_open(const uint8_t* text, size_t size, const SiteSpec& spec, Sig& s, char* why, size_t len) {
     const uint8_t* hit = NULL;
     if (!pin_prologue_imm(text, size, spec, s, kAbilityOpenGlobal, &hit, why, len)) {
@@ -1120,10 +1082,8 @@ bool pin_ability_open(const uint8_t* text, size_t size, const SiteSpec& spec, Si
     return true;
 }
 
-// The key test, from the UI update's call at kUpdateKeyTestCall: its
-// prologue read out of the routine, or on a site the daemon patched for
-// this shape before, out of the original it saved. The bytes past the
-// prologue are never patched.
+// On a target the daemon already patched, the prologue comes from the
+// original it saved; the bytes past the prologue are never patched.
 bool resolve_key_test(const uint8_t* text, size_t size, const SiteSpec& spec, char* why, size_t len) {
     const uint8_t* update = g_rt.targets[kSiteUpdate];
     const uint8_t* at = update[kUpdateKeyTestCall] == 0xE8 ? call_target(update, kUpdateKeyTestCall) : NULL;
@@ -1161,9 +1121,8 @@ bool resolve_key_test(const uint8_t* text, size_t size, const SiteSpec& spec, ch
     return true;
 }
 
-// The target window's two arrow draws: each a call of the sprite draw the
-// site hooks, the second just after the first. The sprite draw's pre tells
-// an arrow's draw by the address each call returns to.
+// The sprite draw's pre tells the target window's two arrow draws by these
+// calls' return addresses.
 bool resolve_arrows(const uint8_t* text, size_t size, char* why, size_t len) {
     const uint8_t* target = find_one(text, size, "target_arrow", kSigTargetArrow, why, len);
     const uint8_t* pick = target ? find_one(text, size, "pick_arrow", kSigPickArrow, why, len) : NULL;
@@ -1182,9 +1141,8 @@ bool resolve_arrows(const uint8_t* text, size_t size, char* why, size_t len) {
     return true;
 }
 
-// The quad routine, its first five bytes as found or another hook's jump,
-// must call the draw primitive the site found at kQuadPrimitiveCall: the
-// draw every quad of the interface takes.
+// Every interface quad draws through the primitive draw site; the quad
+// routine's first five bytes may be another hook's jump.
 bool resolve_quad(const uint8_t* text, size_t size, char* why, size_t len) {
     Sig s;
     s.length = parse_signature(kSigQuadDraw, s.bytes, s.mask, sizeof(s.bytes));
@@ -1228,7 +1186,7 @@ bool resolve_sites(const uint8_t* text, size_t size, char* why, size_t len) {
             snprintf(why, len, "signature %s: malformed", spec.name);
             return false;
         }
-        // The manager's address, resolved before the sites, in its imm32.
+        // The manager, resolved before the sites, fills its imm32.
         if (spec.manager_imm) {
             if (spec.manager_imm + 4 > s.length) {
                 snprintf(why, len, "signature %s: malformed", spec.name);
@@ -1309,11 +1267,6 @@ bool clear_handlers() {
     g_rt.pinned_busy = !all;
     return all;
 }
-
-uint8_t* compass_guarded();
-bool targetarrow_guarded();
-
-uint8_t* live_menu_guarded(int n, uint8_t** ctl_out);
 
 bool install_engine() {
     HU_STEP("install_engine");
@@ -1417,11 +1370,11 @@ bool install_engine() {
     }
     // The compass and the target arrows as the install finds them: their
     // first opened or closed events are changes from here.
-    g_engine.compass_shown = compass_open(compass_guarded()) ? 1 : 0;
-    g_engine.targetarrow_shown = targetarrow_guarded() ? 1 : 0;
+    g_engine.compass_shown = compass_open(compass_object(g_engine, kGuarded)) ? 1 : 0;
+    g_engine.targetarrow_shown = targetarrow_drawn(g_engine, kGuarded, NULL) ? 1 : 0;
     // The windows open at install: their first event is their close.
     for (int n = 0; n < g_engine.inv.count; ++n) {
-        g_engine.reported[n] = synthetic(g_engine, n) ? NULL : live_menu_guarded(n, NULL);
+        g_engine.reported[n] = synthetic(g_engine, n) ? NULL : live_menu(g_engine, kGuarded, n, NULL);
     }
     g_rt.pinned_busy = false;
     g_rt.transient = false;
@@ -1430,103 +1383,16 @@ bool install_engine() {
     return true;
 }
 
-// ---------------------------------------------------------------------------
-// Reads from the Lua thread. The game may retire a menu between two hops, so
-// every pointer is checked before it is followed.
-
-uint8_t* live_menu_guarded(int n, uint8_t** ctl_out) {
-    const NameEntry& ne = g_engine.inv.names[n];
-    for (int i = 0; i < ne.row_count; ++i) {
-        uint8_t** slot = g_engine.game.slot[ne.rows[i]];
-        uint8_t* ctl = slot ? *slot : NULL;
-        if (!ctl || !readable(ctl, kCtlMenu + 4)) {
-            continue;
-        }
-        uint8_t* menu = rdptr(ctl, kCtlMenu);
-        if (!menu || !readable(menu, kMenuBytes)) {
-            continue;
-        }
-        const uint8_t* res = rdptr(menu, kMenuRes);
-        if (!res || !readable(res + kResKey, kKeyLen) || !ne.keyed(res + kResKey)) {
-            continue;
-        }
-        if (ctl_out) {
-            *ctl_out = ctl;
-        }
-        return menu;
-    }
-    return NULL;
-}
-
-// live_menu_guarded() when the window is open (game.h's menu_is_open): what
-// every reader and verb reports, from the frame the closed event is posted.
-uint8_t* open_menu_guarded(int n, uint8_t** ctl_out) {
-    uint8_t* ctl = NULL;
-    uint8_t* menu = n >= 0 ? live_menu_guarded(n, &ctl) : NULL;
-    if (!menu_is_open(menu)) {
-        return NULL;
-    }
-    if (ctl_out) {
-        *ctl_out = ctl;
-    }
-    return menu;
-}
-
-// A controller through its registry row's slot, with `bytes` of it readable.
-uint8_t* controller_guarded(const char* nm, size_t bytes) {
-    const int n = g_engine.inv.find_exact(nm);
-    if (n < 0 || g_engine.inv.names[n].row_count == 0) {
-        return NULL;
-    }
-    uint8_t** slot = g_engine.game.slot[g_engine.inv.names[n].rows[0]];
-    uint8_t* ctl = slot ? *slot : NULL;
-    return ctl && readable(ctl, bytes) ? ctl : NULL;
-}
-
-bool open_guarded(const char* nm) {
-    return open_menu_guarded(g_engine.inv.find_exact(nm), NULL) != NULL;
-}
-
-// An instance of the window, open or closing.
-bool live_guarded(const char* nm) {
-    const int n = g_engine.inv.find_exact(nm);
-    return n >= 0 && live_menu_guarded(n, NULL) != NULL;
-}
-
-// The compass object while its global names one this thread can read.
-uint8_t* compass_guarded() {
-    uint8_t* c = compass_object(g_engine);
-    return c && readable(c, kCompassBytes) ? c : NULL;
-}
-
-// The draw walk's gates as this thread can read them: the manager, and
-// rem4line's controller.
-const uint8_t* mcb_guarded() {
-    const uint8_t* mcb = g_engine.game.mcb;
-    return mcb && readable(mcb, kMcbBytes) ? mcb : NULL;
-}
-
-const uint8_t* modal_guarded() {
-    return controller_guarded("rem4line", kBoxBytes);
-}
-
-// The target window's draw painting an arrow, as the drain reads it.
-bool targetarrow_guarded() {
-    uint8_t* ctl = NULL;
-    const uint8_t* menu = live_menu_guarded(g_engine.inv.targetwi, &ctl);
-    return menu && readable(ctl, kTargetBytes) && arrows_drawn(menu, ctl, mcb_guarded(), modal_guarded());
-}
-
 // Open as every reader reports it: a window's live instance with the marks
 // clear, the compass's state byte, the target arrows drawn.
 bool open_of(int n) {
     if (is_compass(g_engine, n)) {
-        return compass_open(compass_guarded());
+        return compass_open(compass_object(g_engine, kGuarded));
     }
     if (is_targetarrow(g_engine, n)) {
-        return targetarrow_guarded();
+        return targetarrow_drawn(g_engine, kGuarded, NULL);
     }
-    return open_menu_guarded(n, NULL) != NULL;
+    return open_menu(g_engine, kGuarded, n, NULL) != NULL;
 }
 
 // The registry's words for a name; one on no row reads as zeros.
@@ -1551,11 +1417,9 @@ struct ElementInfo {
     char text[kElementText];
 };
 
-// Where each type the draw knows keeps its box: the frame (0) at
-// +0x1A/+0x1C sized +0x22/+0x24, as SetFrameRect writes them; a list item
-// (1) at +0x2A/+0x2C sized +0x2E/+0x30, as its re-lay writes them and its hit
-// test reads them (its +0x1C and +0x20 are the sprite's float scales); the
-// cursor (2) at +0x20/+0x22, with no size. 0: the type has no such field.
+// Box fields by element type: the frame (0) as SetFrameRect writes them, a
+// list item (1) as its re-lay writes and its hit test reads them, the cursor
+// (2). 0: the type has no such field.
 struct ElementLayout {
     size_t x;
     size_t y;
@@ -1570,8 +1434,8 @@ const ElementLayout kElementLayouts[] = {
 const int kElementTypes = static_cast<int>(sizeof(kElementLayouts) / sizeof(kElementLayouts[0]));
 const size_t kElementBytes = 0x32;
 
-// A list item's template text: the string at +0x40, else the one at +0x44,
-// the order the game reads them in. Frames and the cursor carry none.
+// A list item's template text: kItemText, else kItemTextAlt, the order the
+// game reads them in.
 const size_t kItemText = 0x40;
 const size_t kItemTextAlt = 0x44;
 
@@ -1579,18 +1443,18 @@ const size_t kItemTextAlt = 0x44;
 // game has tombstoned the node.
 int read_elements(const uint8_t* menu, ElementInfo* out, int max, bool* truncated) {
     *truncated = false;
-    if (!readable(menu + kMenuList, 4)) {
+    if (!can_read(kGuarded, menu + kMenuList, 4)) {
         return 0;
     }
     const uint8_t* node = rdptr(menu, kMenuList);
     int stored = 0;
     for (int steps = 0; node && steps < 512; ++steps) {
-        if (!readable(node, 0x15)) {
+        if (!can_read(kGuarded, node, 0x15)) {
             break;
         }
         if (node[0x14] == 0) {
             const uint8_t* item = rdptr(node, 0x10);
-            if (item && readable(item, kElementBytes)) {
+            if (can_read(kGuarded, item, kElementBytes)) {
                 if (stored < max) {
                     ElementInfo& e = out[stored++];
                     memset(&e, 0, sizeof(e));
@@ -1606,7 +1470,7 @@ int read_elements(const uint8_t* menu, ElementInfo* out, int max, bool* truncate
                             e.h = rd16(item, l.h);
                         }
                     }
-                    if (e.type == 1 && readable(item, kItemTextAlt + 4)) {
+                    if (e.type == 1 && can_read(kGuarded, item, kItemTextAlt + 4)) {
                         const char* text = reinterpret_cast<const char*>(rdptr(item, kItemText));
                         if (!text) {
                             text = reinterpret_cast<const char*>(rdptr(item, kItemTextAlt));
@@ -1638,12 +1502,20 @@ void set_hex(ReplyWriter& w, const char* key, const void* p) {
     w.set_string(key, text);
 }
 
-// ---------------------------------------------------------------------------
-// The operations. Every copy's Lua bindings call them: this image's own when
-// it is the resident, the resident's through its table when it forwards.
-// Plain C in and out; none calls into Lua.
+// The operations every copy's Lua bindings call, through the resident's table
+// when forwarding. Plain C in and out; none may call into Lua.
 
-const char* category_name(int32_t category);
+// The ability window's list for `category` as engine abi `abi` names it; NULL
+// when that abi has no name for it.
+const char* category_name(int32_t category, uint32_t abi) {
+    if (abi >= 8) {
+        return ability_list_name(category);
+    }
+    if (category == kMonstrosityWeaponSkills) {
+        return ability_list_name(kWeaponSkills);
+    }
+    return category <= kNamedBefore8 ? ability_list_name(category) : NULL;
+}
 
 // Under the lock. NULL with `why` filled when the call cannot go ahead.
 Handle* usable(const HuEngineHandle* ref, char* why, size_t size) {
@@ -1662,8 +1534,7 @@ Handle* usable(const HuEngineHandle* ref, char* why, size_t size) {
     return h;
 }
 
-// A name as engine abi 1 and 2 take it, a group name standing for its
-// anchor; fills `why` when it names no menu.
+// A name as engine abi 1 and 2 take it, a group name standing for its anchor.
 int name_index(const char* name, char* why, size_t size) {
     const int n = name ? g_engine.inv.find(name) : -1;
     if (n < 0) {
@@ -1712,10 +1583,9 @@ Command command(uint8_t op, int target, int x, int y, const HuEngineHandle* ref,
     return c;
 }
 
-// Under the lock: a reply counts against its window until the drain has
-// carried it out. Engine abi 3 refuses a second one while one is queued, to
-// the window or, for a dialogue box, to its twin, the two being one
-// dialogue; the earlier slots queue it as they always did.
+// Under the lock: a reply counts against its window until the drain carries
+// it out. A dialogue box and its twin show one dialogue, so they share the
+// queued-reply test.
 bool enqueue_reply(Command c, bool refuse_queued, char* why, size_t size) {
     HU_STEP_AT("enqueue_reply", c.op);
     const int n = c.target;
@@ -1752,8 +1622,7 @@ bool int_value(double v, int lo, int hi, int* out) {
     return true;
 }
 
-// `why` as "prefix: reason", or the reason alone: engine abi 1 and 2 named
-// the verb in every refusal, abi 3's caller knows it.
+// Engine abi 1 and 2 name the verb in every refusal; abi 3's caller knows it.
 void refusal(char* why, size_t size, const char* prefix, const char* format, ...) {
     char text[kWhyBytes];
     va_list args;
@@ -1780,10 +1649,10 @@ void __stdcall op_new(const char* name, HuEngineHandle* out) {
     if (g_rt.state == kIdle && published_as_self()) {
         install_engine();
     }
-    // A handle made while closing -- a reload's new() before the frame its
-    // unload's shutdown waits for -- cancels that shutdown: the restore it
-    // queued still runs, ahead of anything this handle queues, and its
-    // thread leaves without unhooking.
+    // A handle made while closing (a reload's new() before its unload's
+    // shutdown frame) cancels that shutdown: the queued restore still runs,
+    // ahead of anything this handle queues, and its thread leaves without
+    // unhooking.
     if (g_rt.state == kInstalled || g_rt.state == kClosing) {
         const int slot = g_rt.handles.claim(name, g_engine.events.position());
         if (slot >= 0) {
@@ -1841,16 +1710,14 @@ int32_t hold(const HuEngineHandle* ref, const char* name, uint8_t bit, bool on, 
     if (h) {
         const int n = lookup(name, windows, why, size);
         if (n >= 0) {
-            // The compass and the target arrows take a block as a window
-            // does, hidden by the want bit their draw hooks read; no
-            // `blocked` event ever follows, the game never attempts an open
-            // of them.
+            // The compass and target arrows' block is the want bit their draw
+            // hooks read; no `blocked` event follows, as the game never opens
+            // them.
             if (bit == kHoldBlock && on && block_refusal(g_engine.inv.names[n].name)) {
                 snprintf(why, size, "%s", block_refusal(g_engine.inv.names[n].name));
             } else {
-                // A dialogue box's hold is its twin's too: the two show one
-                // dialogue. Both are hide-only, so a block of either is
-                // refused as one of both.
+                // A dialogue box and its twin show one dialogue, so the hold
+                // covers both. Both are hide-only, so neither takes a block.
                 g_engine.holds.set(*h, n, bit, on);
                 const int twin = g_engine.inv.dialogue_twin(n);
                 if (twin >= 0) {
@@ -1911,8 +1778,7 @@ int32_t place_command(const HuEngineHandle* ref, const char* name, double x, dou
             if (!coords) {
                 snprintf(why, size, "usage: move(name, x, y) with whole-number x and y");
             } else if (is_targetarrow(g_engine, n)) {
-                // Accepted and ignored: the arrows follow the target; nothing
-                // is queued or remembered.
+                // Accepted and ignored: the arrows follow the target.
                 ok = true;
             } else {
                 Command c = command(kOpMove, n, ix, iy, ref, 0, kVerbMove);
@@ -1942,10 +1808,9 @@ int32_t __stdcall op_move5(const HuEngineHandle* ref, const char* name, double x
     return place_command(ref, name, x, y, true, true, why, size);
 }
 
-// Engine abi 1 and 2 shift the group by dx, dy; abi 3 and 4 put its
-// anchor's origin at x, y and the rest by as much, abi 5 its frame's
-// top-left. Abi 4's and 5's wait for the anchor's next open when it is
-// closed; the others refuse.
+// `absolute` puts the anchor's origin (with `frame`, its frame's top-left) at
+// x, y and the rest by as much; otherwise the group shifts by x, y. `wait`
+// waits for a closed anchor's next open instead of refusing.
 int32_t group_command(const HuEngineHandle* ref, const char* group, double x, double y, bool absolute, bool wait,
                       bool frame, char* why, uint32_t size) {
     int ix = 0;
@@ -1961,7 +1826,7 @@ int32_t group_command(const HuEngineHandle* ref, const char* group, double x, do
         } else if (!coords) {
             snprintf(why, size, absolute ? "usage: move_group(group, x, y) with whole-number x and y"
                                          : "usage: move_group(group, dx, dy) with whole-number dx and dy");
-        } else if (!wait && !open_menu_guarded(g_engine.inv.find_exact(kGroups[g].anchor), NULL)) {
+        } else if (!wait && !open_named(g_engine, kGuarded, kGroups[g].anchor, NULL)) {
             snprintf(why, size, "%s: its anchor %s is not open", kGroups[g].name, kGroups[g].anchor);
         } else {
             Command c = command(absolute ? kOpGroupTo : kOpGroup, g, ix, iy, ref, 0, kVerbMoveGroup);
@@ -1998,40 +1863,15 @@ int32_t __stdcall op_move_group5(const HuEngineHandle* ref, const char* group, d
     return group_command(ref, group, x, y, true, true, true, why, size);
 }
 
-// The reason of the pair in `table` naming nm while its other window is
-// open (`open` true) or not open (false), read from the Lua thread; NULL
-// when no pair names nm or the other window is not so.
-const char* pair_refusal(const PairSpec* table, int count, const char* nm, bool open) {
-    const PairSpec* p = pair_spec(table, count, nm);
-    return p && open_guarded(p->other) == open ? p->reason : NULL;
-}
-
-// game.h's parent_open(), read from the Lua thread: why child window nm
-// cannot open now, in `why`, or NULL.
-const char* child_refusal(const char* nm, char* why, size_t size) {
-    const ChildSpec* c = child_spec(nm);
-    for (int i = 0; c && c->parents[i]; ++i) {
-        if (open_guarded(c->parents[i])) {
-            return NULL;
-        }
-    }
-    if (!c) {
+// Why window n may not open: a handle blocks it; NULL while none does.
+const char* open_blocked(int n, char* why, size_t size) {
+    if (!(g_engine.holds.want[n] & kWantBlocked)) {
         return NULL;
     }
-    child_reason(*c, why, size);
+    snprintf(why, size, "%s is blocked", g_engine.inv.names[n].name);
     return why;
 }
 
-// game.h's controller_missing(), read from the Lua thread.
-bool controller_missing_guarded(int n) {
-    if (n < 0 || n >= g_engine.inv.count || g_engine.inv.names[n].row_count == 0) {
-        return false;
-    }
-    uint8_t** slot = g_engine.game.slot[g_engine.inv.names[n].rows[0]];
-    return slot && readable(slot, 4) && !*slot;
-}
-
-// A route's command: kOpOpenRoute on window n with the route's values.
 Command route_command(int n, const RouteArgs& args, const HuEngineHandle* ref) {
     Command c = command(kOpOpenRoute, n, args.x, args.y, ref, args.value, kVerbOpen);
     return c;
@@ -2042,16 +1882,9 @@ bool list_window(int n) {
     return n >= 0 && (n == g_engine.inv.ability || n == g_engine.inv.find_exact("magic"));
 }
 
-// `abi`: the engine abi of the slot. From 3 on it takes a window's name
-// alone and open refuses the prompts that abi counts (core.h's kPrompts);
-// from 4 on close refuses those cancel() ends too, pointing at it: a
-// hide-only one here, any other on the game thread while it asks
-// (kCmdPrompt), as only the game's state says whether it does. Every
-// slot's close refuses a hide-only or close-refused window with its own
-// reason, and every slot's open the windows core.h's kOpenRefused
-// gives that abi and a window whose registry slot holds no controller
-// (game.h's controller_missing()); from 9 on open takes ability and magic
-// only with a list.
+// `abi`: the slot's engine abi. A close of a prompt cancel() ends is queued
+// with kCmdPrompt and refused on the game thread while the prompt asks: only
+// the game's state says whether it does.
 int32_t name_command(const HuEngineHandle* ref, const char* name, uint8_t op, uint8_t verb, uint32_t abi,
                      char* why, uint32_t size) {
     HU_STEP_AT("name_command", op);
@@ -2064,20 +1897,16 @@ int32_t name_command(const HuEngineHandle* ref, const char* name, uint8_t op, ui
             const char* nm = g_engine.inv.names[n].name;
             if ((op == kOpOpen || op == kOpClose) && synthetic(g_engine, n)) {
                 // No window to open or close: close is this handle's hide
-                // hold and open drops it, here; nothing queued, no event.
+                // hold and open drops it; nothing queued, no event.
                 g_engine.holds.set(*h, n, kHoldHide, op == kOpClose);
                 ok = true;
-            } else if (op == kOpOpen && (g_engine.holds.want[n] & kWantBlocked)) {
-                snprintf(why, size, "%s is blocked", nm);
+            } else if (op == kOpOpen && open_blocked(n, why, size)) {
+                // why filled
             } else if (op == kOpOpen && abi >= 3 && prompt_window(nm, abi)) {
                 snprintf(why, size, "%s opens only for the game's own event; %s it instead", nm,
                     prompt_cancels(nm) ? "answer or cancel" : "answer");
-            } else if (op == kOpOpen && open_refusal(nm, abi)) {
-                snprintf(why, size, "%s", open_refusal(nm, abi));
-            } else if (op == kOpOpen && child_refusal(nm, why, size)) {
+            } else if (op == kOpOpen && open_now_refusal(g_engine, kGuarded, n, abi, why, size)) {
                 // why filled
-            } else if (op == kOpOpen && controller_missing_guarded(n)) {
-                snprintf(why, size, "%s has no controller now, and the game's open would crash the client", nm);
             } else if (op == kOpOpen && route_spec(nm)) {
                 OpenArg none;
                 parse_open_arg(NULL, &none);
@@ -2085,14 +1914,14 @@ int32_t name_command(const HuEngineHandle* ref, const char* name, uint8_t op, ui
                 if (route_args(*route_spec(nm), none, &args, why, size)) {
                     ok = enqueue(route_command(n, args, ref), why, size);
                 }
-            } else if (op == kOpClose && pair_refusal(kCloseWhileOpen, kCloseWhileOpenCount, nm, true)) {
-                snprintf(why, size, "%s", pair_refusal(kCloseWhileOpen, kCloseWhileOpenCount, nm, true));
+            } else if (op == kOpClose && close_pair_refusal(g_engine, kGuarded, nm, why, size)) {
+                // why filled
             } else if (op == kOpOpen && abi >= 9 && list_window(n)) {
                 snprintf(why, size, "%s opens one list at a time: name the list, as in open('%s', '%s')", nm, nm,
                     n == g_engine.inv.ability ? kAbilityLists[0].name : kMagicLists[0].name);
             } else if (op == kOpClose && abi >= 4 && prompt_window(nm, abi) && prompt_cancels(nm)
                        && close_refusal(nm)) {
-                snprintf(why, size, "%s is a prompt the game waits on; use cancel('%s')", nm, nm);
+                prompt_close_refusal(nm, why, size);
             } else if (op == kOpClose && close_refusal(nm)) {
                 snprintf(why, size, "%s", close_refusal(nm));
             } else {
@@ -2112,10 +1941,8 @@ int32_t __stdcall op_reset(const HuEngineHandle* ref, const char* name, char* wh
     return name_command(ref, name, kOpReset, kVerbReset, 1, why, size);
 }
 
-// A block from engine abi 5 on: the hold, and the game's own close of the
-// window when it is open now, queued with it; an open prompt the slot's
-// engine abi `abi` counts is left to its reply. A full queue refuses the
-// block whole.
+// The hold plus the game's close of an open window; a prompt or a
+// close-refused window is left open, hidden. A full queue refuses it whole.
 int32_t block_window(const HuEngineHandle* ref, const char* name, uint32_t abi, char* why, uint32_t size) {
     bool ok = false;
     lock();
@@ -2125,12 +1952,10 @@ int32_t block_window(const HuEngineHandle* ref, const char* name, uint32_t abi, 
         const char* nm = g_engine.inv.names[n].name;
         if (block_refusal(nm)) {
             snprintf(why, size, "%s", block_refusal(nm));
-        } else if (synthetic(g_engine, n) || prompt_window(nm, abi) || !open_menu_guarded(n, NULL)
+        } else if (prompt_window(nm, abi) || !block_closes(g_engine, kGuarded, n)
                    || enqueue(command(kOpBlockClose, n, 0, 0, ref, 0, kVerbBlock), why, size)) {
-            // The compass and the target arrows have no window to close:
-            // their block is the hidden want bit their draw hooks read, and
-            // no `blocked` event ever follows, the game never attempts an
-            // open of them.
+            // The compass and target arrows have no window to close; no
+            // `blocked` event follows, as the game never opens them.
             g_engine.holds.set(*h, n, kHoldBlock, true);
             ok = true;
         }
@@ -2143,20 +1968,30 @@ int32_t __stdcall op_block5(const HuEngineHandle* ref, const char* name, char* w
     return block_window(ref, name, 5, why, size);
 }
 
-// The lists of ability as block7 and unblock7 name them, as a bit mask: a
-// list's name (core.h's kAbilityLists) takes its category; a number
-// 1..kCategoryBits-1 in digits takes that one. 0 with `why` filled for
-// anything else.
-uint32_t ability_categories(const char* text, char* why, size_t size) {
+// The ability lists `text` names for engine abi `abi`, as a category bit mask:
+// a list's name, or a number 1..kCategoryBits-1. 0 with `why` filled.
+uint32_t ability_categories(const char* text, uint32_t abi, char* why, size_t size) {
     char low[24];
-    if (text && strlen(text) < sizeof(low)) {
+    bool read = false;
+    if (abi < 8) {
+        // The slots before engine abi 8 read a category of 15 characters at most.
+        read = Inventory::lower_name(text, low);
+    } else if (text && strlen(text) < sizeof(low)) {
         for (size_t i = 0; i <= strlen(text); ++i) {
             low[i] = lower_ascii(text[i]);
         }
-        for (int i = 0; i < kAbilityListCount; ++i) {
-            if (strcmp(kAbilityLists[i].name, low) == 0) {
-                return 1u << kAbilityLists[i].category;
+        read = true;
+    }
+    if (read) {
+        uint32_t mask = 0;
+        for (int c = 1; c < kCategoryBits; ++c) {
+            const char* named = category_name(c, abi);
+            if (named && strcmp(named, low) == 0) {
+                mask |= 1u << c;
             }
+        }
+        if (mask) {
+            return mask;
         }
         int value = 0;
         bool digits = low[0] != '\0';
@@ -2169,16 +2004,19 @@ uint32_t ability_categories(const char* text, char* why, size_t size) {
             return 1u << value;
         }
     }
-    snprintf(why, size, "no such category: %s (a list's name, such as job_abilities or pet_commands, or a number"
-        " 1..31)", text ? text : "(not a string)");
+    if (abi < 8) {
+        snprintf(why, size, "no such category: %s (job_abilities, pet_commands, weapon_skills, job_traits, or a"
+            " number 1..31)", text ? text : "(not a string)");
+    } else {
+        snprintf(why, size, "no such category: %s (a list's name, such as job_abilities or pet_commands, or a"
+            " number 1..31)", text ? text : "(not a string)");
+    }
     return 0;
 }
 
-// With a category, engine abi 7's block: the hold on that list of ability
-// alone, and the game's own close of the window when it shows that list
-// now, queued with it as block5 queues the whole window's. A full queue
-// refuses the block whole.
-int32_t block_category(const HuEngineHandle* ref, const char* name, const char* category, char* why,
+// The hold on those ability lists, plus the game's close of the window when it
+// shows one of them now. A full queue refuses it whole.
+int32_t block_category(const HuEngineHandle* ref, const char* name, const char* category, uint32_t abi, char* why,
                        uint32_t size) {
     bool ok = false;
     lock();
@@ -2188,10 +2026,10 @@ int32_t block_category(const HuEngineHandle* ref, const char* name, const char* 
         if (n != g_engine.inv.ability) {
             snprintf(why, size, "only ability has categories");
         } else {
-            const uint32_t mask = ability_categories(category, why, size);
+            const uint32_t mask = ability_categories(category, abi, why, size);
             uint8_t* ctl = NULL;
-            const int32_t shown = open_menu_guarded(n, &ctl) && readable(ctl, kAbilityCategory + 4)
-                ? static_cast<int32_t>(rd32(ctl, kAbilityCategory)) : -1;
+            const bool open = open_menu(g_engine, kGuarded, n, &ctl) && can_read(kGuarded, ctl, kAbilityCategory + 4);
+            const int32_t shown = open ? static_cast<int32_t>(rd32(ctl, kAbilityCategory)) : -1;
             const bool showing = shown >= 0 && shown < kCategoryBits && (mask & (1u << shown));
             if (mask && (!showing || enqueue(command(kOpBlockClose, n, 0, 0, ref, 0, kVerbBlock), why, size))) {
                 for (int c = 1; c < kCategoryBits; ++c) {
@@ -2207,30 +2045,27 @@ int32_t block_category(const HuEngineHandle* ref, const char* name, const char* 
     return ok;
 }
 
-// Engine abi 7's block: with a category, block_category; without one,
-// block5.
 int32_t __stdcall op_block7(const HuEngineHandle* ref, const char* name, const char* category, char* why,
                             uint32_t size) {
     if (!category || !category[0]) {
         return op_block5(ref, name, why, size);
     }
-    return block_category(ref, name, category, why, size);
+    return block_category(ref, name, category, 7, why, size);
 }
 
-// Engine abi 8's block: abi 7's, and without a category the yes/no windows
-// among the prompts it leaves open.
+// As abi 7's, but categories and the prompts left open are abi 8's.
 int32_t __stdcall op_block8(const HuEngineHandle* ref, const char* name, const char* category, char* why,
                             uint32_t size) {
     if (!category || !category[0]) {
         return block_window(ref, name, 8, why, size);
     }
-    return block_category(ref, name, category, why, size);
+    return block_category(ref, name, category, 8, why, size);
 }
 
-// Engine abi 7's unblock: with a category, that list's hold dropped and
-// nothing else; without one, unblock3, the whole-window hold alone.
-int32_t __stdcall op_unblock7(const HuEngineHandle* ref, const char* name, const char* category, char* why,
-                              uint32_t size) {
+// With a category, drops only those lists' holds; without one, only the
+// whole-window hold.
+int32_t unblock_category(const HuEngineHandle* ref, const char* name, const char* category, uint32_t abi, char* why,
+                         uint32_t size) {
     if (!category || !category[0]) {
         return op_unblock3(ref, name, why, size);
     }
@@ -2242,7 +2077,7 @@ int32_t __stdcall op_unblock7(const HuEngineHandle* ref, const char* name, const
         if (n != g_engine.inv.ability) {
             snprintf(why, size, "only ability has categories");
         } else {
-            const uint32_t mask = ability_categories(category, why, size);
+            const uint32_t mask = ability_categories(category, abi, why, size);
             if (mask) {
                 for (int c = 1; c < kCategoryBits; ++c) {
                     if (mask & (1u << c)) {
@@ -2257,14 +2092,23 @@ int32_t __stdcall op_unblock7(const HuEngineHandle* ref, const char* name, const
     return ok;
 }
 
+int32_t __stdcall op_unblock7(const HuEngineHandle* ref, const char* name, const char* category, char* why,
+                              uint32_t size) {
+    return unblock_category(ref, name, category, 7, why, size);
+}
+
+int32_t __stdcall op_unblock9(const HuEngineHandle* ref, const char* name, const char* category, char* why,
+                              uint32_t size) {
+    return unblock_category(ref, name, category, 9, why, size);
+}
+
 int32_t __stdcall op_open(const HuEngineHandle* ref, const char* name, char* why, uint32_t size) {
     return name_command(ref, name, kOpOpen, kVerbOpen, 1, why, size);
 }
 
-// One list of ability or magic, n, by its name or its number in the
-// window's table (core.h's kAbilityLists, kMagicLists): the category, or
-// -1 with `why` filled. The game checks no category, and one past a
-// window's table writes past its controller.
+// A list of ability or magic by name or number: its category, or -1. The game
+// checks no category, and one past a window's table writes past its
+// controller.
 int32_t window_list(int n, const char* text, char* why, size_t size) {
     const bool ability = n == g_engine.inv.ability;
     char low[24];
@@ -2288,8 +2132,7 @@ int32_t window_list(int n, const char* text, char* why, size_t size) {
 // Under the lock: why list `category` of window n cannot open now, or NULL.
 const char* list_refusal(int n, int32_t category, char* why, size_t size) {
     const char* nm = g_engine.inv.names[n].name;
-    if (g_engine.holds.want[n] & kWantBlocked) {
-        snprintf(why, size, "%s is blocked", nm);
+    if (open_blocked(n, why, size)) {
         return why;
     }
     if (n == g_engine.inv.ability && category < kCategoryBits && (g_engine.holds.ability_want & (1L << category))) {
@@ -2299,12 +2142,8 @@ const char* list_refusal(int n, int32_t category, char* why, size_t size) {
     return NULL;
 }
 
-// Engine abi 9's open: with no argument, open8's, also refusing the windows
-// core.h's kOpenRefused gives abi 9 and the windows of kRoutes that need
-// one, and running the route of the rest; with one, the list of ability or
-// magic alone through the game's own opener of it, with no sort window or
-// detail pane, or the route of a window of kRoutes with what it takes. A
-// window that takes an argument is refused up front as its plain open is.
+// With an argument: one list of ability or magic through the game's own
+// opener, or a kRoutes window's route with what it takes.
 int32_t __stdcall op_open9(const HuEngineHandle* ref, const char* name, const char* list, char* why,
                            uint32_t size) {
     if (!list || !list[0]) {
@@ -2330,12 +2169,8 @@ int32_t __stdcall op_open9(const HuEngineHandle* ref, const char* name, const ch
                 " taking one do", nm);
         } else if (!parse_open_arg(list, &arg)) {
             snprintf(why, size, "%s: the argument is not one hideui reads (%s)", nm, list);
-        } else if (g_engine.holds.want[n] & kWantBlocked) {
-            snprintf(why, size, "%s is blocked", nm);
-        } else if (child_refusal(nm, why, size)) {
+        } else if (open_blocked(n, why, size) || open_now_refusal(g_engine, kGuarded, n, 9, why, size)) {
             // why filled
-        } else if (controller_missing_guarded(n)) {
-            snprintf(why, size, "%s has no controller now, and the game's open would crash the client", nm);
         } else if (route_args(*spec, arg, &args, why, size)) {
             ok = enqueue(route_command(n, args, ref), why, size);
         }
@@ -2344,8 +2179,8 @@ int32_t __stdcall op_open9(const HuEngineHandle* ref, const char* name, const ch
     return ok;
 }
 
-// An inventory index in digits, 1..kInventoryRecords - 1, for a set that
-// opens for an item; -1 with `why` filled.
+// An inventory index in digits, for a set that opens for an item; -1 with
+// `why` filled.
 int32_t set_item_index(const SetSpec& spec, const char* text, char* why, size_t size) {
     int32_t value = 0;
     bool digits = text && text[0];
@@ -2362,13 +2197,9 @@ int32_t set_item_index(const SetSpec& spec, const char* text, char* why, size_t 
     return -1;
 }
 
-// Engine abi 9's open_set: the windows of a set (core.h's kSets) opened
-// together by the game's own opener of them, the ability and magic sets
-// with their list, synthesis and tabula with the inventory index of their
-// crystal or tabula, compare with an item, region and text_colors with
-// their choice. Refused up front when a window of the set, or the list, is
-// blocked; for blue magic the sort window is blusortw, and for region the
-// kind's points window is one of the set's.
+// A kSets set through the game's own opener. Refused up front when a window
+// it opens, or the list, is blocked: blue magic's sort window is blusortw,
+// and a by-choice set opens its choice's window too.
 int32_t __stdcall op_open_set9(const HuEngineHandle* ref, const char* set, const char* list, char* why,
                                uint32_t size) {
     bool ok = false;
@@ -2443,7 +2274,8 @@ int32_t __stdcall op_open_set9(const HuEngineHandle* ref, const char* set, const
                 }
             }
             refused = refused || (spec.takes == kTakesList && list_refusal(n, value, why, size));
-            refused = refused || (spec.takes == kTakesItemPanel && child_refusal(spec.opens, why, size) != NULL);
+            refused = refused || (spec.takes == kTakesItemPanel
+                                  && child_refusal(g_engine, kGuarded, spec.opens, why, size) != NULL);
             if (!refused) {
                 Command c = command(kOpOpenSet, n, s, item.y, ref, static_cast<uint32_t>(value), kVerbOpenSet);
                 c.z = item.x;
@@ -2493,9 +2325,8 @@ int32_t __stdcall op_reset_all(const HuEngineHandle* ref, char* why, uint32_t si
     return ok;
 }
 
-// The macro keys blocked: the hold on this handle, and with the first hold
-// in the client, the close of a bar the handler has up, queued with it. A
-// full queue refuses the block whole.
+// The client's first macro hold also queues the close of a bar the handler
+// has up; a full queue refuses the whole block.
 int32_t __stdcall op_block_macros(const HuEngineHandle* ref, char* why, uint32_t size) {
     bool ok = false;
     lock();
@@ -2526,18 +2357,15 @@ int32_t __stdcall op_unblock_macros(const HuEngineHandle* ref, char* why, uint32
 bool written_by(int32_t slot, uint32_t gen, const HuEngineHandle* ref);
 void owner_name(int32_t slot, uint32_t gen, char* out, size_t size);
 
-// Under the lock: "<what> was placed by <owner>" into `why`, the owner the
-// handle another than `ref` that wrote slot, gen.
+// Under the lock.
 void placed_by(const char* what, int32_t slot, uint32_t gen, char* why, size_t size) {
     char owner[48];
     owner_name(slot, gen, owner, sizeof(owner));
     snprintf(why, size, "%s was placed by %s", what, owner[0] ? owner : "another handle");
 }
 
-// Engine abi 5's reset(name[, aspect]): only what this handle placed, the
-// position and the size, or the one aspect named. Refused whole when
-// another handle placed an aspect it would reset; one nobody placed is
-// left as it is.
+// Resets only what this handle placed; refused whole when another handle
+// placed an aspect it would reset.
 int32_t __stdcall op_reset5(const HuEngineHandle* ref, const char* name, const char* aspect, char* why,
                             uint32_t size) {
     uint32_t aspects = kAspectPosition | kAspectSize;
@@ -2571,9 +2399,8 @@ int32_t __stdcall op_reset5(const HuEngineHandle* ref, const char* name, const c
     return ok;
 }
 
-// Engine abi 5's reset_group(group): this handle's move of the group, the
-// one waiting for its anchor or every position it wrote. Refused while
-// another handle's move of the group waits, or placed the anchor.
+// Resets this handle's move of the group, waiting or written. Refused while
+// another handle's move of the group waits or placed the anchor.
 int32_t __stdcall op_reset_group5(const HuEngineHandle* ref, const char* group, char* why, uint32_t size) {
     bool ok = false;
     lock();
@@ -2599,326 +2426,168 @@ int32_t __stdcall op_reset_group5(const HuEngineHandle* ref, const char* group, 
     return ok;
 }
 
-// ---------------------------------------------------------------------------
-// Replies. Each check runs under the lock, reads the game from this thread
-// with every pointer guarded, and fills `why` when the reply cannot go
-// ahead; the drain checks again on the game thread. `prefix` is the engine
-// abi 1 or 2 verb its refusals start with, empty for abi 3.
+// Reply checks run under the lock through game.h's routines in kGuarded mode;
+// the drain runs them again on the game thread. `prefix`: the engine abi 1 or
+// 2 verb refusals start with, empty for abi 3.
 
 int window_named(const char* nm) {
     return g_engine.inv.find_exact(nm);
 }
 
-// The open choice's controller, or NULL with `why` filled.
+// The open choice's controller, its result word and the title before it
+// readable, or NULL with `why` filled.
 uint8_t* query_open(const char* prefix, char* why, size_t size) {
-    const int n = window_named("query");
     uint8_t* ctl = NULL;
-    if (n < 0 || !open_menu_guarded(n, &ctl) || !readable(ctl, kQueryResult + 2)) {
-        refusal(why, size, prefix, "query is not open");
+    if (!open_named(g_engine, kGuarded, "query", &ctl) || !can_read(kGuarded, ctl, kQueryResult + 2)) {
+        refusal(why, size, prefix, "%s", kQueryNotOpen);
         return NULL;
     }
     return ctl;
 }
 
-// The byte query's input handler tests before it writes the cancel answer;
-// the game buzzes instead while it is not 1.
-bool query_cancellable() {
-    return *static_cast<const volatile uint8_t*>(g_engine.game.query_cancel_allowed) == 1;
-}
-
-// game.h's query_index_of() with every hop guarded: true when an option
-// the player can pick has this value.
-bool query_lists_guarded(const uint8_t* ctl, int value) {
-    const uint8_t* node = rdptr(ctl, kQueryOptions);
-    for (int steps = 0; node && steps < kQueryListMax && readable(node, 0x15); ++steps) {
-        const uint8_t* item = rdptr(node, 0x10);
-        if (node[0x14] == 0 && readable(item, kOptionBytes)
-            && static_cast<uint16_t>(rd16(item, kOptionValue)) == value) {
-            return true;
-        }
-        node = rdptr(node, 0);
-    }
-    return false;
-}
-
 // The pending entry's controller, or NULL with `why` filled.
-uint8_t* passinpu_pending(const char* prefix, char* why, size_t size) {
-    uint8_t* ctl = controller_guarded("passinpu", kPassContext + 4);
-    if (!passinpu_asks(ctl)) {
-        refusal(why, size, prefix, "no text entry is pending");
-        return NULL;
+uint8_t* passinpu_check(const char* prefix, char* why, size_t size) {
+    uint8_t* ctl = passinpu_pending(g_engine, kGuarded);
+    if (!ctl) {
+        refusal(why, size, prefix, "%s", kNoTextEntry);
     }
     return ctl;
 }
 
 bool passinpu_fits(const uint8_t* ctl, size_t length, const char* prefix, char* why, size_t size) {
-    const int max = static_cast<int>(rd32(ctl, kPassMax));
-    if (static_cast<int>(length) > max) {
-        refusal(why, size, prefix, "%u bytes, the entry takes at most %d", static_cast<unsigned>(length), max);
-        return false;
+    char buf[kWhyBytes];
+    const char* reason = passinpu_length_refusal(ctl, length, buf, sizeof(buf));
+    if (reason) {
+        refusal(why, size, prefix, "%s", reason);
     }
-    return true;
+    return reason == NULL;
 }
 
 bool party_pending(const char* prefix, char* why, size_t size) {
-    if (!*static_cast<const volatile uint8_t*>(g_engine.game.party_pending)) {
-        refusal(why, size, prefix, "no party invite is pending");
+    if (!invite_flags(g_engine, kGuarded)) {
+        refusal(why, size, prefix, "%s", kNoInvite);
         return false;
     }
     return true;
 }
 
-// A controller's window instance with its bytes readable, or NULL: what the
-// post-box replies take for the box's window, open, closing or covered.
-const uint8_t* window_of(const uint8_t* ctl) {
-    const uint8_t* menu = ctl ? rdptr(ctl, kCtlMenu) : NULL;
-    return menu && readable(menu, kMenuBytes) ? menu : NULL;
+// Whether post window n's session can end through post_close() now; false
+// with `why` filled.
+bool post_open(int n, const char* prefix, char* why, size_t size) {
+    const char* reason = post_close_refusal(g_engine, kGuarded, n);
+    if (reason) {
+        refusal(why, size, prefix, "%s", reason);
+    }
+    return reason == NULL;
 }
 
-// game.h's post_close() checks with every hop guarded.
-bool post_open(const char* nm, const char* prefix, char* why, size_t size) {
-    if (strcmp(nm, "delivery") == 0) {
-        const uint8_t* ctl = controller_guarded("delivery", kDeliveryNext + 2);
-        const uint8_t* menu = window_of(ctl);
-        const char* reason = menu ? delivery_row_refusal(ctl, menu) : NULL;
-        const int state = ctl ? rd16(ctl, kDeliveryState) : 0;
-        if (reason) {
-            refusal(why, size, prefix, "%s", reason);
-            return false;
-        }
-        if (menu) {
-            return true;
-        }
-        if (state == 0) {
-            refusal(why, size, prefix, "no outgoing post-box session is open");
-            return false;
-        }
-        if (state == kDeliveryClosing) {
-            refusal(why, size, prefix, "its close is already waiting for the server");
-            return false;
-        }
-        return true;
-    }
-    if (live_guarded("post1") || live_guarded("post2")) {
-        refusal(why, size, prefix, "%s", open_guarded("post1") || open_guarded("post2") ? kBoxOpen : kBoxClosing);
-        return false;
-    }
-    const uint8_t* ctl = controller_guarded("post1", kPostState + 4);
-    const uint32_t state = ctl ? rd32(ctl, kPostState) : 0;
-    if (state == 0) {
-        refusal(why, size, prefix, "no incoming post-box session is open");
-        return false;
-    }
-    if (state == kPostClosing) {
-        refusal(why, size, prefix, "its close is already waiting for the server");
-        return false;
-    }
-    return true;
-}
-
-// game.h's link5_pending() with every hop guarded: link5's controller, or
-// NULL with `why` filled.
-const uint8_t* link5_pending(const char* prefix, char* why, size_t size) {
-    const uint8_t* ctl = controller_guarded("link5", kLink5Callback + 4);
-    const bool pending = ctl && *static_cast<const volatile uint8_t*>(g_engine.game.link5_latch) == 1
-        && rd32(ctl, kLink5Mode) == 1 && rdptr(ctl, kLink5Callback) == g_engine.game.link5_callback;
-    if (!pending) {
-        refusal(why, size, prefix, "no linkshell choice is pending");
-        return NULL;
+// link5's controller while the event waits on its choice, or NULL with `why`
+// filled.
+const uint8_t* link5_check(const char* prefix, char* why, size_t size) {
+    const uint8_t* ctl = link5_pending(g_engine, kGuarded);
+    if (!ctl) {
+        refusal(why, size, prefix, "%s", kNoLinkshellChoice);
     }
     return ctl;
-}
-
-// The concierge cache slot a row's record is, or -1.
-int link5_slot_of(const uint8_t* record) {
-    const uint8_t* cache = g_engine.game.link5_cache;
-    if (record < cache || record >= cache + kLink5Slots * kLink5Entry) {
-        return -1;
-    }
-    const size_t at = static_cast<size_t>(record - cache);
-    return at % kLink5Entry == 0 ? static_cast<int>(at / kLink5Entry) : -1;
-}
-
-// link5's rows past the header and its name buffer, guarded; 0 rows when
-// either is unreadable.
-int link5_rows(const uint8_t* ctl, const uint8_t** rows, const uint8_t** names) {
-    *rows = rdptr(ctl, kLink5Rows);
-    *names = rdptr(ctl, kLink5Names);
-    const int count = static_cast<int>(rd32(ctl, kLink5Count));
-    if (count <= 1 || count > 256 || !readable(*rows, count * kLink5RowStride)) {
-        return 0;
-    }
-    if (*names && !readable(*names, count * kLink5NameStride)) {
-        *names = NULL;
-    }
-    return count;
-}
-
-// game.h's link5_lists() with every hop guarded.
-bool link5_lists_guarded(const uint8_t* ctl, int slot) {
-    const uint8_t* rows = NULL;
-    const uint8_t* names = NULL;
-    const int count = link5_rows(ctl, &rows, &names);
-    for (int i = 1; i < count; ++i) {
-        if (link5_slot_of(rdptr(rows + i * kLink5RowStride, kLink5RowRecord)) == slot) {
-            return true;
-        }
-    }
-    return false;
 }
 
 // arealist's controller while its list is open and its latch set, which
 // every open sets: what options() reads; NULL with `why` filled.
 const uint8_t* area_pending(const char* prefix, char* why, size_t size) {
-    const int n = window_named("arealist");
     uint8_t* ctl = NULL;
-    if (n < 0 || !open_menu_guarded(n, &ctl) || !readable(ctl, kAreaBytes) || !ctl[kAreaLatch]) {
-        refusal(why, size, prefix, "no area choice is pending");
+    if (!open_named(g_engine, kGuarded, "arealist", &ctl) || !can_read(kGuarded, ctl, kAreaBytes)
+        || !ctl[kAreaLatch]) {
+        refusal(why, size, prefix, "%s", kNoAreaChoice);
         return NULL;
     }
     return ctl;
 }
 
 // arealist's controller while an NPC event's choice waits with no window
-// instance to show it (its open refused): the latch set in mode 1 or 2, as
-// the event's opener sets them before the open. NULL otherwise.
+// instance to show it (its open refused), else NULL.
 const uint8_t* area_blocked() {
-    const uint8_t* ctl = controller_guarded("arealist", kAreaBytes);
-    return !area_refusal(ctl) && !rdptr(ctl, kCtlMenu) ? ctl : NULL;
+    const uint8_t* ctl = area_event_pending(g_engine, kGuarded);
+    return ctl && !rdptr(ctl, kCtlMenu) ? ctl : NULL;
 }
 
-// arealist's rows, guarded: game.h's area_count() of them with the array
-// readable, else 0. Every rebuild moves the array, so it is read each time.
-int area_rows_guarded(const uint8_t* ctl, const uint8_t** rows) {
-    *rows = rdptr(ctl, kAreaRows);
-    const int count = area_count(ctl);
-    return count && readable(*rows, count * kAreaRowStride) ? count : 0;
-}
-
-// Row i's id, from its entry; false when the entry is unreadable, which ends
-// the rows a read takes.
-bool area_id_guarded(const uint8_t* rows, int i, int* id) {
-    const uint8_t* entry = rdptr(rows + i * kAreaRowStride, kAreaRowEntry);
-    if (!readable(entry, 4)) {
-        return false;
-    }
-    *id = static_cast<int32_t>(rd32(entry, 0));
-    return true;
-}
-
-// game.h's area_row_of() with every hop guarded: true when a row holds `id`.
-bool area_lists_guarded(const uint8_t* ctl, int id) {
-    const uint8_t* rows = NULL;
-    const int count = area_rows_guarded(ctl, &rows);
-    int at = 0;
-    for (int i = 0; i < count && area_id_guarded(rows, i, &at); ++i) {
-        if (at == id) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// game.h's area_event_pending() with every hop guarded: an NPC event's
-// choice, the window open (`*window`) or blocked; NULL with `why` filled.
-const uint8_t* area_event_guarded(const char* prefix, char* why, size_t size, bool* window) {
-    const uint8_t* ctl = controller_guarded("arealist", kAreaBytes);
-    const char* reason = area_refusal(ctl);
-    if (reason) {
+// arealist's controller while an NPC event's choice waits, the window open
+// (`*window`) or blocked; NULL with `why` filled.
+const uint8_t* area_check(const char* prefix, char* why, size_t size, bool* window) {
+    const char* reason = NULL;
+    const uint8_t* ctl = area_event_pending(g_engine, kGuarded, window, &reason);
+    if (!ctl) {
         refusal(why, size, prefix, "%s", reason);
-        return NULL;
     }
-    *window = open_guarded("arealist");
     return ctl;
 }
 
-// The zone an answer to that choice names: one of the open list's zone rows,
-// or with the list blocked, any zone id.
+// Whether an answer to that choice may name `zone` (area_zone_refusal());
+// false with `why` filled.
 bool area_zone_ok(const uint8_t* ctl, bool window, int zone, const char* prefix, char* why, size_t size) {
-    if (!window && (zone < 0 || zone > kZoneMax)) {
-        refusal(why, size, prefix, "the area list is blocked, so there are no rows to check %d against; the answer"
-            " takes a zone id, 0..%d", zone, kZoneMax);
-        return false;
+    char buf[kWhyBytes];
+    const char* reason = area_zone_refusal(kGuarded, ctl, window, zone, buf, sizeof(buf));
+    if (reason) {
+        refusal(why, size, prefix, "%s", reason);
     }
-    if (window && !area_lists_guarded(ctl, zone)) {
-        refusal(why, size, prefix, "no row of the list has the id %d (options('arealist') lists them)", zone);
-        return false;
-    }
-    if (window && zone < 1) {
-        refusal(why, size, prefix, "the row with the id %d is not a zone; the answer takes a zone row's id", zone);
-        return false;
-    }
-    return true;
+    return reason == NULL;
 }
 
-// game.h's yesno_pending() with every hop guarded: window n's yes/no
-// controller while it asks, or NULL with `why` filled.
-const uint8_t* yesno_pending_guarded(int n, char* why, size_t size) {
-    const uint8_t* ctl = controller_guarded(g_engine.inv.names[n].name, kYesNoBytes);
-    return yesno_asks(g_engine, n, ctl, why, size) ? ctl : NULL;
-}
-
-// A number box's question as a reply or a read finds it, every hop
-// guarded: its question kept from its window while its record stands
-// (game.h's box_record_gone), else its window up with its callback set.
+// A number box's question as this thread reads it: a copy of its record and
+// the box against that copy.
 struct BoxQuestion {
     int box;
     bool blocked;
-    const uint8_t* ctl;
     int asker;
     uint32_t id;
-    BoxRecord record;           // blocked: the record, and its asker's window and controller now
-    const uint8_t* owner;
-    const uint8_t* owner_ctl;
+    BoxRecord record;
+    BoxNow now;
 };
 
-bool box_question_guarded(int b, BoxQuestion* q, char* why, size_t size) {
+void box_read(int b, BoxQuestion* q) {
     memset(q, 0, sizeof(*q));
     q->box = b;
     q->asker = -1;
-    const char* nm = kBoxNames[b];
-    const uint8_t* ctl = controller_guarded(nm, kBoxLayouts[b].bytes);
-    BoxRecord r;
-    if (!ctl || !g_engine.boxes[b].read(&r)) {
-        memset(&r, 0, sizeof(r));
+    if (!g_engine.boxes[b].read(&q->record)) {
+        memset(&q->record, 0, sizeof(q->record));
     }
-    const AskerSpec* a = r.active && r.asker >= 0 ? &kAskers[r.asker] : NULL;
-    const uint8_t* owner = r.active ? open_menu_guarded(r.owner_n, NULL) : NULL;
-    const uint8_t* owner_ctl = a ? controller_guarded(a->owner, static_cast<size_t>(a->field) + a->field_bytes)
-                                 : NULL;
-    const int n = g_engine.inv.box_window[b];
-    if (!box_asks(r, b, ctl, owner, owner_ctl, open_menu_guarded(n, NULL) != NULL, &q->blocked)) {
-        snprintf(why, size, "no number is pending in %s", nm);
+    q->now = box_now(g_engine, kGuarded, b, q->record);
+}
+
+// box_read(), false with `why` filled when the box asks nothing.
+bool box_question(int b, BoxQuestion* q, char* why, size_t size) {
+    box_read(b, q);
+    char buf[kWhyBytes];
+    const char* reason = box_question_refusal(b, q->record, q->now, &q->blocked, buf, sizeof(buf));
+    if (reason) {
+        snprintf(why, size, "%s", reason);
         return false;
     }
-    q->ctl = ctl;
     if (q->blocked) {
-        q->asker = r.asker;
-        q->id = r.id;
-        q->record = r;
-        q->owner = owner;
-        q->owner_ctl = owner_ctl;
+        q->asker = q->record.asker;
+        q->id = q->record.id;
     } else {
-        q->asker = asker_of(g_engine, box_callback(ctl, b));
-        q->id = static_cast<uint32_t>(g_engine.instance[n]);
+        q->asker = asker_of(g_engine, box_callback(q->now.ctl, b));
+        q->id = static_cast<uint32_t>(g_engine.instance[g_engine.inv.box_window[b]]);
     }
     return true;
 }
 
-// game.h's box_blocked_refusal() or box_window_refusal(), for the question
-// read.
-const char* box_refusal_guarded(const BoxQuestion& q, bool answer, char* buf, size_t size) {
-    if (q.blocked) {
-        return box_blocked_refusal(q.record, q.box, q.owner, q.owner_ctl, answer, buf, size);
+// Whether box b takes the reply now, `answer` with `value` or its cancel;
+// false with `why` filled.
+bool box_takes(int b, bool answer, int32_t value, char* why, size_t size) {
+    BoxQuestion q;
+    box_read(b, &q);
+    char buf[kWhyBytes];
+    const char* reason = box_reply_refusal(g_engine, kGuarded, b, q.record, q.now, answer, value, &q.blocked, buf,
+        sizeof(buf));
+    if (reason) {
+        snprintf(why, size, "%s", reason);
     }
-    const bool owner_open = q.asker >= 0 && open_guarded(kAskers[q.asker].owner);
-    return box_window_refusal(q.asker, owner_open, answer, buf, size);
+    return reason == NULL;
 }
 
-// An Asked window's question as a reply or a read finds it, every hop
-// guarded (game.h's asked_now() and asked_pending()): its record's copy, the
-// window as it stands, whether a block kept it from its window, and the
-// prompt's id.
+// An Asked window's question as this thread reads it: a copy of its record
+// and the window against that copy.
 struct AskedQuestion {
     int asked;
     bool blocked;
@@ -2927,74 +2596,56 @@ struct AskedQuestion {
     AskedRecord record;
 };
 
-bool asked_question_guarded(int a, AskedQuestion* q, char* why, size_t size) {
+void asked_read(int a, AskedQuestion* q) {
     memset(q, 0, sizeof(*q));
     q->asked = a;
-    const int n = g_engine.inv.asked_window[a];
-    AskedRecord& r = q->record;
-    if (!asked_records(a) || !g_engine.asked[a].read(&r)) {
-        memset(&r, 0, sizeof(r));
+    if (!asked_records(a) || !g_engine.asked[a].read(&q->record)) {
+        memset(&q->record, 0, sizeof(q->record));
     }
-    AskedNow& now = q->now;
-    now.ctl = controller_guarded(kAskedNames[a], asked_size(a));
-    now.menu = now.ctl ? open_menu_guarded(n, NULL) : NULL;
-    if (r.active && r.owner_n >= 0) {
-        now.owner = open_menu_guarded(r.owner_n, NULL);
-    }
-    if (a == kAskedEvitem) {
-        now.list = controller_guarded("evitem", kEvitemListBytes);
-    }
-    if (a == kAskedBank) {
-        now.safe2 = bank_safe2(g_engine);
-    }
-    if (a == kAskedDoor) {
-        door_now(g_engine, &now);
-    }
+    q->now = asked_now(g_engine, kGuarded, a, q->record);
+}
+
+// asked_read(), false with `why` filled when the window asks nothing.
+bool asked_question(int a, AskedQuestion* q, char* why, size_t size) {
+    asked_read(a, q);
     char buf[kWhyBytes];
-    const char* reason = asked_pending(g_engine, a, r, now, &q->blocked, buf, sizeof(buf));
+    const char* reason = asked_pending(g_engine, a, q->record, q->now, &q->blocked, buf, sizeof(buf));
     if (reason) {
         snprintf(why, size, "%s", reason);
         return false;
     }
-    q->id = q->blocked && asked_records(a) ? r.id : static_cast<uint32_t>(g_engine.instance[n]);
+    q->id = q->blocked && asked_records(a) ? q->record.id
+                                           : static_cast<uint32_t>(g_engine.instance[g_engine.inv.asked_window[a]]);
     return true;
 }
 
-// Dialogue box d's text object and the chat log it hands its lines back
-// to, every hop guarded, NULL for either it has not.
-void dialogue_box_guarded(int d, const uint8_t** text, const uint8_t** log) {
-    const uint8_t* ctl = controller_guarded(kDialogueNames[d], kBoxBytes);
-    const uint8_t* t = ctl ? rdptr(ctl, kBoxText) : NULL;
-    *text = t && readable(t, kTextBytes) ? t : NULL;
-    const uint8_t* log_ctl = ctl ? rdptr(ctl, kBoxLog) : NULL;
-    *log = log_ctl && readable(log_ctl + kLogObject, 4) ? rdptr(log_ctl, kLogObject) : NULL;
-}
-
-// game.h's dialogue_pair_refusal() for dialogue box d with every hop
-// guarded: false, with `why` filled, when it and its twin take no answer
-// (`answer`) or cancel now.
-bool dialogue_question_guarded(int d, bool answer, char* why, size_t size) {
-    const uint8_t* text = NULL;
-    const uint8_t* log = NULL;
-    const uint8_t* twin_text = NULL;
-    const uint8_t* twin_log = NULL;
-    dialogue_box_guarded(d, &text, &log);
-    dialogue_box_guarded(kDialogueCount - 1 - d, &twin_text, &twin_log);
-    const uint8_t* allowed = g_engine.game.query_cancel_allowed;
+// Whether Asked window a takes the reply now, `answer` with `value` or its
+// cancel; false with `why` filled.
+bool asked_takes(int a, bool answer, int32_t value, char* why, size_t size) {
+    AskedQuestion q;
+    asked_read(a, &q);
     char buf[kWhyBytes];
-    const char* reason = dialogue_pair_refusal(d, text, log, twin_text, twin_log,
-        readable(allowed, 1) ? *allowed : 0, answer, buf, sizeof(buf));
+    const char* reason = asked_reply_refusal(g_engine, a, q.record, q.now, answer, value, &q.blocked, buf,
+        sizeof(buf));
     if (reason) {
         snprintf(why, size, "%s", reason);
-        return false;
     }
-    return true;
+    return reason == NULL;
 }
 
-// A text window's question as a reply or a read finds it, every hop
-// guarded (game.h's text_now() and text_asks()): the window as it stands,
-// msgline's record's copy, and the prompt's id. `answer`: for an answer,
-// which comment's view of another player's message takes none of.
+// Whether dialogue box d takes the reply now, `answer` or its cancel; false
+// with `why` filled.
+bool dialogue_takes(int d, bool answer, char* why, size_t size) {
+    char buf[kWhyBytes];
+    const char* reason = dialogue_pair_refusal(d, dialogue_pair(g_engine, kGuarded, d), answer, buf, sizeof(buf));
+    if (reason) {
+        snprintf(why, size, "%s", reason);
+    }
+    return reason == NULL;
+}
+
+// A text window's question as this thread reads it: a copy of msgline's
+// record and the window against that copy.
 struct TextQuestion {
     int text;
     uint32_t id;
@@ -3002,98 +2653,49 @@ struct TextQuestion {
     TextRecord record;
 };
 
-bool text_question_guarded(int t, bool answer, TextQuestion* q, char* why, size_t size) {
+void text_read(int t, TextQuestion* q) {
     memset(q, 0, sizeof(*q));
     q->text = t;
-    const int n = g_engine.inv.text_window[t];
-    TextRecord& r = q->record;
-    if (t != kTextMsgline || !g_engine.msgline.read(&r)) {
-        memset(&r, 0, sizeof(r));
+    if (t != kTextMsgline || !g_engine.msgline.read(&q->record)) {
+        memset(&q->record, 0, sizeof(q->record));
     }
-    TextNow& now = q->now;
-    now.ctl = controller_guarded(kTextNames[t], text_size(t));
-    now.menu = now.ctl ? open_menu_guarded(n, NULL) : NULL;
-    const TextSites& s = g_engine.game.text;
-    switch (t) {
-    case kTextStringdl:
-        now.owner = controller_guarded("delivery", kDeliveryNext + 2);
-        break;
-    case kTextScname: {
-        uint8_t* search = s.search && readable(s.search, 4) ? *s.search : NULL;
-        now.owner = search && readable(search, kSearchCriteria + 4) ? search : NULL;
-        break;
-    }
-    case kTextLink11:
-        now.owner = controller_guarded("link5", kLink5Callback + 4);
-        now.selected = link5_selected(now.owner);
-        break;
-    case kTextMsgline:
-        now.busy = s.busy && readable(s.busy, 1) ? *s.busy : 0;
-        now.player = s.player && readable(s.player, 4) ? (*s.player ? 1 : 0) : -1;
-        now.pol = s.pol && readable(s.pol, 4) ? (*s.pol && readable(*s.pol, kPolWord + 4) ? 1 : 0) : -1;
-        now.blocked = !msgline_record_gone(r, now.ctl);
-        break;
-    default:
-        break;
-    }
-    now.owner_menu = now.owner && t != kTextScname ? window_of(now.owner) : NULL;
+    q->now = text_now(g_engine, kGuarded, t, q->record);
+}
+
+// text_read(), false with `why` filled when nothing asks through the window.
+bool text_question(int t, TextQuestion* q, char* why, size_t size) {
+    text_read(t, q);
     char buf[kWhyBytes];
-    const char* reason = text_asks(t, now, r, answer, buf, sizeof(buf));
+    const char* reason = text_asks(t, q->now, q->record, false, buf, sizeof(buf));
     if (reason) {
         snprintf(why, size, "%s", reason);
         return false;
     }
-    q->id = now.blocked ? r.id : static_cast<uint32_t>(g_engine.instance[n]);
+    q->id = q->now.blocked ? q->record.id : static_cast<uint32_t>(g_engine.instance[g_engine.inv.text_window[t]]);
     return true;
 }
 
-// A text window's question asked now and the answer `a` (or its cancel)
-// one the game would take now, else `why` filled.
-bool text_takes_guarded(int t, bool answer, const TextAnswer& a, char* why, size_t size) {
+// Whether text window t takes the answer `a` (or its cancel) now; false with
+// `why` filled.
+bool text_takes(int t, bool answer, const TextAnswer& a, char* why, size_t size) {
     TextQuestion q;
-    if (!text_question_guarded(t, answer, &q, why, size)) {
-        return false;
-    }
+    text_read(t, &q);
     char buf[kWhyBytes];
-    const char* reason = text_refusal(t, q.now, answer, a, buf, sizeof(buf));
+    const char* reason = text_reply_refusal(t, q.now, q.record, answer, a, buf, sizeof(buf));
     if (reason) {
         snprintf(why, size, "%s", reason);
-        return false;
     }
-    return true;
+    return reason == NULL;
 }
 
-// An offer window as a reply or a read finds it from this thread (game.h's
-// offer_now() and offer_view(), every hop guarded), the trade's offers on
-// their way among it.
-void offer_view_guarded(int w, OfferView* v) {
-    const OfferSites& s = g_engine.game.offer;
-    OfferNow now;
-    memset(&now, 0, sizeof(now));
-    now.ctl = controller_guarded(kOfferNames[w], offer_bytes(w));
-    now.menu = now.ctl ? open_menu_guarded(g_engine.inv.offer_window[w], NULL) : NULL;
-    const uint8_t* data = s.player && readable(s.player, 4) ? *s.player : NULL;
-    now.data = offer_data_ok(s, data) ? data : NULL;
-    const uint8_t* intervals = s.intervals && readable(s.intervals, 4) ? *s.intervals : NULL;
-    now.intervals = offer_intervals_ok(s, intervals) ? intervals : NULL;
-    now.clock = clock_read(s, &now.now);
+// Offer window w's view as this thread reads it, the trade's offers on their
+// way included; returns what it was read from.
+OfferNow offer_read(int w, OfferView* v) {
+    const OfferNow now = offer_now(g_engine, kGuarded, w);
     TradePending p;
     const bool pending = w == kOfferTrade && g_engine.trade_pending.read(&p);
     offer_view(g_engine, w, now, pending ? &p : NULL, v);
-}
-
-// The player's data as the offer windows read it from this thread, NULL
-// while any table they read is not readable.
-const uint8_t* offer_data_guarded() {
-    const OfferSites& s = g_engine.game.offer;
-    const uint8_t* data = s.player && readable(s.player, 4) ? *s.player : NULL;
-    return offer_data_ok(s, data) ? data : NULL;
-}
-
-// Inventory item `index` as the player's data holds it now, read from this
-// thread; nothing for one the data does not hold.
-HeldItem held_guarded(int index) {
-    return held_item(g_engine.game.offer, offer_data_guarded(), index);
+    return now;
 }
 
 // Offer window w's open now, as the drain's gray test records it.
@@ -3101,19 +2703,19 @@ uint32_t offer_instance(int w) {
     return static_cast<uint32_t>(g_engine.instance[g_engine.inv.offer_window[w]]);
 }
 
-// The lines of the page dialogue box `ctl` showed last, oldest first, at
-// most kPageLines: the last +0x4E nodes of its list, each line's codes and
-// their count into `glyphs` and `counts`; how many were read.
-int page_lines_guarded(const uint8_t* ctl, const uint8_t** glyphs, int* counts) {
-    HU_STEP("page_lines_guarded");
+// The lines the page dialogue box showed last, oldest first, at most
+// kPageLines: each line's codes and their count into `glyphs` and `counts`;
+// returns how many were read.
+int page_lines(const uint8_t* ctl, const uint8_t** glyphs, int* counts) {
+    HU_STEP("page_lines");
     int want = rd16(ctl, kBoxPageLines);
     want = want < 0 ? 0 : want > kPageLines ? kPageLines : want;
     const uint8_t* lines[kPageLines];
     int found = 0;
     const uint8_t* node = rdptr(ctl, kBoxLinesTail);
-    for (int steps = 0; node && found < want && steps < 512 && readable(node, kNodeRemoved + 1); ++steps) {
+    for (int steps = 0; found < want && steps < 512 && can_read(kGuarded, node, kNodeRemoved + 1); ++steps) {
         const uint8_t* line = rdptr(node, kNodeItem);
-        if (!node[kNodeRemoved] && line && readable(line, kLineBytes)) {
+        if (!node[kNodeRemoved] && can_read(kGuarded, line, kLineBytes)) {
             lines[found++] = line;
         }
         node = rdptr(node, kNodePrev);
@@ -3126,47 +2728,14 @@ int page_lines_guarded(const uint8_t* ctl, const uint8_t** glyphs, int* counts) 
     return found;
 }
 
-// game.h's dead_refusal() with every hop guarded: why the KO window's own
-// confirm would not ask now, or NULL.
-const char* dead_refusal_guarded() {
-    const uint8_t* menu = open_menu_guarded(window_named("dead"), NULL);
-    return dead_refusal(g_engine, menu, controller_guarded("comyn", kYesNoBytes));
-}
-
-// game.h's session_live() with every hop guarded.
-bool session_live_guarded(int which) {
-    if (which == kSessionInvite) {
-        const uint8_t* flags = g_engine.game.party_pending;
-        return readable(flags, 1) && flags[0] != 0;
-    }
-    const uint8_t* delivery = controller_guarded("delivery", kDeliveryState + 2);
-    const uint8_t* post1 = controller_guarded("post1", kPostState + 4);
-    return (delivery && rd16(delivery, kDeliveryState) != 0) || (post1 && rd32(post1, kPostState) != 0);
-}
-
-// The id of the invite or post-box session up now, as the drain will
-// number it.
-uint32_t session_now(int which) {
-    const LONG watch = which == kSessionInvite ? g_engine.invite_watch : g_engine.post_watch;
-    MemoryBarrier();
-    return session_id(watch, session_live_guarded(which));
-}
-
-// A reply naming its prompt: refused once another open of the window has
-// come since the caller read the prompt's id (of either dialogue box for
-// one of them: game.h's open_count()), or with kCmdSession, once another
-// invite or post-box session has.
+// A reply naming its prompt is refused once another has come since the caller
+// read the prompt's id (prompt_refusal()).
 bool current_prompt(const Command& c, char* why, size_t size) {
-    if (!(c.flags & kCmdInstance)) {
-        return true;
+    const char* reason = prompt_refusal(g_engine, kGuarded, c);
+    if (reason) {
+        snprintf(why, size, "%s", reason);
     }
-    const int session = (c.flags & kCmdSession) ? session_window(g_engine.inv.names[c.target].name) : -1;
-    const uint32_t current = session >= 0 ? session_now(session) : open_count(g_engine, c.target);
-    if (current != c.instance) {
-        snprintf(why, size, "that prompt is gone");
-        return false;
-    }
-    return true;
+    return reason == NULL;
 }
 
 // Under the lock: the handle, the prompt, then `check`, then the queue,
@@ -3183,9 +2752,9 @@ int32_t queue_checked(const HuEngineHandle* ref, const Command& c, bool refuse_q
     return ok;
 }
 
-// queue_checked() for a text window's reply, its answer handed over in the
-// engine's slot for the window, written only while no reply to the window
-// is queued: the drain reads the slot until it has carried that one out.
+// The answer goes through the window's slot in the engine, written only while
+// no reply to the window is queued: the drain reads the slot until it has
+// carried that reply out.
 template <typename Check>
 int32_t queue_text(const HuEngineHandle* ref, const Command& c, int t, const TextAnswer& a, char* why,
                    uint32_t size, Check check) {
@@ -3232,7 +2801,7 @@ int32_t __stdcall op_query_cancel(const HuEngineHandle* ref, char* why, uint32_t
             if (!query_open("query_cancel", w, s)) {
                 return false;
             }
-            if (!query_cancellable()) {
+            if (event_cancel_allowed(g_engine, kGuarded) != 1) {
                 snprintf(w, s, "query_cancel: this event does not allow a cancel right now");
                 return false;
             }
@@ -3249,14 +2818,14 @@ int32_t __stdcall op_passinpu_submit(const HuEngineHandle* ref, const char* text
         kVerbAnswer);
     memcpy(c.text, text, length);
     return queue_checked(ref, c, false, why, size, [=](char* w, size_t s) {
-        const uint8_t* ctl = passinpu_pending("passinpu_submit", w, s);
+        const uint8_t* ctl = passinpu_check("passinpu_submit", w, s);
         return ctl && passinpu_fits(ctl, length, "passinpu_submit", w, s);
     });
 }
 
 int32_t __stdcall op_passinpu_cancel(const HuEngineHandle* ref, char* why, uint32_t size) {
     return queue_checked(ref, command(kOpPassinpuCancel, window_named("passinpu"), 0, 0, ref, 0, kVerbCancel),
-        false, why, size, [](char* w, size_t s) { return passinpu_pending("passinpu_cancel", w, s) != NULL; });
+        false, why, size, [](char* w, size_t s) { return passinpu_check("passinpu_cancel", w, s) != NULL; });
 }
 
 int32_t party_reply(const HuEngineHandle* ref, bool accept, char* why, uint32_t size) {
@@ -3283,7 +2852,7 @@ int32_t __stdcall op_post_close(const HuEngineHandle* ref, const char* name, cha
         [=](char* w, size_t s) {
             char prefix[32];
             snprintf(prefix, sizeof(prefix), "post_close %s", nm);
-            return post_open(nm, prefix, w, s);
+            return post_open(n, prefix, w, s);
         });
 }
 
@@ -3294,12 +2863,12 @@ int32_t __stdcall op_link5_confirm(const HuEngineHandle* ref, double slot, char*
     }
     return queue_checked(ref, command(kOpLink5Confirm, window_named("link5"), 0, 0, ref, static_cast<uint32_t>(s),
             kVerbAnswer), false, why, size,
-        [](char* w, size_t n) { return link5_pending("link5_confirm", w, n) != NULL; });
+        [](char* w, size_t n) { return link5_check("link5_confirm", w, n) != NULL; });
 }
 
 int32_t __stdcall op_link5_cancel(const HuEngineHandle* ref, char* why, uint32_t size) {
     return queue_checked(ref, command(kOpLink5Cancel, window_named("link5"), 0, 0, ref, 0, kVerbCancel), false,
-        why, size, [](char* w, size_t n) { return link5_pending("link5_cancel", w, n) != NULL; });
+        why, size, [](char* w, size_t n) { return link5_check("link5_cancel", w, n) != NULL; });
 }
 
 int32_t __stdcall op_arealist_confirm(const HuEngineHandle* ref, double zone, char* why, uint32_t size) {
@@ -3311,7 +2880,7 @@ int32_t __stdcall op_arealist_confirm(const HuEngineHandle* ref, double zone, ch
             static_cast<uint32_t>(z), kVerbAnswer), false, why, size,
         [=](char* w, size_t s) {
             bool window = false;
-            const uint8_t* ctl = area_event_guarded("arealist_confirm", w, s, &window);
+            const uint8_t* ctl = area_check("arealist_confirm", w, s, &window);
             return ctl && area_zone_ok(ctl, window, z, "arealist_confirm", w, s);
         });
 }
@@ -3320,13 +2889,13 @@ int32_t __stdcall op_arealist_cancel(const HuEngineHandle* ref, char* why, uint3
     return queue_checked(ref, command(kOpArealistCancel, window_named("arealist"), 0, 0, ref, 0, kVerbCancel),
         false, why, size, [](char* w, size_t s) {
             bool window = false;
-            return area_event_guarded("arealist_cancel", w, s, &window) != NULL;
+            return area_check("arealist_cancel", w, s, &window) != NULL;
         });
 }
 
-// The prompt's id into `c`, when the caller gave one. False for an id that
-// is no whole number from 0 up: misuse. With `sessions`, engine abi 5's: a
-// reply to prtyjoin or a post box names the session, not an open.
+// False for an id that is no whole number from 0 up: misuse. With `sessions`
+// (engine abi 5 on), a reply to prtyjoin or a post box names the session,
+// not an open.
 bool take_id(Command* c, int32_t has_id, double id, bool sessions = false) {
     if (!has_id) {
         return true;
@@ -3344,7 +2913,6 @@ bool take_id(Command* c, int32_t has_id, double id, bool sessions = false) {
     return true;
 }
 
-// Only the letters A to Z, either case.
 bool letters_only(const char* text) {
     for (const char* p = text; *p; ++p) {
         if (!((*p >= 'A' && *p <= 'Z') || (*p >= 'a' && *p <= 'z'))) {
@@ -3354,12 +2922,8 @@ bool letters_only(const char* text) {
     return true;
 }
 
-// An answer to text window t, of Lua type `kind`, as *a: 1; 0 with `why`
-// the limit the game holds it to, or -1 with `why` the misuse. The game's
-// limits: stringdl's name as the outgoing box's check takes it, comment's
-// lines and msgline's text as their fields hold them, scname's and link11's
-// names as their fields take them (letters only) and link11's colors as its
-// rows step them.
+// 1 with *a filled; 0 with `why` the game's limit the answer breaks; -1 with
+// `why` the misuse.
 int32_t text_answer_of(int t, int32_t kind, double number, const char* text, TextAnswer* a, char* why,
                        size_t size) {
     memset(a, 0, sizeof(*a));
@@ -3476,15 +3040,9 @@ int32_t text_answer_of(int t, int32_t kind, double number, const char* text, Tex
     return 1;
 }
 
-// answer(name, value[, id]): the reply the player would give in the window,
-// each window taking the value of one Lua type. A value of another type, or
-// an id that is no whole number, is misuse (-1); a value the window does not
-// list is refused (0), and so is an id another open of the window has
-// replaced. `abi`, the slot's engine abi: from 5 on a reply to prtyjoin
-// names the invite's session, from 8 on the yes/no windows take one, dead
-// takes none, its answer being its own confirm, the number boxes take a
-// whole number in the range they ask and the text windows their text, a
-// table for comment and link11.
+// A value of the wrong Lua type, or an id that is no whole number, is misuse
+// (-1); a value the window does not list, or an id another open of the window
+// has replaced, is refused (0). `abi`: the slot's engine abi.
 int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, double number, const char* text,
                      int32_t has_id, double id, uint32_t abi, char* why, uint32_t size) {
     if (!name) {
@@ -3577,8 +3135,8 @@ int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, 
             if (!ctl) {
                 return false;
             }
-            if (!query_lists_guarded(ctl, v)) {
-                snprintf(w, s, "no option in the list has the value %d (options('query') lists them)", v);
+            if (query_index_of(kGuarded, ctl, v) < 0) {
+                no_option("query", v, w, s);
                 return false;
             }
             return true;
@@ -3593,15 +3151,8 @@ int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, 
         c.flags = kCmdListed;
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
-            const uint8_t* ctl = link5_pending(NULL, w, s);
-            if (!ctl) {
-                return false;
-            }
-            if (!link5_lists_guarded(ctl, slot)) {
-                snprintf(w, s, "slot %d is not in the list (options('link5') lists them)", slot);
-                return false;
-            }
-            return true;
+            const uint8_t* ctl = link5_check(NULL, w, s);
+            return ctl && !link5_slot_refusal(g_engine, kGuarded, ctl, slot, w, s);
         });
     }
     if (strcmp(nm, "arealist") == 0) {
@@ -3613,7 +3164,7 @@ int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, 
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
             bool window = false;
-            const uint8_t* ctl = area_event_guarded(NULL, w, s, &window);
+            const uint8_t* ctl = area_check(NULL, w, s, &window);
             return ctl && area_zone_ok(ctl, window, row_id, NULL, w, s);
         });
     }
@@ -3626,7 +3177,7 @@ int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, 
         memcpy(c.text, text, length);
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
-            const uint8_t* ctl = passinpu_pending(NULL, w, s);
+            const uint8_t* ctl = passinpu_check(NULL, w, s);
             return ctl && passinpu_fits(ctl, length, NULL, w, s);
         });
     }
@@ -3640,7 +3191,7 @@ int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, 
         Command c = command(kOpYesNoAnswer, n, 0, 0, ref, number != 0 ? 1 : 0, kVerbAnswer);
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size,
-            [=](char* w, size_t s) { return yesno_pending_guarded(n, w, s) != NULL; });
+            [=](char* w, size_t s) { return yesno_pending(g_engine, kGuarded, n, false, w, s) != NULL; });
     }
     if (box >= 0) {
         int v = 0;
@@ -3651,31 +3202,14 @@ int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, 
         }
         Command c = command(kOpBoxAnswer, n, 0, 0, ref, static_cast<uint32_t>(v), kVerbAnswer);
         take_id(&c, has_id, id);
-        return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
-            BoxQuestion q;
-            if (!box_question_guarded(box, &q, w, s)) {
-                return false;
-            }
-            const int32_t max = box_max(q.ctl, box);
-            if (v < kBoxLayouts[box].min || v > max) {
-                snprintf(w, s, "%d is outside %d..%d, what %s takes now", v, static_cast<int>(kBoxLayouts[box].min),
-                    static_cast<int>(max), kBoxNames[box]);
-                return false;
-            }
-            char buf[kWhyBytes];
-            const char* refused = box_refusal_guarded(q, true, buf, sizeof(buf));
-            if (refused) {
-                snprintf(w, s, "%s", refused);
-                return false;
-            }
-            return true;
-        });
+        return queue_checked(ref, c, true, why, size,
+            [=](char* w, size_t s) { return box_takes(box, true, v, w, s); });
     }
     if (dead) {
         Command c = command(kOpDeadConfirm, n, 0, 0, ref, 0, kVerbAnswer);
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size, [](char* w, size_t s) {
-            const char* reason = dead_refusal_guarded();
+            const char* reason = dead_confirm_refusal(g_engine, kGuarded);
             if (reason) {
                 snprintf(w, s, "%s", reason);
             }
@@ -3696,34 +3230,15 @@ int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, 
             }
         }
         Command c = command(kOpAskedAnswer, n, 0, 0, ref, static_cast<uint32_t>(v), kVerbAnswer);
-        if (asked == kAskedGmtell) {
-            c.flags = kCmdListed;
-        }
         take_id(&c, has_id, id);
-        return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
-            AskedQuestion q;
-            if (!asked_question_guarded(asked, &q, w, s)) {
-                return false;
-            }
-            char buf[kWhyBytes];
-            const char* refused = asked_refusal(g_engine, asked, q.now, q.record, q.blocked, true, v, buf,
-                sizeof(buf));
-            if (!refused && asked == kAskedGmtell && !query_lists_guarded(q.now.ctl, v)) {
-                snprintf(buf, sizeof(buf), "no option in the list has the value %d (options('gmtell') lists them)", v);
-                refused = buf;
-            }
-            if (refused) {
-                snprintf(w, s, "%s", refused);
-                return false;
-            }
-            return true;
-        });
+        return queue_checked(ref, c, true, why, size,
+            [=](char* w, size_t s) { return asked_takes(asked, true, v, w, s); });
     }
     if (dialogue >= 0) {
         Command c = command(kOpDialogueAnswer, n, 0, 0, ref, 0, kVerbAnswer);
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size,
-            [=](char* w, size_t s) { return dialogue_question_guarded(dialogue, true, w, s); });
+            [=](char* w, size_t s) { return dialogue_takes(dialogue, true, w, s); });
     }
     const int offer = abi >= 8 ? offer_named(nm) : -1;
     if (offer >= 0) {
@@ -3736,7 +3251,7 @@ int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, 
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
             OfferView v;
-            offer_view_guarded(offer, &v);
+            offer_read(offer, &v);
             char buf[kWhyBytes];
             const char* refused = offer_reply_refusal(v, true, buf, sizeof(buf));
             if (refused) {
@@ -3761,7 +3276,7 @@ int32_t answer_reply(const HuEngineHandle* ref, const char* name, int32_t kind, 
         Command c = command(kOpTextAnswer, n, 0, 0, ref, 0, kVerbAnswer);
         take_id(&c, has_id, id);
         return queue_text(ref, c, text_t, a, why, size,
-            [=](char* w, size_t s) { return text_takes_guarded(text_t, true, a, w, s); });
+            [=](char* w, size_t s) { return text_takes(text_t, true, a, w, s); });
     }
     char text_why[kWhyBytes];
     snprintf(text_why, sizeof(text_why), abi >= 8
@@ -3808,8 +3323,8 @@ bool whole_number(double v, int64_t* out) {
     return true;
 }
 
-// The offer window `name` names for offer() and withdraw(); -1 with `why`
-// filled, the result offer8 or withdraw8 returns in *result.
+// -1 with `why` filled and the op's result in *result when `name` is no offer
+// window.
 int offer_window_of(const HuEngineHandle* ref, const char* name, const char* verb, char* why, uint32_t size,
                     int32_t* result) {
     char found[kWhyBytes];
@@ -3828,12 +3343,9 @@ int offer_window_of(const HuEngineHandle* ref, const char* name, const char* ver
     return w;
 }
 
-// offer(name, item, count): `count` of inventory item `item`, or with item
-// "gil" `count` gil, into the window's offer, refused up front for all the
-// game would refuse, its gray test of the item as the drain last ran it on
-// this open and this item; the game thread runs that test again. A count
-// that is no whole number, or an item that is neither an index nor "gil",
-// is misuse.
+// Refused up front for all the game would refuse, its gray test of the item
+// as the drain last ran it on this open included; the game thread runs that
+// test again.
 int32_t __stdcall op_offer8(const HuEngineHandle* ref, const char* name, double item, const char* item_text,
                             double count, char* why, uint32_t size) {
     int64_t index = 0;
@@ -3866,10 +3378,10 @@ int32_t __stdcall op_offer8(const HuEngineHandle* ref, const char* name, double 
         static_cast<uint32_t>(n < 0 ? 0 : n), kVerbOffer);
     return queue_checked(ref, c, true, why, size, [=](char* t, size_t ts) {
         OfferView v;
-        offer_view_guarded(w, &v);
+        const OfferNow now = offer_read(w, &v);
         char buf[kWhyBytes];
         int slot = 0;
-        const HeldItem held = x ? held_guarded(x) : HeldItem();
+        const HeldItem held = held_item(g_engine.game.offer, now.data, x);
         const char* refused = offer_refusal(v, x, held, n, &slot, buf, sizeof(buf));
         GrayRows rows;
         if (!refused && x && g_engine.gray_table.read(&rows)) {
@@ -3883,8 +3395,7 @@ int32_t __stdcall op_offer8(const HuEngineHandle* ref, const char* name, double 
     });
 }
 
-// withdraw(name, item): inventory item `item` back out of the window's
-// offer, as its own row's confirm takes it out.
+// Takes the item out of the offer as its own row's confirm does.
 int32_t __stdcall op_withdraw8(const HuEngineHandle* ref, const char* name, double item, char* why,
                                uint32_t size) {
     int64_t index = 0;
@@ -3905,7 +3416,7 @@ int32_t __stdcall op_withdraw8(const HuEngineHandle* ref, const char* name, doub
     Command c = command(kOpWithdraw, g_engine.inv.offer_window[w], x, 0, ref, 0, kVerbWithdraw);
     return queue_checked(ref, c, true, why, size, [=](char* t, size_t ts) {
         OfferView v;
-        offer_view_guarded(w, &v);
+        offer_read(w, &v);
         char buf[kWhyBytes];
         int slot = 0;
         const char* refused = withdraw_refusal(v, x, &slot, buf, sizeof(buf));
@@ -3917,28 +3428,8 @@ int32_t __stdcall op_withdraw8(const HuEngineHandle* ref, const char* name, doub
     });
 }
 
-// game.h's post_end() checks with every hop guarded: with post1's window
-// instance live, the gates the player's cancel passes, else post_close's.
-bool box_cancellable(const char* nm, char* why, size_t size) {
-    const uint8_t* menu = window_of(controller_guarded("post1", kCtlMenu + 4));
-    if (!menu) {
-        return post_open(nm, NULL, why, size);
-    }
-    const char* reason = box_cancel_refusal(menu);
-    if (reason) {
-        snprintf(why, size, "%s", reason);
-        return false;
-    }
-    return true;
-}
-
-// cancel(name[, id]): the way out the window itself offers, or the end of
-// the session for the post box. `abi`, the slot's engine abi: from 4 on the
-// incoming box ends as its window's own cancel does, where abi 3 refuses
-// while a box window is live; from 5 on a reply to prtyjoin or a box names
-// its session; from 8 on the yes/no windows, the number boxes and the text
-// windows take one, and dead's and comment's refusals say why they have
-// none.
+// The way out the window itself offers; for a post box, the session's end.
+// `abi`: the slot's engine abi.
 int32_t cancel_reply(const HuEngineHandle* ref, const char* name, int32_t has_id, double id, uint32_t abi,
                      char* why, uint32_t size) {
     Command probe;
@@ -3962,8 +3453,8 @@ int32_t cancel_reply(const HuEngineHandle* ref, const char* name, int32_t has_id
                 if (!query_open(NULL, w, s)) {
                     return false;
                 }
-                if (!query_cancellable()) {
-                    snprintf(w, s, "query cannot be canceled now: the event allows no cancel");
+                if (event_cancel_allowed(g_engine, kGuarded) != 1) {
+                    snprintf(w, s, "%s", kQueryNoCancel);
                     return false;
                 }
                 return true;
@@ -3973,20 +3464,20 @@ int32_t cancel_reply(const HuEngineHandle* ref, const char* name, int32_t has_id
         c = command(kOpPassinpuCancel, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size,
-            [](char* w, size_t s) { return passinpu_pending(NULL, w, s) != NULL; });
+            [](char* w, size_t s) { return passinpu_check(NULL, w, s) != NULL; });
     }
     if (strcmp(nm, "link5") == 0) {
         c = command(kOpLink5Cancel, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size,
-            [](char* w, size_t s) { return link5_pending(NULL, w, s) != NULL; });
+            [](char* w, size_t s) { return link5_check(NULL, w, s) != NULL; });
     }
     if (strcmp(nm, "arealist") == 0) {
         c = command(kOpArealistCancel, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size, [](char* w, size_t s) {
             bool window = false;
-            return area_event_guarded(NULL, w, s, &window) != NULL;
+            return area_check(NULL, w, s, &window) != NULL;
         });
     }
     if (strcmp(nm, "prtyjoin") == 0) {
@@ -3997,13 +3488,18 @@ int32_t cancel_reply(const HuEngineHandle* ref, const char* name, int32_t has_id
     if (abi >= 4 && (strcmp(nm, "post1") == 0 || strcmp(nm, "post2") == 0)) {
         c = command(kOpPostEnd, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id, abi >= 5);
-        return queue_checked(ref, c, true, why, size,
-            [=](char* w, size_t s) { return box_cancellable(nm, w, s); });
+        return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
+            const char* reason = post_end_refusal(g_engine, kGuarded, n, post1_window(g_engine, kGuarded));
+            if (reason) {
+                snprintf(w, s, "%s", reason);
+            }
+            return reason == NULL;
+        });
     }
     if (strcmp(nm, "delivery") == 0 || strcmp(nm, "post1") == 0 || strcmp(nm, "post2") == 0) {
         c = command(kOpPostClose, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id, abi >= 5);
-        return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) { return post_open(nm, NULL, w, s); });
+        return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) { return post_open(n, NULL, w, s); });
     }
     if (abi >= 8 && strcmp(nm, "dead") == 0) {
         return refusal_result(ref, why, size,
@@ -4013,19 +3509,8 @@ int32_t cancel_reply(const HuEngineHandle* ref, const char* name, int32_t has_id
         const int box = box_named(nm);
         c = command(kOpBoxCancel, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id);
-        return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
-            BoxQuestion q;
-            if (!box_question_guarded(box, &q, w, s)) {
-                return false;
-            }
-            char buf[kWhyBytes];
-            const char* refused = box_refusal_guarded(q, false, buf, sizeof(buf));
-            if (refused) {
-                snprintf(w, s, "%s", refused);
-                return false;
-            }
-            return true;
-        });
+        return queue_checked(ref, c, true, why, size,
+            [=](char* w, size_t s) { return box_takes(box, false, 0, w, s); });
     }
     if (abi >= 8 && asked_named(nm) >= 0) {
         const int asked = asked_named(nm);
@@ -4034,39 +3519,21 @@ int32_t cancel_reply(const HuEngineHandle* ref, const char* name, int32_t has_id
         }
         c = command(kOpAskedCancel, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id);
-        return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
-            AskedQuestion q;
-            if (!asked_question_guarded(asked, &q, w, s)) {
-                return false;
-            }
-            char buf[kWhyBytes];
-            const char* refused = asked_refusal(g_engine, asked, q.now, q.record, q.blocked, false, 0, buf,
-                sizeof(buf));
-            if (refused) {
-                snprintf(w, s, "%s", refused);
-                return false;
-            }
-            return true;
-        });
+        return queue_checked(ref, c, true, why, size,
+            [=](char* w, size_t s) { return asked_takes(asked, false, 0, w, s); });
     }
     if (abi >= 8 && dialogue_named(nm) >= 0) {
         const int dialogue = dialogue_named(nm);
         c = command(kOpDialogueCancel, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size,
-            [=](char* w, size_t s) { return dialogue_question_guarded(dialogue, false, w, s); });
+            [=](char* w, size_t s) { return dialogue_takes(dialogue, false, w, s); });
     }
     if (abi >= 8 && yesno_window(nm)) {
         c = command(kOpYesNoCancel, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id);
-        return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
-            const uint8_t* ctl = yesno_pending_guarded(n, w, s);
-            if (ctl && !ctl[kYesNoCancellable]) {
-                snprintf(w, s, "this question cannot be canceled; answer it");
-                return false;
-            }
-            return ctl != NULL;
-        });
+        return queue_checked(ref, c, true, why, size,
+            [=](char* w, size_t s) { return yesno_pending(g_engine, kGuarded, n, true, w, s) != NULL; });
     }
     if (abi >= 8 && offer_named(nm) >= 0) {
         const int offer = offer_named(nm);
@@ -4074,7 +3541,7 @@ int32_t cancel_reply(const HuEngineHandle* ref, const char* name, int32_t has_id
         take_id(&c, has_id, id);
         return queue_checked(ref, c, true, why, size, [=](char* w, size_t s) {
             OfferView v;
-            offer_view_guarded(offer, &v);
+            offer_read(offer, &v);
             char buf[kWhyBytes];
             const char* refused = offer_reply_refusal(v, false, buf, sizeof(buf));
             if (refused) {
@@ -4096,7 +3563,7 @@ int32_t cancel_reply(const HuEngineHandle* ref, const char* name, int32_t has_id
         c = command(kOpTextCancel, n, 0, 0, ref, 0, kVerbCancel);
         take_id(&c, has_id, id);
         return queue_text(ref, c, t, a, why, size,
-            [=](char* w, size_t s) { return text_takes_guarded(t, false, a, w, s); });
+            [=](char* w, size_t s) { return text_takes(t, false, a, w, s); });
     }
     char text_why[kWhyBytes];
     snprintf(text_why, sizeof(text_why), abi >= 8
@@ -4164,7 +3631,7 @@ int32_t resize_command(const HuEngineHandle* ref, const char* name, const char* 
                 snprintf(why, size, "usage: resize(name, rows) or resize(name, w, h) with whole numbers");
             } else if (synthetic(g_engine, n) && (two ? (a >= 1 && a <= 0x7FFF && b >= 1 && b <= 0x7FFF) : a >= 1)) {
                 // Accepted and ignored: the compass and the target arrows
-                // have no size to set; nothing is queued or remembered.
+                // have no size.
                 ok = true;
             } else if (!two && !f) {
                 snprintf(why, size, "resize %s: it has no template family; resize(name, w, h) sets any size", nm);
@@ -4194,12 +3661,8 @@ int32_t __stdcall op_resize3(const HuEngineHandle* ref, const char* name, const 
     return resize_command(ref, name, size_text, true, why, size);
 }
 
-// ---------------------------------------------------------------------------
-// Events.
-
-// Engine abi 1 and 2's names: an open and a return from under another
-// window were both `show`, a close and a cover both `close`; errors go to
-// abi 3's poll alone.
+// Engine abi 1 and 2 name an open and an uncover `show`, a close and a cover
+// `close`; errors reach abi 3's poll alone.
 const char* old_event_name(int type, int32_t* fresh) {
     *fresh = -1;
     switch (type) {
@@ -4254,7 +3717,7 @@ void error_reason(const ErrorRecord& r, char* out, size_t size) {
     }
 }
 
-// Up to `max` raw events past the handle's cursor, under the lock.
+// Up to `max` raw events past the handle's cursor.
 int take_events(const HuEngineHandle* ref, uint32_t* raw, int max, uint32_t* dropped, char* why, uint32_t size) {
     HU_STEP("take_events");
     lock();
@@ -4389,13 +3852,9 @@ int32_t __stdcall op_poll4(const HuEngineHandle* ref, HuEngineEvent4* out, uint3
 bool write_holders(ReplyWriter& w, const char* key, int n, uint8_t bit, const HuEngineHandle* ref);
 bool write_blockers(ReplyWriter& w, const char* key, int n, int category, const HuEngineHandle* ref);
 
-// One event for engine abi 5's poll, as a table on the reply; false for one
-// that is not this handle's or names nothing. Under the lock. A blocked
-// event's `by` names the handles whose hold refused the open: the window's
-// whole-window holders, and on ability the holders of the list it carries.
-// From `version` 8 on, a pending event also comes for a number box's
-// question, `what` the box's name, but not to the handle whose reply ended
-// it; and a page event when a dialogue box shows a new page.
+// Under the lock. False for an event that is not this handle's or names
+// nothing. A number box's pending event (version 8 on) skips the handle whose
+// reply ended the question.
 bool write_event(ReplyWriter& w, const HuEngineHandle* ref, uint32_t raw, int version) {
     const int type = event_type(raw);
     if (type == kEvCursor) {
@@ -4458,7 +3917,7 @@ bool write_event(ReplyWriter& w, const HuEngineHandle* ref, uint32_t raw, int ve
     if (event_has_category(raw)) {
         category = event_category(raw);
         w.set_number("category", category);
-        if (const char* named = category_name(category)) {
+        if (const char* named = category_name(category, static_cast<uint32_t>(version))) {
             w.set_string("category_name", named);
         }
     }
@@ -4471,14 +3930,8 @@ bool write_event(ReplyWriter& w, const HuEngineHandle* ref, uint32_t raw, int ve
 // Lua-thread only, under the lock.
 uint32_t g_poll_raw[kEventCapacity];
 
-// Engine abi 5's poll: every event past the handle's cursor as a list of
-// tables, {event, name} and each type's own fields (on ability, the list
-// the event is about as category and category_name), closed by {event =
-// 'resync', dropped} when events were lost; then the count lost. The
-// cursor moves only when the reply fits, so a retry with `used` bytes
-// reads the same events. Engine abi 8's adds the pending events of the
-// questions a block keeps from their windows, and the dialogue boxes' page
-// events.
+// The cursor moves only when the reply fits, so a retry with `used` bytes
+// reads the same events.
 void poll_reply(const HuEngineHandle* ref, HuEngineReply* reply, int version) {
     HU_STEP_AT("poll_reply", version);
     ReplyWriter w = {reply};
@@ -4523,9 +3976,6 @@ void __stdcall op_poll8(const HuEngineHandle* ref, HuEngineReply* reply) {
     poll_reply(ref, reply, 8);
 }
 
-// ---------------------------------------------------------------------------
-// Reads.
-
 bool remembered(const MemEntry& m) {
     return m.active || m.size_kind;
 }
@@ -4534,8 +3984,7 @@ bool written_by(int32_t slot, uint32_t gen, const HuEngineHandle* ref) {
     return ref && slot == ref->slot && gen == ref->generation;
 }
 
-// Under the lock: the handle may read. A read that cannot writes nil and
-// the reason.
+// Whether the handle may read; when not, writes nil and the reason.
 bool readable_for(const HuEngineHandle* ref, ReplyWriter& w) {
     char why[256];
     lock();
@@ -4562,10 +4011,7 @@ void write_size(ReplyWriter& w, const MemEntry& m, const HuEngineHandle* ref, co
     w.field("size");
 }
 
-// The remembered position and size of one window, each with its own last
-// writer, as engine abi 1 and 2 give it: x, y, docked, owner, mine when a
-// position is remembered, and size {rows} or {w, h} with its owner and mine
-// when a size is.
+// Engine abi 1 and 2's shape; position and size each name their own writer.
 void write_memory(ReplyWriter& w, const MemEntry& m, const HuEngineHandle* ref, const char* owner,
                   const char* size_owner) {
     w.table();
@@ -4583,9 +4029,7 @@ void write_memory(ReplyWriter& w, const MemEntry& m, const HuEngineHandle* ref, 
     }
 }
 
-// The same as engine abi 3 gives it: {position = {x, y, group, owner, mine},
-// size = {rows | w, h, owner, mine}}, either part absent when nothing is
-// remembered for it. `group` names the group whose move wrote the position.
+// Engine abi 3's shape. `group` names the group whose move wrote the position.
 void write_memory3(ReplyWriter& w, const MemEntry& m, const HuEngineHandle* ref, const char* owner,
                    const char* size_owner) {
     w.table();
@@ -4607,7 +4051,7 @@ void write_memory3(ReplyWriter& w, const MemEntry& m, const HuEngineHandle* ref,
     }
 }
 
-// A writer's name, copied under the lock; empty when that handle is gone.
+// Under the lock. Empty when that handle is gone.
 void owner_name(int32_t slot, uint32_t gen, char* out, size_t size) {
     out[0] = '\0';
     Handle* h = g_rt.handles.get(slot, gen);
@@ -4681,12 +4125,10 @@ struct InfoData {
     int16_t arrows[2][2];
 };
 
-// What info() reports of the compass: its object's words while the global
-// names one, its box, its anchor as the origin, and as the default box the
-// one on the anchor the game had before the engine moved it, else the box
-// it has.
+// The default box is the one on the game's anchor before the engine moved
+// it, else the current box.
 void collect_compass(InfoData* d) {
-    const uint8_t* c = compass_guarded();
+    const uint8_t* c = compass_object(g_engine, kGuarded);
     d->open = compass_open(c);
     if (!c) {
         return;
@@ -4706,18 +4148,12 @@ void collect_compass(InfoData* d) {
     }
 }
 
-// What info() reports of the target arrows: whether the target window's
-// draw paints one, and while its window is live, its controller and the
-// point of each arrow painted. They have no box: each is a sprite at a
-// point the game takes from the target.
+// The target arrows have no box: each is a sprite at a point the game takes
+// from the target.
 void collect_targetarrow(InfoData* d) {
-    uint8_t* ctl = NULL;
-    const uint8_t* menu = live_menu_guarded(g_engine.inv.targetwi, &ctl);
-    if (!menu || !readable(ctl, kTargetBytes)) {
-        return;
-    }
+    const uint8_t* ctl = NULL;
+    d->open = targetarrow_drawn(g_engine, kGuarded, &ctl);
     d->menu = ctl;
-    d->open = arrows_drawn(menu, ctl, mcb_guarded(), modal_guarded());
     if (!d->open) {
         return;
     }
@@ -4752,7 +4188,7 @@ void collect_info(int n, InfoData* d) {
     }
     d->registry_policy = rd32(g_engine.game.registry + g_engine.inv.names[n].rows[0] * kRowStride, kRowPolicy);
     uint8_t* ctl = NULL;
-    uint8_t* menu = open_menu_guarded(n, &ctl);
+    uint8_t* menu = open_menu(g_engine, kGuarded, n, &ctl);
     d->open = menu != NULL;
     if (menu) {
         d->menu = menu;
@@ -4767,15 +4203,8 @@ void collect_info(int n, InfoData* d) {
         d->origin[0] = rd16(menu, kMenuOrigin);
         d->origin[1] = rd16(menu, kMenuOrigin + 2);
         const char* nm = g_engine.inv.names[n].name;
-        if (strcmp(nm, "query") == 0) {
-            d->has_cursor = readable(ctl, kQueryTop + 2) && query_position(ctl, &d->cursor, &d->top);
-        } else if (strcmp(nm, "arealist") == 0) {
-            d->has_cursor = readable(ctl, kAreaBytes) && area_position(ctl, menu, area_count(ctl), &d->cursor, &d->top);
-        } else {
-            d->cursor = rd16(menu, kMenuCursor);
-            d->has_cursor = true;
-        }
-        if (strcmp(nm, "ability") == 0 && readable(ctl, kAbilityCategory + 4)) {
+        d->has_cursor = cursor_row(kGuarded, nm, menu, ctl, &d->cursor, &d->top);
+        if (strcmp(nm, "ability") == 0 && can_read(kGuarded, ctl, kAbilityCategory + 4)) {
             d->has_category = true;
             d->category = static_cast<int32_t>(rd32(ctl, kAbilityCategory));
         }
@@ -5030,8 +4459,6 @@ bool write_blockers(ReplyWriter& w, const char* key, int n, int category, const 
     });
 }
 
-// The macro keys: {blocked, blocked_by = the handles holding the block,
-// mine}.
 void __stdcall op_macros(const HuEngineHandle* ref, HuEngineReply* reply) {
     ReplyWriter w = {reply};
     if (!readable_for(ref, w)) {
@@ -5042,9 +4469,7 @@ void __stdcall op_macros(const HuEngineHandle* ref, HuEngineReply* reply) {
     w.set_bool("mine", write_holding(w, "blocked_by", ref, [](const Handle& h) { return h.macros_hold != 0; }));
 }
 
-// The compass's and the target arrows' info: what every window has at the
-// top but the layer, which they have none of, and the compass's box; the
-// game's words under `detail`.
+// The compass and the target arrows have no layer; only the compass has a box.
 void write_compass_info(const HuEngineHandle* ref, int n, const InfoData& d, ReplyWriter& w, bool v4) {
     const NameEntry& ne = g_engine.inv.names[n];
     const bool arrows = is_targetarrow(g_engine, n);
@@ -5098,22 +4523,24 @@ void write_compass_info(const HuEngineHandle* ref, int n, const InfoData& d, Rep
     w.field("detail");
 }
 
-// The list ability's window shows, by its controller's category (core.h's
-// kAbilityLists); NULL for a value no list has.
-const char* category_name(int32_t category) {
-    return ability_list_name(category);
-}
-
-// The lists of ability in `mask`, each by its name, or by its number where
-// no list has it, as a list under `key`.
-void write_categories(ReplyWriter& w, const char* key, uint32_t mask) {
+// Each list by its engine abi `abi` name, or by number where it has none; a
+// name two numbers share is listed once.
+void write_categories(ReplyWriter& w, const char* key, uint32_t mask, uint32_t abi) {
     w.table();
     int k = 0;
     for (int c = 0; c < kCategoryBits; ++c) {
         if (!(mask & (1u << c))) {
             continue;
         }
-        if (const char* named = category_name(c)) {
+        if (const char* named = category_name(c, abi)) {
+            bool listed = false;
+            for (int earlier = 0; earlier < c && !listed; ++earlier) {
+                const char* other = category_name(earlier, abi);
+                listed = (mask & (1u << earlier)) && other && strcmp(other, named) == 0;
+            }
+            if (listed) {
+                continue;
+            }
             w.string(named);
         } else {
             w.number(c);
@@ -5132,13 +4559,10 @@ uint32_t own_categories(const HuEngineHandle* ref) {
     return mask;
 }
 
-// Engine abi 3's info, and with `v4` abi 4's: what an addon draws by at the
-// top, the engine's and the game's own words under `detail`. Abi 4 has
-// `blockable` for abi 3's `hide_only`, the handles holding each hide and
-// block, `resize` for `sizes`, and `elements_truncated` beside `elements`.
-// On ability, `blocked_categories` lists the lists any handle blocks, and
-// mine.blocked_categories this handle's.
-void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* reply, bool v4) {
+// Engine abi 3, 4 and 9's info: what an addon draws by at the top, the
+// engine's and the game's own words under `detail`.
+void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* reply, uint32_t abi) {
+    const bool v4 = abi >= 4;
     HU_STEP("write_info");
     ReplyWriter w = {reply};
     const int n = read_target(ref, name, true, w);
@@ -5162,7 +4586,7 @@ void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* repl
     w.set_bool("blocked", (d.want & kWantBlocked) != 0);
     const bool lists = n == g_engine.inv.ability;
     if (lists) {
-        write_categories(w, "blocked_categories", static_cast<uint32_t>(g_engine.holds.ability_want));
+        write_categories(w, "blocked_categories", static_cast<uint32_t>(g_engine.holds.ability_want), abi);
     }
     if (v4) {
         w.set_bool("blockable", blockable(n));
@@ -5172,7 +4596,7 @@ void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* repl
         w.set_bool("hidden", hiding);
         w.set_bool("blocked", blocking);
         if (lists) {
-            write_categories(w, "blocked_categories", own_categories(ref));
+            write_categories(w, "blocked_categories", own_categories(ref), abi);
         }
         w.field("mine");
     } else {
@@ -5208,7 +4632,7 @@ void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* repl
         }
         if (d.has_category) {
             w.set_number("category", d.category);
-            if (const char* named = category_name(d.category)) {
+            if (const char* named = category_name(d.category, abi)) {
                 w.set_string("category_name", named);
             }
         }
@@ -5257,11 +4681,15 @@ void write_info(const HuEngineHandle* ref, const char* name, HuEngineReply* repl
 }
 
 void __stdcall op_info3(const HuEngineHandle* ref, const char* name, HuEngineReply* reply) {
-    write_info(ref, name, reply, false);
+    write_info(ref, name, reply, 3);
 }
 
 void __stdcall op_info4(const HuEngineHandle* ref, const char* name, HuEngineReply* reply) {
-    write_info(ref, name, reply, true);
+    write_info(ref, name, reply, 4);
+}
+
+void __stdcall op_info9(const HuEngineHandle* ref, const char* name, HuEngineReply* reply) {
+    write_info(ref, name, reply, 9);
 }
 
 void __stdcall op_list(const HuEngineHandle* ref, HuEngineReply* reply) {
@@ -5296,8 +4724,7 @@ void __stdcall op_list(const HuEngineHandle* ref, HuEngineReply* reply) {
     }
 }
 
-// Every window keyed by name: its state at the top, the registry's words
-// under `detail`. Abi 4 has `blockable` for abi 3's `hide_only`.
+// Every window keyed by name, the registry's words under `detail`.
 void write_list(const HuEngineHandle* ref, HuEngineReply* reply, bool v4) {
     HU_STEP("write_list");
     ReplyWriter w = {reply};
@@ -5362,17 +4789,16 @@ void __stdcall op_opened(const HuEngineHandle* ref, HuEngineReply* reply) {
     }
 }
 
-// The manager's active menu (mcb+0x54) by name while it is open; when it is
-// none of the registry's, closing, or none at all, nil (abi 3) or false
-// (abi 4).
+// The manager's active menu by name while it is open; else nil (abi 3) or
+// false (abi 4).
 void write_focused(const HuEngineHandle* ref, HuEngineReply* reply, bool v4) {
     ReplyWriter w = {reply};
     if (!readable_for(ref, w)) {
         return;
     }
     const uint8_t* menu = rdptr(g_engine.game.mcb, kMcbActive);
-    const uint8_t* res = menu && readable(menu, kMenuBytes) && menu_is_open(menu) ? rdptr(menu, kMenuRes) : NULL;
-    const int n = res && readable(res + kResKey, kKeyLen) ? g_engine.inv.find_key16(res + kResKey) : -1;
+    const bool open = can_read(kGuarded, menu, kMenuBytes) && menu_is_open(menu);
+    const int n = open ? name_of_menu(g_engine, kGuarded, menu) : -1;
     if (n >= 0) {
         w.string(g_engine.inv.names[n].name);
     } else if (v4) {
@@ -5404,8 +4830,8 @@ void write_members(ReplyWriter& w, int g, const uint32_t* policy, int anchor) {
     w.field("members");
 }
 
-// `version` 1 for the table's first slot (name, index and mask too), 3, or
-// 4: the anchor's origin while it is open, and a move waiting for it.
+// `version` 1 (the table's first slot) adds name, index and mask; 4 adds the
+// open anchor's origin and a move waiting for it.
 void write_groups(const HuEngineHandle* ref, HuEngineReply* reply, int version) {
     ReplyWriter w = {reply};
     if (!readable_for(ref, w)) {
@@ -5419,7 +4845,7 @@ void write_groups(const HuEngineHandle* ref, HuEngineReply* reply, int version) 
     for (int g = 0; g < kGroupCount; ++g) {
         const GroupSpec& spec = kGroups[g];
         const int anchor = g_engine.inv.find_exact(spec.anchor);
-        const uint8_t* menu = open_menu_guarded(anchor, NULL);
+        const uint8_t* menu = anchor >= 0 ? open_menu(g_engine, kGuarded, anchor, NULL) : NULL;
         w.table();
         if (version < 3) {
             w.set_string("name", spec.name);
@@ -5466,12 +4892,10 @@ void __stdcall op_groups4(const HuEngineHandle* ref, HuEngineReply* reply) {
     write_groups(ref, reply, 4);
 }
 
-// Everything this handle wrote last, in the form apply() replays: a group
-// move as its anchor's position, taken from the anchor's entry (the members
-// it carried follow it again) or from the move waiting for the anchor to
-// open, which replaces it; a move of a window as its position, and each
-// size. Only string keys and numbers, and no empty table, so Windower's
-// config library saves it as it is.
+// Everything this handle wrote last, in the form apply() replays; a group
+// move is its anchor's position, a waiting move replacing the anchor's entry.
+// Only string keys and numbers and no empty table, so Windower's config
+// library saves it as it is.
 void __stdcall op_layout(const HuEngineHandle* ref, HuEngineReply* reply) {
     ReplyWriter w = {reply};
     if (!readable_for(ref, w)) {
@@ -5560,9 +4984,8 @@ void __stdcall op_layout(const HuEngineHandle* ref, HuEngineReply* reply) {
     }
 }
 
-// A decoded title, option or page: the plain text under `text_key`, its
-// runs under `segments_key` as {text, color, escape}, and its '?' count
-// under `undecoded_key`. Shift-JIS, the game's own encoding.
+// The text is Shift-JIS, the game's own encoding; `undecoded_key` counts the
+// '?' put in for codes with no character.
 template <typename Text>
 void write_glyph_text(ReplyWriter& w, const Text& t, const char* text_key, const char* segments_key,
         const char* undecoded_key) {
@@ -5582,13 +5005,8 @@ void write_glyph_text(ReplyWriter& w, const Text& t, const char* text_key, const
     w.set_number(undecoded_key, t.undecoded);
 }
 
-// The open NPC choice as query's controller parsed it out of the event:
-// {title, title_segments, title_undecoded, options = {{text, segments,
-// undecoded, value}, ...}} in list order, the nodes the game has tombstoned
-// left out; with `title_table`, abi 4's title = {text, segments, undecoded}.
-// Each text is its glyph codes decoded by their count, two-byte characters
-// through the table the game thread built; `value` is the option's word at
-// +0x104, the one the answer writes.
+// The open NPC choice in list order, tombstoned nodes left out; with
+// `title_table`, abi 4's title table. `value` is the word the answer writes.
 void write_query(ReplyWriter& w, const uint8_t* ctl, bool title_table) {
     GlyphText text;
     decode_glyphs(ctl + kQueryTitle, ctl[kQueryTitleCount], &g_engine.glyphs, &text);
@@ -5603,9 +5021,9 @@ void write_query(ReplyWriter& w, const uint8_t* ctl, bool title_table) {
     w.table();
     int k = 0;
     const uint8_t* node = rdptr(ctl, kQueryOptions);
-    for (int steps = 0; node && steps < kQueryListMax && readable(node, 0x15); ++steps) {
+    for (int steps = 0; steps < kQueryListMax && can_read(kGuarded, node, 0x15); ++steps) {
         const uint8_t* item = rdptr(node, 0x10);
-        if (node[0x14] == 0 && readable(item, kOptionBytes)) {
+        if (node[0x14] == 0 && can_read(kGuarded, item, kOptionBytes)) {
             decode_glyphs(item + kOptionGlyphs, item[kOptionCount], &g_engine.glyphs, &text);
             w.table();
             write_glyph_text(w, text, "text", "segments", "undecoded");
@@ -5617,37 +5035,26 @@ void write_query(ReplyWriter& w, const uint8_t* ctl, bool title_table) {
     w.field("options");
 }
 
-// query's controller with its title readable, or NULL.
-const uint8_t* query_parsed() {
-    const int n = window_named("query");
-    uint8_t* ctl = NULL;
-    if (n < 0 || !open_menu_guarded(n, &ctl) || !readable(ctl, kQueryTitle + 2 * kGlyphMax)) {
-        return NULL;
-    }
-    return ctl;
-}
-
 void __stdcall op_query_options(const HuEngineHandle* ref, HuEngineReply* reply) {
     ReplyWriter w = {reply};
     if (!readable_for(ref, w)) {
         return;
     }
-    const uint8_t* ctl = query_parsed();
+    char why[kWhyBytes];
+    const uint8_t* ctl = query_open(NULL, why, sizeof(why));
     if (!ctl) {
-        w.fail("query is not open");
+        w.fail(why);
         return;
     }
     write_query(w, ctl, false);
 }
 
-// The pending invite as prtyjoin's controller holds it: the inviter's 16
-// bytes, and whether it is to an alliance. Engine abi 5 keeps `name` for
-// the prompt's and has the inviter as `inviter`.
+// Engine abi 5 keeps `name` for the prompt's and has the inviter as `inviter`.
 void write_invite(ReplyWriter& w, const uint8_t* flags, bool v5) {
     char inviter[kPartyNameBytes + 1];
     inviter[0] = '\0';
-    const uint8_t* ctl = controller_guarded("prtyjoin", kPartyName + kPartyNameBytes);
-    if (ctl) {
+    const uint8_t* ctl = controller_at(g_engine, window_named("prtyjoin"));
+    if (can_read(kGuarded, ctl, kPartyName + kPartyNameBytes)) {
         memcpy(inviter, ctl + kPartyName, kPartyNameBytes);
         inviter[kPartyNameBytes] = '\0';
     }
@@ -5655,9 +5062,8 @@ void write_invite(ReplyWriter& w, const uint8_t* flags, bool v5) {
     w.set_bool("alliance", flags[kPartyKind] == 0);
 }
 
-// The kind of arealist row i, by its id and the list it is in: the top of
-// mode 0's and mode 3's lists opens on the current area; mode 4's rows are
-// no areas.
+// The top of mode 0's and mode 3's lists opens on the current area;
+// kAreaModeOther's rows are no areas.
 const char* area_kind(int mode, int level, int i, int id) {
     if (mode == kAreaModeOther) {
         return "other";
@@ -5676,14 +5082,28 @@ const char* area_kind(int mode, int level, int i, int id) {
 
 const size_t kAreaText = 64;
 
-// arealist's rows in order, each {text, id, kind} and column 1's value: its
-// text as `label`, or a region's count of zones as `count`; the mode, the
-// level (0 the top, a region's -id inside it) and pending, true. With
-// `blocked`, an event's choice with no window: no rows. Engine abi 3 and 4
-// have the zone rows alone, each {zone}, under `zones`.
+// A list row's columns onto the table being written: column 0's text, and
+// column 1 as a `label` when it is drawn as text, or a `count`.
+void write_row_columns(ReplyWriter& w, const uint8_t* row) {
+    char text[kAreaText];
+    copy_text(reinterpret_cast<const char*>(rdptr(row, kAreaRowValue)), text, sizeof(text));
+    w.set_string("text", text);
+    const uint8_t format = row[kAreaRowFormat + 1];
+    const uint8_t* value = rdptr(row, kAreaRowValue + 4);
+    if ((format == kFormatText || format == kFormatTextParens) && value) {
+        copy_text(reinterpret_cast<const char*>(value), text, sizeof(text));
+        w.set_string("label", text);
+    } else if (format == kFormatCount) {
+        w.set_number("count", static_cast<int32_t>(rd32(row, kAreaRowValue + 4)));
+    }
+}
+
+// `level`: 0 at the top, a region's -id inside it. With `blocked` (an event's
+// choice with no window) there are no rows. Engine abi 3 and 4 have only the
+// zone rows, under `zones`.
 void write_area(ReplyWriter& w, const uint8_t* ctl, bool v5, bool blocked) {
-    const uint8_t* rows = NULL;
-    const int count = blocked ? 0 : area_rows_guarded(ctl, &rows);
+    int count = 0;
+    const uint8_t* rows = blocked ? NULL : area_rows(kGuarded, ctl, &count);
     const int mode = ctl[kAreaMode];
     const int level = rd16(ctl, kAreaLevel);
     w.table();
@@ -5694,9 +5114,13 @@ void write_area(ReplyWriter& w, const uint8_t* ctl, bool v5, bool blocked) {
     }
     w.table();
     int k = 0;
-    int id = 0;
-    for (int i = 0; i < count && area_id_guarded(rows, i, &id); ++i) {
+    for (int i = 0; i < count; ++i) {
+        const uint8_t* entry = area_entry(kGuarded, rows, i);
+        if (!entry) {
+            continue;
+        }
         const uint8_t* row = rows + i * kAreaRowStride;
+        const int id = static_cast<int32_t>(rd32(entry, 0));
         const char* kind = area_kind(mode, level, i, id);
         if (!v5) {
             if (strcmp(kind, "zone") == 0) {
@@ -5706,20 +5130,10 @@ void write_area(ReplyWriter& w, const uint8_t* ctl, bool v5, bool blocked) {
             }
             continue;
         }
-        char text[kAreaText];
-        copy_text(reinterpret_cast<const char*>(rdptr(row, kAreaRowValue)), text, sizeof(text));
         w.table();
-        w.set_string("text", text);
+        write_row_columns(w, row);
         w.set_number("id", id);
         w.set_string("kind", kind);
-        const uint8_t format = row[kAreaRowFormat + 1];
-        const uint8_t* value = rdptr(row, kAreaRowValue + 4);
-        if ((format == kFormatText || format == kFormatTextParens) && value) {
-            copy_text(reinterpret_cast<const char*>(value), text, sizeof(text));
-            w.set_string("label", text);
-        } else if (format == kFormatCount) {
-            w.set_number("count", static_cast<int32_t>(rd32(row, kAreaRowValue + 4)));
-        }
         w.index(++k);
     }
     w.field(v5 ? "rows" : "zones");
@@ -5727,14 +5141,10 @@ void write_area(ReplyWriter& w, const uint8_t* ctl, bool v5, bool blocked) {
 
 const size_t kYesNoTextBytes = 512;
 
-// The answer yes/no window n offers first: the row the drain saw its cursor
-// on at this open, else the cursor now; with no window, the default of a
-// question asked again, the one default the controller keeps.
-bool yesno_default_guarded(int n, const uint8_t* ctl) {
-    const uint8_t* menu = open_menu_guarded(n, NULL);
-    if (!menu) {
-        return ctl[kYesNoChainedYes] != 0;
-    }
+// The answer a boolean prompt's window, its open instance `menu`, offers
+// first: the row the drain saw its cursor on at this open, else the cursor
+// now.
+bool default_yes(int n, const uint8_t* menu) {
     const LONG first = g_engine.yesno_first[n];
     MemoryBarrier();
     if (first_row_is(first, g_engine.instance[n])) {
@@ -5743,10 +5153,15 @@ bool yesno_default_guarded(int n, const uint8_t* ctl) {
     return rd16(menu, kMenuCursor) == kRowYes;
 }
 
-// The question yes/no window n asks: {text, segments, undecoded} decoded
-// from the game's own text as decode_text reads it, default, cancellable,
-// hold (a confirm the player holds through holdtime), and the mode under
-// `detail`.
+// The answer yes/no window n offers first: default_yes() with its window
+// open; with none, the one default the controller keeps, for a question
+// asked again.
+bool yesno_default(int n, const uint8_t* ctl) {
+    const uint8_t* menu = open_menu(g_engine, kGuarded, n, NULL);
+    return menu ? default_yes(n, menu) : ctl[kYesNoChainedYes] != 0;
+}
+
+// `hold`: a confirm the player holds through holdtime.
 void write_yesno(ReplyWriter& w, int n, const uint8_t* ctl) {
     char raw[kYesNoTextBytes];
     copy_text(reinterpret_cast<const char*>(rdptr(ctl, kYesNoText)), raw, sizeof(raw));
@@ -5755,7 +5170,7 @@ void write_yesno(ReplyWriter& w, int n, const uint8_t* ctl) {
     const int32_t mode = static_cast<int32_t>(rd32(ctl, kYesNoMode));
     w.table();
     write_glyph_text(w, text, "text", "segments", "undecoded");
-    w.set_bool("default", yesno_default_guarded(n, ctl));
+    w.set_bool("default", yesno_default(n, ctl));
     w.set_bool("cancellable", ctl[kYesNoCancellable] != 0);
     w.set_bool("hold", mode != 0);
     w.table();
@@ -5763,14 +5178,13 @@ void write_yesno(ReplyWriter& w, int n, const uint8_t* ctl) {
     w.field("detail");
 }
 
-// The KO window's countdown, in whole seconds as the window draws it, and
-// whether answer('dead') would ask now; the countdown's raw fields and the
-// home-point byte under `detail`.
+// `seconds` in whole seconds, as the window draws it; `askable`: whether
+// answer('dead') would ask now.
 void write_dead(ReplyWriter& w, const uint8_t* ctl) {
     const int32_t remaining = static_cast<int32_t>(rd32(ctl, kDeadRemaining));
     w.table();
     w.set_number("seconds", remaining > 0 ? remaining / kDeadTicks : 0);
-    w.set_bool("askable", dead_refusal_guarded() == NULL);
+    w.set_bool("askable", dead_confirm_refusal(g_engine, kGuarded) == NULL);
     w.table();
     w.set_number("remaining", remaining);
     w.set_number("deadline", rd32(ctl, kDeadDeadline));
@@ -5778,20 +5192,18 @@ void write_dead(ReplyWriter& w, const uint8_t* ctl) {
     w.field("detail");
 }
 
-// A number box's question: the number its window shows, the numbers it
-// takes, whether a block kept its window from opening, and for an item
-// count asked for an item picked from the inventory that item's id; the
-// callback, its context and the asker under `detail`.
+// `item`: for a count asked for an item picked from the inventory, its id.
 void write_box(ReplyWriter& w, const BoxQuestion& q) {
     const int b = q.box;
-    const void* callback = box_callback(q.ctl, b);
-    const uint8_t* context = rdptr(q.ctl, kBoxLayouts[b].context);
+    const uint8_t* ctl = q.now.ctl;
+    const void* callback = box_callback(ctl, b);
+    const uint8_t* context = rdptr(ctl, kBoxLayouts[b].context);
     w.table();
-    w.set_number("value", box_value(q.ctl, b));
+    w.set_number("value", box_value(ctl, b));
     w.set_number("min", kBoxLayouts[b].min);
-    w.set_number("max", box_max(q.ctl, b));
+    w.set_number("max", box_max(ctl, b));
     w.set_bool("blocked", q.blocked);
-    if (q.asker >= 0 && kAskers[q.asker].item && readable(context, 2)) {
+    if (q.asker >= 0 && kAskers[q.asker].item && can_read(kGuarded, context, 2)) {
         w.set_number("item", static_cast<uint16_t>(rd16(context, 0)));
     }
     w.table();
@@ -5823,24 +5235,13 @@ void write_game_text(ReplyWriter& w, const char* p, size_t bytes, const char* ke
     }
 }
 
-// The answer a boolean prompt's window offers first: the row the drain saw
-// its cursor on at this open, else the cursor now.
-bool first_row_yes_guarded(int n, const uint8_t* menu) {
-    const LONG first = g_engine.yesno_first[n];
-    MemoryBarrier();
-    if (first_row_is(first, g_engine.instance[n])) {
-        return first_row_yes(first);
-    }
-    return rd16(menu, kMenuCursor) == kRowYes;
-}
-
-// The text a window's open hook gave its list row `row`, the list's nodes
-// and items guarded; NULL for none.
-const char* row_text_guarded(const uint8_t* menu, int row) {
-    const uint8_t* node = readable(menu + kMenuList, 4) ? rdptr(menu, kMenuList) : NULL;
-    for (int steps = 0; node && steps < 512 && readable(node, 0x15); ++steps) {
+// The text a window's open hook gave its list row `row`; NULL for none.
+const char* row_text(const uint8_t* menu, int row) {
+    const uint8_t* node = can_read(kGuarded, menu + kMenuList, 4) ? rdptr(menu, kMenuList) : NULL;
+    for (int steps = 0; steps < 512 && can_read(kGuarded, node, 0x15); ++steps) {
         const uint8_t* item = rdptr(node, 0x10);
-        if (node[0x14] == 0 && readable(item, kItemRowText + 4) && rd16(item, 0) == 1 && rd16(item, kItemRowId) == row) {
+        if (node[0x14] == 0 && can_read(kGuarded, item, kItemRowText + 4) && rd16(item, 0) == 1
+            && rd16(item, kItemRowId) == row) {
             return reinterpret_cast<const char*>(rdptr(item, kItemRowText));
         }
         node = rdptr(node, 0);
@@ -5848,49 +5249,35 @@ const char* row_text_guarded(const uint8_t* menu, int row) {
     return NULL;
 }
 
-// maplist's rows in order, each {text, value, kind} and column 1's text as
-// `label` or count as `count`: kind 'map' for a zone's map, with its zone
-// and map; 'list' for a row whose answer opens a list of its own; 'close'
-// for the row that closes the list. value is the row's place, what answer()
-// takes.
+// `value` is the row's place, what answer() takes. Kind 'list': a row whose
+// answer opens a list of its own.
 void write_map_rows(ReplyWriter& w, const uint8_t* ctl) {
     const uint8_t* rows = rdptr(ctl, kMapRows);
-    const int count = map_count(ctl);
+    const int count = map_count(kGuarded, ctl);
     w.table();
+    int k = 0;
     for (int i = 0; i < count; ++i) {
-        const uint8_t* entry = map_entry(ctl, i);
+        const uint8_t* entry = map_entry(kGuarded, ctl, i);
         if (!entry) {
-            break;
+            continue;
         }
-        const uint8_t* row = rows + i * kAreaRowStride;
         const int32_t id = static_cast<int32_t>(rd32(entry, 0));
-        char text[kAreaText];
-        copy_text(reinterpret_cast<const char*>(rdptr(row, kAreaRowValue)), text, sizeof(text));
         w.table();
-        w.set_string("text", text);
+        write_row_columns(w, rows + i * kAreaRowStride);
         w.set_number("value", i + 1);
         w.set_string("kind", id == kMapCloseRow ? "close" : id >= 0 ? "map" : "list");
         if (id >= 0 && id != kMapCloseRow) {
             w.set_number("zone", id);
             w.set_number("map", static_cast<int32_t>(rd32(entry, 4)));
         }
-        const uint8_t format = row[kAreaRowFormat + 1];
-        const uint8_t* value = rdptr(row, kAreaRowValue + 4);
-        if ((format == kFormatText || format == kFormatTextParens) && value) {
-            copy_text(reinterpret_cast<const char*>(value), text, sizeof(text));
-            w.set_string("label", text);
-        } else if (format == kFormatCount) {
-            w.set_number("count", static_cast<int32_t>(rd32(row, kAreaRowValue + 4)));
-        }
-        w.index(i + 1);
+        w.index(++k);
     }
     w.field("rows");
 }
 
-// One of mogdoor's rows: its text, its kind, its exit's value unless it
-// has none (-1: the stay row, cancel()'s, and the row that opens the list
-// of areas, which the values of `areas` stand for), a zone, and whether the
-// window takes it now.
+// `value` -1: a row with no exit (the stay row, which is cancel()'s, and the
+// row that opens the area list, whose entries carry values); `enabled`:
+// whether the window takes it now.
 void write_door_row(ReplyWriter& w, const char* text, const char* kind, int32_t value, int32_t zone, bool enabled,
                     int index) {
     w.table();
@@ -5906,18 +5293,16 @@ void write_door_row(ReplyWriter& w, const char* text, const char* kind, int32_t 
     w.index(index);
 }
 
-// mogdoor's question: its title; level, 'top' or 'areas', the one it
-// shows (the top for a question its block kept from opening); `options`,
-// the rows of that level; and `areas`, the list's, each value an answer at
-// either level. The texts are the draw's, read on the game thread for this
-// prompt.
+// `level` is 'top' for a question its block kept from opening. Each `areas`
+// value is an answer at either level. The texts are the draw's, read on the
+// game thread for this prompt.
 void write_door(ReplyWriter& w, const AskedQuestion& q) {
     const uint8_t* ctl = q.now.ctl;
     DoorTexts t;
     memset(&t, 0, sizeof(t));
     const bool texts = g_engine.door_texts.read(&t) && t.ready && t.id == q.id;
     uint16_t zones[kDoorListMax];
-    const int count = door_areas(g_engine, ctl, !q.blocked, q.record.row & 0xFF, zones);
+    const int count = door_areas(g_engine, kGuarded, ctl, !q.blocked, q.record.row & 0xFF, zones);
     const bool top = q.blocked || ctl[kDoorLevel] == kDoorTop;
     const int32_t garden = g_engine.game.asked.door.garden;
     write_game_text(w, texts ? t.title : "", kDoorTextBytes - 1, "title");
@@ -5941,9 +5326,6 @@ void write_door(ReplyWriter& w, const AskedQuestion& q) {
     }
 }
 
-// An Asked window's question, in plain fields: its text as the game's
-// readers decode it, its choices, whether a block kept its window from
-// opening; the controller's words under `detail`.
 void write_asked(ReplyWriter& w, const AskedQuestion& q) {
     const int a = q.asked;
     const int n = g_engine.inv.asked_window[a];
@@ -5986,7 +5368,7 @@ void write_asked(ReplyWriter& w, const AskedQuestion& q) {
         char gm[kGmTellNameBytes + 1];
         gm[0] = '\0';
         const AskedSites& s = g_engine.game.asked;
-        const int32_t slot = readable(s.gm_slot, 4) ? *s.gm_slot : -1;
+        const int32_t slot = can_read(kGuarded, s.gm_slot, 4) ? *s.gm_slot : -1;
         if (slot >= 0 && slot < kGmTellSlots) {
             copy_text(reinterpret_cast<const char*>(s.gm_queue + slot * kGmTellSlotBytes), gm, sizeof(gm));
         }
@@ -5998,7 +5380,7 @@ void write_asked(ReplyWriter& w, const AskedQuestion& q) {
         w.table();
         for (int row = 1; row <= 2; ++row) {
             w.table();
-            write_game_text(w, row_text_guarded(menu, row), kYesNoTextBytes - 1, NULL);
+            write_game_text(w, row_text(menu, row), kYesNoTextBytes - 1, NULL);
             w.set_number("value", row);
             w.index(row);
         }
@@ -6017,7 +5399,7 @@ void write_asked(ReplyWriter& w, const AskedQuestion& q) {
         break;
     }
     if (boolean_window(kAskedNames[a]) && menu) {
-        w.set_bool("default", first_row_yes_guarded(n, menu));
+        w.set_bool("default", default_yes(n, menu));
     }
     if (a == kAskedSortyn || a == kAskedEvitem) {
         w.set_bool("cancellable", true);
@@ -6050,7 +5432,7 @@ void write_asked(ReplyWriter& w, const AskedQuestion& q) {
         break;
     case kAskedGmtell: {
         const AskedSites& s = g_engine.game.asked;
-        w.set_number("slot", readable(s.gm_slot, 4) ? *s.gm_slot : -1);
+        w.set_number("slot", can_read(kGuarded, s.gm_slot, 4) ? *s.gm_slot : -1);
         break;
     }
     case kAskedMpDead:
@@ -6075,35 +5457,29 @@ void write_asked(ReplyWriter& w, const AskedQuestion& q) {
     w.field("detail");
 }
 
-// The page dialogue box d shows: {text, segments, undecoded} of its lines
-// decoded and joined, waits ('key', 'timer' or 'key_or_timer'), seconds
-// left on a timed page, auto while the script confirms each page itself,
-// more while a page of the message follows, queued (the messages behind
-// it) and cancellable (the event allows a cancel); the text object's words
-// under `detail`. False, with nil and the reason written, while the box
-// shows no message.
+// `auto`: the script confirms each page itself; `more`: a page of the message
+// follows; `queued`: the messages behind it. False, with nil and the reason
+// written, while the box shows no message.
 bool write_dialogue(ReplyWriter& w, int d) {
     HU_STEP_AT("write_dialogue", d);
-    const uint8_t* ctl = controller_guarded(kDialogueNames[d], kBoxBytes);
-    const uint8_t* text = ctl ? rdptr(ctl, kBoxText) : NULL;
-    text = text && readable(text, kTextBytes) ? text : NULL;
+    const DialogueNow box = dialogue_now(g_engine, kGuarded, d);
+    const uint8_t* ctl = box.ctl;
+    const uint8_t* text = box.text;
     const uint8_t* message = dialogue_message(text);
-    if (!message || !readable(message, kMessageBytes)) {
+    if (!can_read(kGuarded, message, kMessageBytes)) {
         char why[kWhyBytes];
-        snprintf(why, sizeof(why), "no dialogue is shown in %s", kDialogueNames[d]);
-        w.fail(why);
+        w.fail(no_dialogue(d, why, sizeof(why)));
         return false;
     }
     const uint8_t* glyphs[kPageLines];
     int counts[kPageLines];
-    const int lines = page_lines_guarded(ctl, glyphs, counts);
+    const int lines = page_lines(ctl, glyphs, counts);
     PageText page;
     decode_page(glyphs, counts, lines, &g_engine.glyphs, &page);
     const uint32_t flags = rd32(text, kTextFlags);
     int64_t timer;
     memcpy(&timer, text + kTextTimer, 8);
     const int32_t held = static_cast<int32_t>(rd32(text, kTextQueued));
-    const uint8_t* allowed = g_engine.game.query_cancel_allowed;
     w.table();
     write_glyph_text(w, page, "text", "segments", "undecoded");
     const bool key = (flags & kPageKey) != 0;
@@ -6117,7 +5493,7 @@ bool write_dialogue(ReplyWriter& w, int d) {
     w.set_bool("auto", rd16(ctl, kBoxAuto) != 0);
     w.set_bool("more", more_pages(message));
     w.set_number("queued", held > 1 ? held - 1 : 0);
-    w.set_bool("cancellable", readable(allowed, 1) && *allowed == 1);
+    w.set_bool("cancellable", event_cancel_allowed(g_engine, kGuarded) == 1);
     w.table();
     w.set_number("flags", flags);
     w.set_number("timer", static_cast<double>(timer));
@@ -6132,8 +5508,8 @@ bool write_dialogue(ReplyWriter& w, int d) {
     return true;
 }
 
-// One item of an offer: {slot, item, id, count}, item the inventory index
-// (none for the partner's), and pending while it is on its way.
+// `item`: the inventory index, none for the partner's; `pending` while the
+// item is on its way.
 void write_offer_item(ReplyWriter& w, const OfferEntry& m, bool own, int k) {
     w.table();
     w.set_number("slot", m.slot);
@@ -6157,7 +5533,7 @@ void write_gray(ReplyWriter& w, int which) {
         || rows.instance != offer_instance(which)) {
         return;
     }
-    const uint8_t* data = offer_data_guarded();
+    const uint8_t* data = offer_data(g_engine, kGuarded);
     w.table();
     int k = 0;
     for (int i = 1; i < kInventoryRecords; ++i) {
@@ -6170,21 +5546,16 @@ void write_gray(ReplyWriter& w, int which) {
     w.field("gray");
 }
 
-// An offer window's offer, with its window open. trade: {partner, mine =
-// {gil, items}, theirs = {gil, items}, ok_mine, ok_theirs, next_change,
-// gray}, mine's items in slot order, this engine's offers on their way after
-// them, next_change the seconds until the game sends another change;
-// handover: {npc, items, gil, gray, next_ok}, next_ok the seconds until the
-// game sends the NPC trade. Each wait 0 when it would go now, nil while the
-// clock cannot be read; gray as write_gray(). The partner's and the NPC's
-// names as the actor table holds them, nil when it holds none. detail: the
-// controller, the target's index and id, and the trade's states.
-void write_offer(ReplyWriter& w, const OfferView& v) {
+// `next_change` (trade) and `next_ok` (handover): seconds until the game sends
+// the next change or the NPC trade, nil while the clock cannot be read. The
+// partner's and the NPC's names as the actor table holds them. `now` is what
+// `v` was read from.
+void write_offer(ReplyWriter& w, const OfferNow& now, const OfferView& v) {
     const OfferSites& s = g_engine.game.offer;
     const bool trade = v.which == kOfferTrade;
     char name[kActorNameBytes + 1];
     w.table();
-    if (actor_name(s, v.target, name, sizeof(name))) {
+    if (actor_name(kGuarded, s, v.target, name, sizeof(name))) {
         w.set_string(trade ? "partner" : "npc", name);
     }
     if (trade) {
@@ -6223,7 +5594,7 @@ void write_offer(ReplyWriter& w, const OfferView& v) {
     }
     write_gray(w, v.which);
     w.table();
-    set_hex(w, "controller", controller_guarded(kOfferNames[v.which], offer_bytes(v.which)));
+    set_hex(w, "controller", now.ctl);
     w.set_number(trade ? "partner_index" : "npc_index", v.target);
     w.set_number(trade ? "partner_id" : "npc_id", v.target_id);
     if (trade) {
@@ -6233,13 +5604,7 @@ void write_offer(ReplyWriter& w, const OfferView& v) {
     w.field("detail");
 }
 
-// A text window's question: stringdl's mode ('name' or 'confirm'), the
-// name's lengths and the line shown over the field (`prompt`); comment's
-// kind of message, its lines as the slot holds them and the search's
-// category; msgline's mode, the longest text it takes, the recipient's
-// name where the mode has one and whether its block kept it from opening;
-// scname's and link11's longest name and the name they hold (`text`),
-// link11's colors. The words the replies read under `detail`.
+// `prompt`: the line stringdl shows over its field.
 void write_text(ReplyWriter& w, const TextQuestion& q) {
     const uint8_t* ctl = q.now.ctl;
     w.table();
@@ -6265,20 +5630,23 @@ void write_text(ReplyWriter& w, const TextQuestion& q) {
     }
     case kTextComment: {
         static const char* const modes[4] = {"bazaar", "view", "search", "linkshell"};
+        // The game thread can change the mode since text_asks() checked it.
         const int mode = static_cast<int8_t>(ctl[kCommentMode]);
-        w.set_string("mode", modes[mode]);
-        w.table();
-        for (int l = 0; l < kCommentLines; ++l) {
-            char line[kCommentLineBytes];
-            copy_text(reinterpret_cast<const char*>(ctl + kCommentSlots + (mode * 3 + l) * kCommentLineBytes), line,
-                sizeof(line));
+        if (mode >= 0 && mode < 4) {
+            w.set_string("mode", modes[mode]);
             w.table();
-            w.set_string("text", line);
-            w.index(l + 1);
-        }
-        w.field("lines");
-        if (mode == 2) {
-            w.set_number("category", ctl[kCommentCategory]);
+            for (int l = 0; l < kCommentLines; ++l) {
+                char line[kCommentLineBytes];
+                copy_text(reinterpret_cast<const char*>(ctl + kCommentSlots + (mode * 3 + l) * kCommentLineBytes),
+                    line, sizeof(line));
+                w.table();
+                w.set_string("text", line);
+                w.index(l + 1);
+            }
+            w.field("lines");
+            if (mode == 2) {
+                w.set_number("category", ctl[kCommentCategory]);
+            }
         }
         w.table();
         w.set_number("editing_line", static_cast<int8_t>(ctl[kCommentEditing]));
@@ -6335,40 +5703,36 @@ void write_text(ReplyWriter& w, const TextQuestion& q) {
     }
 }
 
-// What the player could pick in prompt n: query's choice and whether it may
-// be canceled, link5's slots, arealist's rows (engine abi 3 and 4: its
-// zones), passinpu's limit, from engine abi 4 on prtyjoin's invite, and from
-// engine abi 8 on a yes/no window's question, the KO window's countdown, a
-// number box's question, the Asked windows' and a dialogue box's page, and
-// what a text window asks for. False, with nil and the reason written, when
-// the prompt has nothing to offer.
+// What the player could pick in prompt n. False, with nil and the reason
+// written, when the prompt has nothing to offer.
 bool write_options(ReplyWriter& w, int n, int version) {
     HU_STEP_AT("write_options", n);
     const bool v4 = version >= 4;
     const char* nm = g_engine.inv.names[n].name;
     char why[kWhyBytes];
     if (strcmp(nm, "query") == 0) {
-        const uint8_t* ctl = query_parsed();
-        if (!ctl) {
-            w.fail("query is not open");
-            return false;
-        }
-        write_query(w, ctl, v4);
-        w.set_bool("cancellable", query_cancellable());
-    } else if (strcmp(nm, "link5") == 0) {
-        const uint8_t* ctl = link5_pending(NULL, why, sizeof(why));
+        const uint8_t* ctl = query_open(NULL, why, sizeof(why));
         if (!ctl) {
             w.fail(why);
             return false;
         }
-        const uint8_t* rows = NULL;
-        const uint8_t* names = NULL;
-        const int count = link5_rows(ctl, &rows, &names);
+        write_query(w, ctl, v4);
+        w.set_bool("cancellable", event_cancel_allowed(g_engine, kGuarded) == 1);
+    } else if (strcmp(nm, "link5") == 0) {
+        const uint8_t* ctl = link5_check(NULL, why, sizeof(why));
+        if (!ctl) {
+            w.fail(why);
+            return false;
+        }
+        int count = 0;
+        const uint8_t* rows = link5_rows(kGuarded, ctl, &count);
+        const uint8_t* names = rdptr(ctl, kLink5Names);
+        names = can_read(kGuarded, names, count * kLink5NameStride) ? names : NULL;
         w.table();
         w.table();
         int k = 0;
         for (int i = 1; i < count; ++i) {
-            const int slot = link5_slot_of(rdptr(rows + i * kLink5RowStride, kLink5RowRecord));
+            const int slot = link5_slot_of(g_engine, rdptr(rows + i * kLink5RowStride, kLink5RowRecord));
             if (slot < 0) {
                 continue;
             }
@@ -6390,7 +5754,7 @@ bool write_options(ReplyWriter& w, int n, int version) {
         }
         write_area(w, ctl ? ctl : blocked, version >= 5, blocked != NULL);
     } else if (strcmp(nm, "passinpu") == 0) {
-        const uint8_t* ctl = passinpu_pending(NULL, why, sizeof(why));
+        const uint8_t* ctl = passinpu_check(NULL, why, sizeof(why));
         if (!ctl) {
             w.fail(why);
             return false;
@@ -6399,15 +5763,15 @@ bool write_options(ReplyWriter& w, int n, int version) {
         w.table();
         w.set_number("max_length", max < static_cast<int>(kPassinpuText) ? max : static_cast<int>(kPassinpuText));
     } else if (v4 && strcmp(nm, "prtyjoin") == 0) {
-        const uint8_t* flags = g_engine.game.party_pending;
-        if (!readable(flags, kPartyKind + 1) || !flags[0]) {
-            w.fail("no party invite is pending");
+        const uint8_t* flags = invite_flags(g_engine, kGuarded);
+        if (!flags) {
+            w.fail(kNoInvite);
             return false;
         }
         w.table();
         write_invite(w, flags, version >= 5);
     } else if (version >= 8 && yesno_window(nm)) {
-        const uint8_t* ctl = yesno_pending_guarded(n, why, sizeof(why));
+        const uint8_t* ctl = yesno_pending(g_engine, kGuarded, n, false, why, sizeof(why));
         if (!ctl) {
             w.fail(why);
             return false;
@@ -6415,21 +5779,21 @@ bool write_options(ReplyWriter& w, int n, int version) {
         write_yesno(w, n, ctl);
     } else if (version >= 8 && strcmp(nm, "dead") == 0) {
         uint8_t* ctl = NULL;
-        if (!open_menu_guarded(n, &ctl) || !readable(ctl, kDeadBytes)) {
+        if (!open_menu(g_engine, kGuarded, n, &ctl) || !can_read(kGuarded, ctl, kDeadBytes)) {
             w.fail("dead is not open");
             return false;
         }
         write_dead(w, ctl);
     } else if (version >= 8 && box_named(nm) >= 0) {
         BoxQuestion q;
-        if (!box_question_guarded(box_named(nm), &q, why, sizeof(why))) {
+        if (!box_question(box_named(nm), &q, why, sizeof(why))) {
             w.fail(why);
             return false;
         }
         write_box(w, q);
     } else if (version >= 8 && asked_named(nm) >= 0) {
         AskedQuestion q;
-        if (!asked_question_guarded(asked_named(nm), &q, why, sizeof(why))) {
+        if (!asked_question(asked_named(nm), &q, why, sizeof(why))) {
             w.fail(why);
             return false;
         }
@@ -6438,20 +5802,20 @@ bool write_options(ReplyWriter& w, int n, int version) {
         return write_dialogue(w, dialogue_named(nm));
     } else if (version >= 8 && text_named(nm) >= 0) {
         TextQuestion q;
-        if (!text_question_guarded(text_named(nm), false, &q, why, sizeof(why))) {
+        if (!text_question(text_named(nm), &q, why, sizeof(why))) {
             w.fail(why);
             return false;
         }
         write_text(w, q);
     } else if (version >= 8 && offer_named(nm) >= 0) {
         OfferView v;
-        offer_view_guarded(offer_named(nm), &v);
+        const OfferNow now = offer_read(offer_named(nm), &v);
         if (!v.open) {
             snprintf(why, sizeof(why), "%s is not open", nm);
             w.fail(why);
             return false;
         }
-        write_offer(w, v);
+        write_offer(w, now, v);
     } else {
         snprintf(why, sizeof(why), version >= 8
             ? "%s has no options; options() reads query, link5, arealist, passinpu, prtyjoin, comyn, merityn, the"
@@ -6474,19 +5838,16 @@ void __stdcall op_options(const HuEngineHandle* ref, const char* name, HuEngineR
     }
 }
 
-// The prompt's id for version 4 and 5: the count of the game's opens of the
-// window, both dialogue boxes' for either (game.h's open_count()), or from
-// engine abi 5 on for prtyjoin and the post boxes the session's id; either
-// read before the prompt is.
+// The count of the game's opens of the window, or from version 5 on the
+// session's id for prtyjoin and the post boxes. Read before the prompt is.
 uint32_t prompt_id(int n, int version) {
     const int session = version >= 5 ? session_window(g_engine.inv.names[n].name) : -1;
-    return session >= 0 ? session_now(session) : open_count(g_engine, n);
+    return session >= 0 ? current_session(g_engine, kGuarded, session) : open_count(g_engine, n);
 }
 
-// As op_options, with abi 4's or 5's shapes and the prompt's `id`, which
-// answer and cancel take back. A read the prompt changed during is made
-// again, so the id never names a prompt newer than what was read. Abi 5's
-// names the prompt in `name`.
+// `id` is what answer and cancel take back. A read the prompt changed during
+// is made again; the id is read first, so it never names a prompt newer than
+// what was read.
 void write_prompt(const HuEngineHandle* ref, const char* name, HuEngineReply* reply, int version) {
     HU_STEP_AT("write_prompt", version);
     ReplyWriter w = {reply};
@@ -6525,12 +5886,7 @@ void __stdcall op_options8(const HuEngineHandle* ref, const char* name, HuEngine
     write_prompt(ref, name, reply, 8);
 }
 
-// What waits on a reply with no window open: a party invite, a post-box
-// session, and from abi 8 on a number box's, an Asked window's or msgline's
-// question its block kept from opening, under the window's name. Empty when
-// none does. From abi 4 on the session's state word is under `detail`; abi
-// 5's name each the prompt a reply to it takes, prtyjoin or the box, and
-// give the session's id.
+// What waits on a reply with no window open; empty when nothing does.
 void write_pending(const HuEngineHandle* ref, HuEngineReply* reply, int version) {
     HU_STEP_AT("write_pending", version);
     const bool v4 = version >= 4;
@@ -6539,9 +5895,9 @@ void write_pending(const HuEngineHandle* ref, HuEngineReply* reply, int version)
         return;
     }
     w.table();
-    const uint8_t* flags = g_engine.game.party_pending;
-    if (readable(flags, kPartyKind + 1) && flags[0]) {
-        const uint32_t id = session_now(kSessionInvite);
+    const uint8_t* flags = invite_flags(g_engine, kGuarded);
+    if (flags) {
+        const uint32_t id = current_session(g_engine, kGuarded, kSessionInvite);
         w.table();
         write_invite(w, flags, version >= 5);
         if (version >= 5) {
@@ -6550,10 +5906,9 @@ void write_pending(const HuEngineHandle* ref, HuEngineReply* reply, int version)
         }
         w.field("invite");
     }
-    const uint8_t* delivery = controller_guarded("delivery", kDeliveryState + 2);
-    const uint8_t* post1 = controller_guarded("post1", kPostState + 4);
-    const int out_state = delivery ? static_cast<uint16_t>(rd16(delivery, kDeliveryState)) : 0;
-    const uint32_t in_state = post1 ? rd32(post1, kPostState) : 0;
+    int out_state = 0;
+    uint32_t in_state = 0;
+    post_states(g_engine, kGuarded, &out_state, &in_state);
     if (out_state || in_state) {
         const double state = out_state ? static_cast<double>(out_state) : static_cast<double>(in_state);
         const char* box = out_state ? "delivery" : "post1";
@@ -6561,7 +5916,7 @@ void write_pending(const HuEngineHandle* ref, HuEngineReply* reply, int version)
         w.set_string("box", box);
         if (version >= 5) {
             w.set_string("name", box);
-            w.set_number("id", session_now(kSessionPost));
+            w.set_number("id", current_session(g_engine, kGuarded, kSessionPost));
         }
         if (v4) {
             w.table();
@@ -6575,7 +5930,7 @@ void write_pending(const HuEngineHandle* ref, HuEngineReply* reply, int version)
     for (int b = 0; version >= 8 && b < kBoxCount; ++b) {
         BoxQuestion q;
         char why[kWhyBytes];
-        if (!box_question_guarded(b, &q, why, sizeof(why)) || !q.blocked) {
+        if (!box_question(b, &q, why, sizeof(why)) || !q.blocked) {
             continue;
         }
         write_box(w, q);
@@ -6586,7 +5941,7 @@ void write_pending(const HuEngineHandle* ref, HuEngineReply* reply, int version)
     for (int a = 0; version >= 8 && a < kAskedCount; ++a) {
         AskedQuestion q;
         char why[kWhyBytes];
-        if ((!asked_records(a) && a != kAskedBank) || !asked_question_guarded(a, &q, why, sizeof(why)) || !q.blocked) {
+        if ((!asked_records(a) && a != kAskedBank) || !asked_question(a, &q, why, sizeof(why)) || !q.blocked) {
             continue;
         }
         write_asked(w, q);
@@ -6596,8 +5951,7 @@ void write_pending(const HuEngineHandle* ref, HuEngineReply* reply, int version)
     }
     TextQuestion message;
     char why[kWhyBytes];
-    if (version >= 8 && text_question_guarded(kTextMsgline, false, &message, why, sizeof(why))
-        && message.now.blocked) {
+    if (version >= 8 && text_question(kTextMsgline, &message, why, sizeof(why)) && message.now.blocked) {
         write_text(w, message);
         w.set_string("name", kTextNames[kTextMsgline]);
         w.set_number("id", message.id);
@@ -6635,13 +5989,13 @@ void __stdcall op_rects5(const HuEngineHandle* ref, HuEngineReply* reply) {
             continue;
         }
         if (is_compass(g_engine, n)) {
-            const uint8_t* c = compass_guarded();
+            const uint8_t* c = compass_object(g_engine, kGuarded);
             if (!compass_open(c)) {
                 continue;
             }
             compass_frame(c, r);
         } else {
-            const uint8_t* menu = open_menu_guarded(n, NULL);
+            const uint8_t* menu = open_menu(g_engine, kGuarded, n, NULL);
             if (!menu) {
                 continue;
             }
@@ -6896,18 +6250,21 @@ void write_internals(ReplyWriter& w, const StatusData& s) {
     w.set_number("door_garden", door.garden);
     w.field("asked");
     const DialogueSites& dialogue = g_engine.game.dialogue;
-    const void* dialogue_fns[3];
-    memcpy(&dialogue_fns[0], &dialogue.dispatch, 4);
-    memcpy(&dialogue_fns[1], &dialogue.release, 4);
-    memcpy(&dialogue_fns[2], &dialogue.clear, 4);
+    const void* dialogue_fns[4];
+    memcpy(&dialogue_fns[0], &dialogue.advance, 4);
+    memcpy(&dialogue_fns[1], &dialogue.page_sound, 4);
+    memcpy(&dialogue_fns[2], &dialogue.release, 4);
+    memcpy(&dialogue_fns[3], &dialogue.clear, 4);
     w.table();
     set_hex(w, "input", dialogue.input);
     set_hex(w, "handler", dialogue.handler);
-    set_hex(w, "dispatch", dialogue_fns[0]);
+    set_hex(w, "dispatch", dialogue.dispatch);
+    set_hex(w, "advance", dialogue_fns[0]);
+    set_hex(w, "page_sound", dialogue_fns[1]);
     set_hex(w, "text_first", dialogue.texts[0]);
     set_hex(w, "text_second", dialogue.texts[1]);
-    set_hex(w, "release", dialogue_fns[1]);
-    set_hex(w, "clear", dialogue_fns[2]);
+    set_hex(w, "release", dialogue_fns[2]);
+    set_hex(w, "clear", dialogue_fns[3]);
     set_hex(w, "wait", dialogue.wait);
     set_hex(w, "tick", dialogue.tick);
     set_hex(w, "click_return", reinterpret_cast<const void*>(dialogue.click_return));
@@ -6918,6 +6275,8 @@ void write_internals(ReplyWriter& w, const StatusData& s) {
         const void* const* at;
     } text_fns[] = {
         {"stringdl_stop", reinterpret_cast<const void* const*>(&text.stringdl_stop)},
+        {"unbind", reinterpret_cast<const void* const*>(&text.unbind)},
+        {"bind", reinterpret_cast<const void* const*>(&text.bind)},
         {"focus", reinterpret_cast<const void* const*>(&text.focus)},
         {"comment_stop", reinterpret_cast<const void* const*>(&text.comment_stop)},
         {"comment_start", reinterpret_cast<const void* const*>(&text.comment_start)},
@@ -6960,6 +6319,7 @@ void write_internals(ReplyWriter& w, const StatusData& s) {
     for (size_t i = 0; i < sizeof(text_fns) / sizeof(text_fns[0]); ++i) {
         set_hex(w, text_fns[i].name, *text_fns[i].at);
     }
+    set_hex(w, "line", text.line);
     set_hex(w, "player", text.player);
     set_hex(w, "pol", text.pol);
     set_hex(w, "sent_1", text.sent[0]);
@@ -6985,7 +6345,6 @@ void write_internals(ReplyWriter& w, const StatusData& s) {
         {"handover_stage", reinterpret_cast<const void* const*>(&offer.stage[kOfferHandover])},
         {"handover_ok", reinterpret_cast<const void* const*>(&offer.ok[kOfferHandover])},
         {"handover_close", reinterpret_cast<const void* const*>(&offer.handover_close)},
-        {"clock", reinterpret_cast<const void* const*>(&offer.clock)},
         {"item", reinterpret_cast<const void* const*>(&offer.item)},
         {"item_data", reinterpret_cast<const void* const*>(&offer.item_data)},
         {"describe", reinterpret_cast<const void* const*>(&offer.describe)},
@@ -7157,7 +6516,7 @@ void write_internals(ReplyWriter& w, const StatusData& s) {
     }
     set_hex(w, "keys_1", settings.keys[0]);
     set_hex(w, "keys_2", settings.keys[1]);
-    w.set_bool("loaded", store_loaded(settings));
+    w.set_bool("loaded", store_loaded(kGuarded, settings));
     w.set_bool("labels", g_engine.setting_labels.ready != 0);
     w.field("settings");
     w.field("functions");
@@ -7205,11 +6564,8 @@ void __stdcall op_status(HuEngineReply* reply) {
     }
 }
 
-// Engine abi 3's: what an addon acts on at the top, the engine's own words
-// under `detail`; the copy asked adds its role, and its image and the
-// resident's to `detail`. Abi 4's also has the game's UI size at the top
-// once the game is resolved; from 0.9.0 both say whether the macro keys are
-// blocked.
+// What an addon acts on at the top, the engine's own words under `detail`;
+// the Lua binding adds the copy's role and images.
 void write_status(HuEngineReply* reply, bool v4) {
     ReplyWriter w = {reply};
     StatusData s;
@@ -7257,9 +6613,9 @@ int32_t refusal_out(char* why, uint32_t why_size, const char* text, char* kind, 
     return 0;
 }
 
-// The handlers come out, and the claim and the record go with them: from
-// then on another copy may install. A hooked call still running keeps all
-// three, and the pin, until a later shutdown.
+// Once the handlers are out, another copy may install. A hooked call still
+// running keeps the claim, record and pin until a later shutdown; the
+// handlers come out regardless.
 void unhook() {
     if (clear_handlers()) {
         release_claim();
@@ -7274,12 +6630,11 @@ bool still_closing(LONG generation) {
     return *static_cast<volatile int*>(&g_rt.state) == kClosing && g_rt.closing == generation;
 }
 
-// The thread a shutdown starts, so that the Lua thread never waits for the
-// game thread: once a frame has run the restore, it unhooks as unhook() does,
-// but takes the image's pin for itself and gives it back as its last act. A
-// new() before that cancels it. The reference the shutdown took for it keeps
-// the image mapped until it has left: a canceled thread can still be on its
-// way out when a later one gives the pin back.
+// Runs so the Lua thread never waits for the game thread: once a frame has
+// run the restore, it unhooks and frees the pin as its last act. A new()
+// before then cancels it. Its own reference keeps the image mapped until it
+// has left: a canceled thread can still be on its way out when a later one
+// frees the pin.
 DWORD WINAPI finish_shutdown(LPVOID param) {
     const LONG generation = static_cast<LONG>(reinterpret_cast<intptr_t>(param));
     const HMODULE self = self_module(NULL, 0);
@@ -7343,15 +6698,11 @@ bool start_closing(uint32_t target) {
     return true;
 }
 
-// Restores everything the engine changed and unhooks, never waiting for the
-// game thread: the restore is queued, and finish_shutdown() unhooks once a
-// frame has run it, the engine closing until then. Refuses while any handle
-// in the client is open (kind "handles"); a full queue, or a thread that
-// could not start, leaves the engine installed ("drain"). A hooked call still
-// running when the handlers come out leaves the engine idle and pinned; the
-// next shutdown clears them here, and refuses ("busy") while it still runs.
-// Past that unpin this image runs only because every caller holds a
-// reference on it: its own Lua state, or a forwarder.
+// Never waits for the game thread: the restore is queued and
+// finish_shutdown() unhooks once a frame has run it. A hooked call still
+// running at unhook leaves the engine idle and pinned; the next shutdown
+// clears it here. Past the unpin this image runs only because every caller
+// holds a reference on it: its own Lua state, or a forwarder.
 int32_t shutdown_locked(char* why, uint32_t why_size, char* kind, uint32_t kind_size) {
     HU_STEP("shutdown_locked");
     char text[256];
@@ -7393,8 +6744,8 @@ int32_t shutdown_locked(char* why, uint32_t why_size, char* kind, uint32_t kind_
 }
 
 int32_t __stdcall op_shutdown(char* why, uint32_t why_size, char* kind, uint32_t kind_size) {
-    // Every caller already holds the election mutex, so no copy adopts this
-    // resident between its check and a retire here; taking it again is
+    // Held so no copy adopts this resident between its check and a retire
+    // here; a caller that elected already holds it, and taking it again is
     // recursive. finish_shutdown() takes it for its own.
     const HANDLE mutex = g_bind.mutex;
     if (mutex) {
@@ -7412,13 +6763,13 @@ int32_t __stdcall op_shutdown(char* why, uint32_t why_size, char* kind, uint32_t
     return done;
 }
 
-// ---------------------------------------------------------------------------
-// Settings (core.h's kSettings): read from the game's store on this thread,
-// set on the game's by game.h's setting_command().
+// Settings are read from the game's store on this thread and set on the game
+// thread by game.h's setting_command().
 
 const char* const kValueNames[] = {"number", "bool", "choice", "color", "key"};
 const char kNotInGame[] = "the game's settings are not loaded: the player is not in the game";
 const char kNotStored[] = "the game's store does not hold this setting";
+const char kNoRange[] = "the game's store gives this setting no range, so the values it takes are unknown";
 
 // A setting as Lua sees it: a number, a boolean, a choice's name (its
 // number for a value no choice names), a color's {r, g, b}.
@@ -7450,11 +6801,7 @@ void write_setting_value(ReplyWriter& w, const SettingSpec& spec, int32_t raw) {
     }
 }
 
-// settings(): every setting in the Config menu's order, each {name, page,
-// kind, value, default, min, max, choices, label}: min and max for a number
-// and a key, a color's for each channel; choices for a choice, in its
-// page's row order; default nil where the game keeps none; label the game's
-// text, nil where it has none.
+// In the Config menu's order. A color's min and max apply to each channel.
 void __stdcall op_settings9(const HuEngineHandle* ref, HuEngineReply* reply) {
     HU_STEP("op_settings9");
     ReplyWriter w = {reply};
@@ -7462,7 +6809,7 @@ void __stdcall op_settings9(const HuEngineHandle* ref, HuEngineReply* reply) {
         return;
     }
     const SettingSites& s = g_engine.game.settings;
-    if (!store_loaded(s)) {
+    if (!store_loaded(kGuarded, s)) {
         w.fail(kNotInGame);
         return;
     }
@@ -7477,18 +6824,18 @@ void __stdcall op_settings9(const HuEngineHandle* ref, HuEngineReply* reply) {
         w.set_string("page", spec.page);
         w.set_string("kind", kValueNames[spec.value]);
         int32_t raw = 0;
-        if (setting_raw(s, i, false, &raw)) {
+        if (setting_raw(kGuarded, s, i, false, &raw)) {
             write_setting_value(w, spec, raw);
             w.field("value");
         }
-        if (setting_raw(s, i, true, &raw)) {
+        if (setting_raw(kGuarded, s, i, true, &raw)) {
             write_setting_value(w, spec, raw);
             w.field("default");
         }
         int32_t lo = 0;
         int32_t hi = 0;
         if ((spec.value == kValueNumber || spec.value == kValueKey || spec.value == kValueColor)
-            && setting_range(s, i, &lo, &hi)) {
+            && setting_range(kGuarded, s, i, &lo, &hi)) {
             w.set_number("min", lo);
             w.set_number("max", hi);
         }
@@ -7507,7 +6854,6 @@ void __stdcall op_settings9(const HuEngineHandle* ref, HuEngineReply* reply) {
     }
 }
 
-// setting(name): its value.
 void __stdcall op_setting9(const HuEngineHandle* ref, const char* name, HuEngineReply* reply) {
     HU_STEP("op_setting9");
     ReplyWriter w = {reply};
@@ -7520,19 +6866,18 @@ void __stdcall op_setting9(const HuEngineHandle* ref, const char* name, HuEngine
         char why[kWhyBytes];
         snprintf(why, sizeof(why), "no such setting: %s (settings() lists them)", name ? name : "(not a string)");
         w.fail(why);
-    } else if (!store_loaded(g_engine.game.settings)) {
+    } else if (!store_loaded(kGuarded, g_engine.game.settings)) {
         w.fail(kNotInGame);
-    } else if (!setting_raw(g_engine.game.settings, i, false, &raw)) {
+    } else if (!setting_raw(kGuarded, g_engine.game.settings, i, false, &raw)) {
         w.fail(kNotStored);
     } else {
         write_setting_value(w, kSettings[i], raw);
     }
 }
 
-// The value set_setting(name, value) takes for setting i, of Lua type
-// `kind` (hideui_engine_abi.h's HU_ANSWER_*), as setting_raw() reads it:
-// -1 with `why` the misuse, a value of another type than its kind takes;
-// else 1, and *raw within lo..hi, or 0 with `why` the values it takes.
+// *raw as setting_raw() reads it. -1 with `why` for a value of another Lua
+// type than the setting takes; 1 with *raw within lo..hi; else 0 with `why`
+// the values it takes.
 int32_t setting_value_of(int i, int32_t kind, double number, const char* text, int32_t lo, int32_t hi, int32_t* raw,
                          char* why, size_t size) {
     const SettingSpec& spec = kSettings[i];
@@ -7612,11 +6957,8 @@ int32_t setting_value_of(int i, int32_t kind, double number, const char* text, i
     }
 }
 
-// set_setting(name, value): misuse (-1) for a value of another type than
-// the setting's kind takes; refused up front for an unknown name, a value
-// outside the setting's range (the store's, read now), and while the
-// player's values are not loaded; refused by an error event while a page
-// that writes its own copy back as it closes is open.
+// The range is the store's, read now. The drain refuses with an error event
+// while a page that writes its own copy back as it closes is open.
 int32_t __stdcall op_set_setting9(const HuEngineHandle* ref, const char* name, int32_t kind, double number,
                                   const char* text, char* why, uint32_t size) {
     HU_STEP("op_set_setting9");
@@ -7641,10 +6983,11 @@ int32_t __stdcall op_set_setting9(const HuEngineHandle* ref, const char* name, i
         int32_t lo = 0;
         int32_t hi = 0;
         int32_t raw = 0;
-        if (!store_loaded(s)) {
+        bool unbounded = false;
+        if (!store_loaded(kGuarded, s)) {
             snprintf(why, size, "%s", kNotInGame);
-        } else if (!setting_range(s, i, &lo, &hi)) {
-            snprintf(why, size, "%s", kNotStored);
+        } else if (!setting_range(kGuarded, s, i, &lo, &hi, &unbounded)) {
+            snprintf(why, size, "%s", unbounded ? kNoRange : kNotStored);
         } else if (setting_value_of(i, kind, number, text, lo, hi, &raw, why, size) == 1) {
             ok = enqueue(command(kOpSetSetting, i, 0, 0, ref, static_cast<uint32_t>(raw), kVerbSetSetting), why, size);
         }
@@ -7756,11 +7099,9 @@ const HuEngineApi kOwnApi = {
     &op_settings9,
     &op_setting9,
     &op_set_setting9,
+    &op_info9,
+    &op_unblock9,
 };
-
-// ---------------------------------------------------------------------------
-// The election: the first copy to install publishes its table into the
-// pid-scoped record, and every later copy reads it and forwards.
 
 enum Role { kRoleNone = 0, kRoleResident, kRoleForwarder };
 
@@ -7840,9 +7181,8 @@ void image_path(char* out, size_t size) {
 
 enum Adoption { kStale, kAdopted, kRefused };
 
-// Any resident, older or newer: what it published, up to this copy's table,
-// is copied; a slot past its `size` reads as missing, and the call answers
-// that it needs a newer resident.
+// Any resident, older or newer: a slot past its published `size` reads as
+// missing, and that call answers that it needs a newer resident.
 Adoption adopt(const HuEngineRecord* rec, Route* r) {
     note_resident(r, rec);
     char why[kWhyBytes];
@@ -7953,9 +7293,7 @@ void publish(HuEngineRecord* rec) {
 
 // Under the bind lock. Returns true holding the election mutex, which the
 // caller releases once its call through the route is done. A record whose
-// magic is not set, or whose image is gone, is free to publish over. With
-// may_install, a client with no resident gets this copy installed and
-// published; without, no resident.
+// magic is not set, or whose image is gone, is free to publish over.
 bool elect(bool may_install, Route* r) {
     HU_STEP("elect");
     memset(r, 0, sizeof(*r));
@@ -8010,11 +7348,8 @@ void release_adopted() {
     g_bind.adopted_count = 0;
 }
 
-// ---------------------------------------------------------------------------
-// Lua. The same bindings serve a resident and a forwarder: a handle calls
-// through the table it was made with. A call whose slot that table lacks --
-// a resident older than this copy -- answers that it needs a newer one.
-// Misuse, an argument of the wrong type or a missing one, raises; a call the
+// Lua. A handle calls through the table it was made with; a slot that table
+// lacks answers that it needs a newer resident. Misuse raises; a call the
 // engine cannot carry out returns nil and why.
 
 struct HandleRef {
@@ -8123,12 +7458,15 @@ const char* first_build(size_t offset) {
     return offset >= HU_SLOT(query_options) ? "0.4.2" : "0.2.0";
 }
 
-// The last slot this copy's calls use. A handle is made only through a
-// resident whose table reaches it: an older one would serve some of the
-// calls and refuse the rest.
+// A handle is made only through a resident whose table reaches this slot: an
+// older one would serve some calls and refuse the rest. info and unblock fall
+// back to info4 and unblock7 where info9 and unblock9 are missing.
 const size_t kNewestSlot = HU_SLOT(set_setting9);
 
-// "<verb> needs hideui <first build> or newer; the resident copy is <path>".
+size_t newest_slot(const HandleRef* ref, size_t newer, size_t older) {
+    return ref->api && has_slot(ref->api, newer) ? newer : older;
+}
+
 void needs_text(const char* verb, const HuEngineApi* api, size_t offset, char* out, size_t size) {
     char path[MAX_PATH];
     path[0] = '\0';
@@ -8260,8 +7598,8 @@ int replay(lua_State* L, const uint8_t* data, uint32_t used) {
     return depth;
 }
 
-// Runs a read into a buffer that is a Lua userdata, so a Lua error frees
-// it, growing it to what the resident counted when it did not fit.
+// The buffer is a Lua userdata, so a Lua error frees it. It grows to what the
+// resident counted when the reply did not fit.
 template <typename Read>
 int read_reply(lua_State* L, Read read) {
     uint32_t capacity = 16384;
@@ -8325,8 +7663,7 @@ int place_verb(lua_State* L, const char* verb, size_t offset) {
     return verb_result(L, slot_of<HuEnginePlaceVerb>(api, offset)(&ref->h, name, x, y, why, sizeof(why)), why);
 }
 
-// unblock(name[, category]): with a category, engine abi 7's slot; without
-// one, the slot the call has had, so a resident older than 0.10.0 still
+// Without a category, the older slot, so a resident older than 0.10.0 still
 // serves the whole-window form.
 int category_verb(lua_State* L, const char* verb, size_t plain, size_t with) {
     HU_LUA_STEP(verb);
@@ -8349,9 +7686,10 @@ int category_verb(lua_State* L, const char* verb, size_t plain, size_t with) {
 
 int l_hide(lua_State* L) { return window_verb(L, "hide", HU_SLOT(hide3)); }
 int l_unhide(lua_State* L) { return window_verb(L, "unhide", HU_SLOT(unhide3)); }
-int l_unblock(lua_State* L) { return category_verb(L, "unblock", HU_SLOT(unblock3), HU_SLOT(unblock7)); }
-// open(name[, list]) and open_set(set[, list]): engine abi 9's slots, each
-// taking both forms.
+int l_unblock(lua_State* L) {
+    return category_verb(L, "unblock", HU_SLOT(unblock3), newest_slot(ref_at(L), HU_SLOT(unblock9), HU_SLOT(unblock7)));
+}
+// Engine abi 9's open and open_set slots take both forms.
 int list_verb(lua_State* L, const char* verb, size_t offset) {
     HU_LUA_STEP(verb);
     HandleRef* ref = ref_at(L);
@@ -8390,7 +7728,6 @@ int l_reset_group(lua_State* L) { return window_verb(L, "reset_group", HU_SLOT(r
 int l_move(lua_State* L) { return place_verb(L, "move", HU_SLOT(move5)); }
 int l_move_group(lua_State* L) { return place_verb(L, "move_group", HU_SLOT(move_group5)); }
 
-// reset(name[, aspect]).
 int l_reset(lua_State* L) {
     HU_LUA_STEP("reset");
     HandleRef* ref = ref_at(L);
@@ -8406,8 +7743,6 @@ int l_reset(lua_State* L) {
     return verb_result(L, api->reset5(&ref->h, name, aspect, why, sizeof(why)), why);
 }
 
-// An optional prompt id at `index`: absent or nil is none, anything but a
-// number raises.
 int32_t optional_id(lua_State* L, int index, double* id) {
     *id = 0;
     if (lua_isnoneornil(L, index)) {
@@ -8417,7 +7752,6 @@ int32_t optional_id(lua_State* L, int index, double* id) {
     return 1;
 }
 
-// cancel(name[, id]).
 int l_cancel(lua_State* L) {
     HU_LUA_STEP("cancel");
     HandleRef* ref = ref_at(L);
@@ -8452,8 +7786,8 @@ int l_reset_all(lua_State* L) { return handle_verb(L, "reset_all", HU_SLOT(reset
 int l_block_macros(lua_State* L) { return handle_verb(L, "block_macros", HU_SLOT(block_macros)); }
 int l_unblock_macros(lua_State* L) { return handle_verb(L, "unblock_macros", HU_SLOT(unblock_macros)); }
 
-// resize(name, rows) or resize(name, w, h). The numbers travel to the
-// resident as the text "rows" or "WxH", which it parses and checks.
+// The numbers travel to the resident as the text "rows" or "WxH", which it
+// parses and checks.
 int l_resize(lua_State* L) {
     HU_LUA_STEP("resize");
     HandleRef* ref = ref_at(L);
@@ -8475,9 +7809,6 @@ int l_resize(lua_State* L) {
     return verb_result(L, api->resize3(&ref->h, name, text, why, sizeof(why)), why);
 }
 
-// A table onto `out` as hideui_engine_abi.h's HU_ANSWER_TABLE encodes it:
-// the table at stack index `index`, its keys after `prefix`; one level of
-// tables under it, any deeper one a 't'. False when `out` is full.
 struct TableText {
     char* out;
     size_t size;
@@ -8495,6 +7826,8 @@ struct TableText {
     bool put(const char* text) { return put(text, strlen(text)); }
 };
 
+// As hideui_engine_abi.h's HU_ANSWER_TABLE: one level of nested tables, any
+// deeper one a 't'. False when `out` is full.
 bool encode_table(lua_State* L, int index, const char* prefix, TableText* t) {
     lua_pushnil(L);
     while (lua_next(L, index)) {
@@ -8565,9 +7898,8 @@ bool encode_table(lua_State* L, int index, const char* prefix, TableText* t) {
     return true;
 }
 
-// The Lua value at `index` as answer() and set_setting() hand it to the
-// resident: its type (HU_ANSWER_*), a number or a boolean (1 or 0) in
-// *number, a string, or a table encoded into `encoded`, in *text.
+// A Lua value as answer() and set_setting() hand it to the resident: a
+// boolean as 1 or 0 in `number`, a table encoded into `encoded`.
 struct AnswerValue {
     int32_t kind;
     double number;
@@ -8608,8 +7940,8 @@ void answer_value(lua_State* L, int index, AnswerValue* v) {
     }
 }
 
-// answer(name, value[, id]): the resident says which type each window
-// takes, and a value of another type raises. A table travels encoded.
+// The resident says which type each window takes; a value of another type
+// raises.
 int l_answer(lua_State* L) {
     HU_LUA_STEP("answer");
     HandleRef* ref = ref_at(L);
@@ -8629,9 +7961,8 @@ int l_answer(lua_State* L) {
                                        sizeof(why)), why);
 }
 
-// set_setting(name, value): the resident says which type each setting
-// takes, and a value of another type raises. A color's table travels
-// encoded, as answer's does.
+// The resident says which type each setting takes; a value of another type
+// raises.
 int l_set_setting(lua_State* L) {
     HU_LUA_STEP("set_setting");
     HandleRef* ref = ref_at(L);
@@ -8649,8 +7980,7 @@ int l_set_setting(lua_State* L) {
                        why);
 }
 
-// offer(name, item, count): the item an inventory index, or 'gil'. Any
-// other type of item, or of count, reaches the resident as NaN or NULL, which
+// Any other type of item or count reaches the resident as NaN or NULL, which
 // it refuses as misuse.
 int l_offer(lua_State* L) {
     HU_LUA_STEP("offer");
@@ -8674,7 +8004,6 @@ int l_offer(lua_State* L) {
     return verb_result(L, api->offer8(&ref->h, name, item, item_text, count, why, sizeof(why)), why);
 }
 
-// withdraw(name, item).
 int l_withdraw(lua_State* L) {
     HU_LUA_STEP("withdraw");
     HandleRef* ref = ref_at(L);
@@ -8700,8 +8029,8 @@ HandleRef* new_ref(lua_State* L) {
     return ref;
 }
 
-// new(name): a handle, or nil and why. Made under the election mutex, so the
-// resident cannot retire between the election and the claim.
+// Made under the election mutex, so the resident cannot retire between the
+// election and the claim.
 int l_new(lua_State* L) {
     HU_LUA_STEP("new");
     const char* name = check_string(L, 1);
@@ -8750,11 +8079,6 @@ int l_gc(lua_State* L) {
     return 0;
 }
 
-// poll() -> the events since the last poll, and how many were lost: the
-// resident's reply as it is. Each event is {event, name}; an error also has
-// verb and reason, blocked by and mine, cursor row, and pending {event,
-// what, pending} names no window. Lost events end the list with {event =
-// 'resync', dropped}: what came before it is not the whole story.
 int l_poll(lua_State* L) {
     HU_LUA_STEP("poll");
     HandleRef* ref = ref_at(L);
@@ -8795,7 +8119,7 @@ int named_read(lua_State* L, const char* verb, size_t offset) {
     return read_reply(L, [=](HuEngineReply* out) { read(h, name, out); });
 }
 
-int l_info(lua_State* L) { return named_read(L, "info", HU_SLOT(info4)); }
+int l_info(lua_State* L) { return named_read(L, "info", newest_slot(ref_at(L), HU_SLOT(info9), HU_SLOT(info4))); }
 int l_options(lua_State* L) { return named_read(L, "options", HU_SLOT(options8)); }
 int l_list(lua_State* L) { return handle_read(L, "list", HU_SLOT(list4)); }
 int l_opened(lua_State* L) { return handle_read(L, "opened", HU_SLOT(opened)); }
@@ -8836,8 +8160,7 @@ void route_for_read(Route* r, char* refusal, size_t size) {
     bind_unlock();
 }
 
-// The resident's status, as whichever copy is asked, with this copy's part
-// in it: role at the top, image and resident in `detail`.
+// The resident's status, with the asked copy's role and images added.
 int l_status(lua_State* L) {
     HU_LUA_STEP("status");
     Route r;
@@ -8878,9 +8201,8 @@ int l_version(lua_State* L) {
     return 1;
 }
 
-// Goes to the resident, wherever it is: it refuses while any copy holds a
-// handle, and on success leaves no resident behind once the game's next
-// frame has run.
+// Goes to the resident: it refuses while any copy holds a handle, and on
+// success leaves no resident once the game's next frame has run.
 int l_shutdown(lua_State* L) {
     HU_LUA_STEP("shutdown");
     Route r;

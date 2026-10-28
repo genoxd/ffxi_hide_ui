@@ -121,21 +121,27 @@
 // dialogue boxes, on two vtables in read-only data, each have a text object
 // and a chat log; fake_asked_ask's 9 and 10 have rem4line or rem4li2 show a
 // message's first page (opening the box) or end it (closing it). Their input
-// routine and handler are the game's bytes, never run; the text dispatch,
-// which hands each code to the other box's text object too, its gate and
-// the clear are run by the engine, the advance a stand-in that shows the
-// next page or ends the message; the boxes' tick asks the key test for the
-// left button as the game's does and moves the page on when it says so.
+// routine, handler and text dispatch, which hands each code to the other
+// box's text object too, are the game's bytes, never run, the dispatch's
+// gate recording each code it is handed; the clear is run by the engine,
+// and so are the gate's advance, a stand-in that shows the next page or ends
+// the message, and its page-turn sound, a stand-in that counts its calls;
+// the boxes' tick asks the key test for the left button as the game's does
+// and moves the page on when it says so.
 // The text-entry windows (stringdl, comment, msgline, scname, link11)
 // and passinpu: their input routines, never run, and their fields' ends,
 // run by the engine, are the game's bytes around stand-ins that record what
 // they were given (the text entry, the fields, msgline's senders, the
-// search, the linkshell request); passinpu's open hook and begin-close and
-// scname's and link11's begin-closes are the game's bytes too, run by the
-// open and the close; comment's open hook and start and msgline's open
-// hook and start are the bytes the engine reads around stand-ins that start
-// the fields; comment's and msgline's begin-closes are stand-ins behind the
-// bytes the engine reads.
+// search, the linkshell request); passinpu's open hook, start and
+// begin-close and scname's and link11's begin-closes are the game's bytes
+// too, run by the open and the close; comment's open hook and start and
+// msgline's open hook and start are the bytes the engine reads around
+// stand-ins that start the fields; comment's and msgline's begin-closes are
+// stand-ins behind the bytes the engine reads. The text entry's manager,
+// its bind and unbind and the field objects behave as the game's, and
+// passinpu's and msgline's draws read their fields as the game's do; a
+// read, bind or delete of a NULL or deleted field is recorded where the
+// game's would fault or free twice.
 // Their vtables are in read-only data; stringdl and link6 have plain
 // controllers. The per-menu draw, the sprite draw and the quad routine are
 // the game's heads around stand-ins, and the draw primitive is the game's
@@ -392,17 +398,22 @@ volatile LONG g_dialogue_ticks;        // set: each frame runs the dialogue boxe
 uint8_t g_dialogue_wait;               // the event's wait flag the boxes' cancel sets to 2
 uint8_t g_texts[2][0x38];              // rem4line's and rem4li2's text objects
 uint8_t* g_text_objects[2] = {g_texts[0], g_texts[1]};  // the game's globals naming them
-// The game's text entry object (+4 the field it edits, +8 set while it
-// does) and its global; the text-entry windows' fields, each a box on a
-// vtable whose +0xC deletes it, and what a field's read returns.
+// The game's text entry: its manager and its global (+4 the field its last
+// bind gave the line, +8 set by every bind, a bind of NULL too, until an
+// unbind, +0xC the line, +0x10 the IME display, whose +0x2218 names the
+// field bound); the line's mode, as the game's setmode writes it (2 cleared
+// and closed, 3 closed, 4 the chat line, 5 a field's), and its text, what
+// the player types. The field objects, 0x6B4 bytes each: +0 the vtable
+// whose +0xC deletes, +0x12 the text kept, +0x694 set while bound, +0x6A0
+// the manager then. A delete poisons all but the vtable.
 uint8_t g_edit[0x14];
 uint8_t* g_edit_ptr = g_edit;
-struct FieldBox {
-    const void* const* vtable;
-    int index;
-};
-FieldBox g_field_boxes[6];
+uint8_t g_ime[0x2220];
+int g_line_mode = 3;
 char g_field_typed[64] = "Typed";
+uint8_t g_fields[16][0x6B4];
+uint8_t g_field_live[16];
+int g_field_next;
 uint8_t g_input_state[0x50];           // what the open hooks' global names: +0x4C set while a field is up
 uint8_t* g_input_state_ptr = g_input_state;
 char g_empty_text[4] = "";
@@ -523,6 +534,9 @@ struct FakeLog {
     int door_exit_at_open;      // mogdoor's +0x15 as the open found it
     int advances;               // the text advance: its calls, the last one's text object
     void* advance_text;
+    int dispatch_codes;         // the codes the text dispatch handed its gate: their count, the last one
+    int dispatch_code;
+    int page_sounds;            // the gate's page-turn sound: its calls
     int releases;               // the chat log's release: its calls, the last one's log and line
     void* release_log;
     int release_line;
@@ -597,6 +611,12 @@ struct FakeLog {
     int map_mode;
     int map0_open_at_close;     // map0 open and not closing as it ran
     int map_fades;              // the frame's fade-out
+    char line_modes[64];        // each mode the line was set to, a digit, in order
+    int bad_fields;             // a NULL or deleted field read, bound or deleted: the count, the first
+    char bad_field[64];
+    int field_news;             // field objects made
+    int passinpu_draws;         // passinpu's and msgline's draws past their heads
+    int msgline_draws;
 };
 FakeLog g_log;
 
@@ -708,8 +728,8 @@ struct FakeState {
     volatile LONG* left_click;
     volatile LONG* dialogue_ticks;
     uint8_t* edit;              // the game's text entry object
-    char* field_typed;          // what a field's read returns
-    uint8_t* field_boxes;       // the six fields, 8 bytes each: stringdl's, comment's, msgline's, scname's, link11's, passinpu's
+    char* field_typed;          // the line's text: what the player types into the field bound
+    uint8_t* field_boxes;       // the field objects, 0x6B4 bytes each
     uint8_t* msgline_busy;
     int32_t* send_result;
     uint8_t* pol;
@@ -782,6 +802,8 @@ struct FakeState {
     int8_t* nation;             // the player's nation, the missions menu's default log
     uint8_t** policy_ptr;       // the global holding the list the Items row hands inventor
     FakeSettings* settings;
+    uint8_t* ime;               // the text entry's IME display: +0x2218 the field bound
+    int* line_mode;             // the line's mode
 };
 
 void fake_query_confirm();
@@ -1824,9 +1846,11 @@ typedef void (__fastcall* MenuDrawFn)(uint8_t* menu, void* edx);
 // A menu's draw past the per-menu draw's head: its parts, the row the
 // cursor is on (+0x4C) put on +8 as the game's parts loop does, its frame
 // through the quad routine; then, while it draws its controller (+0x6A set,
-// not dormant), the target window's controller's draw, and conq3pts'
+// not dormant), the target window's controller's draw, conq3pts'
 // controller's draw, which closes its window by name while its data is
-// gone, as the game's does, and paints its content otherwise.
+// gone, as the game's does, and paints its content otherwise, and the
+// text-entry windows' controllers' draws (vtable +0x10, where theirs has
+// one).
 void __stdcall h_menu_draw(uint8_t* menu) {
     if (g_log.drawn_count < 64) {
         g_log.drawn[g_log.drawn_count++] = menu;
@@ -1848,6 +1872,19 @@ void __stdcall h_menu_draw(uint8_t* menu) {
             reinterpret_cast<CloseByNameFn>(&fake_close)(g_mcb, NULL, "menu    conq3pts");
         } else if (conq && bound_menu(conq) == menu) {
             reinterpret_cast<QuadFn>(&fake_quad_draw)(g_sprites[4], NULL, 0, 1, 0, 0, 0);
+        }
+        for (int r = 0; r < kRowCount; ++r) {
+            uint8_t* ctl = g_ctl_global[r];
+            const void* const* vt = NULL;
+            if (ctl) {
+                memcpy(&vt, ctl, 4);
+            }
+            if (ctl && bound_menu(ctl) == menu && vt >= g_text_vtables && vt < g_text_vtables + 5 * 0x20) {
+                if (vt[4]) {
+                    reinterpret_cast<MenuDrawFn>(const_cast<void*>(vt[4]))(ctl, NULL);
+                }
+                break;
+            }
         }
     }
     g_painting = outer;
@@ -2441,57 +2478,198 @@ void __fastcall h_inventor_open(void* ctl, void*, uint32_t list) {
     set_opened("menu    iteminfo");
 }
 
-// The game's text entry: attach puts a field on it (NULL turns it off),
-// deactivate stops it; a field's read returns what the harness typed, its
-// +0xC deletes it.
-void __fastcall h_edit_attach(uint8_t* edit, void*, void* field) {
+uint8_t* rdptr_of(const uint8_t* p, size_t off) {
+    uint8_t* v;
+    memcpy(&v, p + off, 4);
+    return v;
+}
+
+// A field the game reads, binds or deletes: false, the read recorded, for
+// NULL or one already deleted, where the game's would fault or free twice.
+bool field_live(const uint8_t* field, const char* what) {
+    for (int k = 0; field && k < 16; ++k) {
+        if (field == g_fields[k] && g_field_live[k]) {
+            return true;
+        }
+    }
+    if (g_log.bad_fields++ == 0) {
+        snprintf(g_log.bad_field, sizeof(g_log.bad_field), "%s %s", what, field ? "a deleted field" : "NULL");
+    }
+    return false;
+}
+
+// The line's setmode: refused in mode 1; 2 clears the line.
+void line_mode(int mode) {
+    if (g_line_mode == 1) {
+        return;
+    }
+    g_line_mode = mode;
+    if (mode == 2) {
+        g_field_typed[0] = '\0';
+    }
+    const size_t n = strlen(g_log.line_modes);
+    if (n + 1 < sizeof(g_log.line_modes)) {
+        g_log.line_modes[n] = static_cast<char>('0' + mode);
+        g_log.line_modes[n + 1] = '\0';
+    }
+}
+
+void put_ime(const void* field) {
+    memcpy(g_ime + 0x2218, &field, 4);
+}
+
+// The manager's bind (this = the manager; the field or NULL; ret 4): +4 and
+// +8 written first, then a field told it is bound and the line given its
+// text, mode 5; for NULL mode 3.
+void __fastcall h_edit_attach(uint8_t* edit, void*, uint8_t* field) {
     memcpy(edit + 4, &field, 4);
     edit[8] = 1;
     ++g_log.attaches;
     g_log.attached = field;
+    if (field && field_live(field, "bind")) {
+        field[0x694] = 1;
+        memcpy(field + 0x6A0, &edit, 4);
+        line_mode(5);
+        snprintf(g_field_typed, sizeof(g_field_typed), "%s", reinterpret_cast<const char*>(field + 0x12));
+        put_ime(field);
+    } else if (!field) {
+        line_mode(3);
+        put_ime(NULL);
+    }
 }
 
+// The manager's unbind (this = the manager): only while +8 is set; the
+// field it bound, if any, keeps the line's text and is told it is unbound,
+// +4 left naming it; then mode 2.
 void __fastcall h_edit_deactivate(uint8_t* edit, void*) {
-    edit[8] = 0;
     ++g_log.deactivates;
+    if (!edit[8]) {
+        return;
+    }
+    edit[8] = 0;
+    uint8_t* field = NULL;
+    memcpy(&field, edit + 4, 4);
+    if (field && field_live(field, "unbind")) {
+        snprintf(reinterpret_cast<char*>(field + 0x12), 0x180, "%s", g_field_typed);
+        field[0x694] = 0;
+        memset(field + 0x6A0, 0, 4);
+    }
+    line_mode(2);
 }
 
-const char* __fastcall h_field_read(void*, void*, int) {
+// A field's read of its text (this = the field; one dword): the line's text
+// while it is bound, else what it kept.
+const char* __fastcall h_field_read(uint8_t* field, void*, int) {
     ++g_log.field_reads;
-    return g_field_typed;
+    if (!field_live(field, "read")) {
+        return g_empty_text;
+    }
+    if (field[0x694]) {
+        snprintf(reinterpret_cast<char*>(field + 0x12), 0x180, "%s", g_field_typed);
+    }
+    return reinterpret_cast<const char*>(field + 0x12);
 }
 
-void __fastcall h_field_delete(void* field, void*, int) {
+// A field's delete (vtable +0xC; one dword): its destructor's unbind while
+// it is bound, then the object poisoned.
+void __fastcall h_field_delete(uint8_t* field, void*, int) {
     ++g_log.field_deletes;
     g_log.field_deleted = field;
+    if (!field_live(field, "delete")) {
+        return;
+    }
+    if (field[0x694]) {
+        snprintf(reinterpret_cast<char*>(field + 0x12), 0x180, "%s", g_field_typed);
+        uint8_t* edit = NULL;
+        memcpy(&edit, field + 0x6A0, 4);
+        h_edit_deactivate(edit, NULL);
+        memset(field + 0x6A0, 0, 4);
+    }
+    memset(field, 0xDD, 0x6B4);
+    const void* vt = g_field_vtable;
+    memcpy(field, &vt, 4);
+    g_field_live[(field - g_fields[0]) / 0x6B4] = 0;
+}
+
+// The allocation a start makes for its field (cdecl; the size), a field
+// object unused since the last cycled round, and the field's constructor
+// (this = it; eight dwords, ret 0x20), its vtable alone set.
+void* __cdecl h_field_new(uint32_t) {
+    for (int i = 0; i < 16; ++i) {
+        const int k = (g_field_next + i) % 16;
+        if (!g_field_live[k]) {
+            g_field_next = k + 1;
+            g_field_live[k] = 1;
+            memset(g_fields[k], 0, 0x6B4);
+            ++g_log.field_news;
+            return g_fields[k];
+        }
+    }
+    return NULL;
+}
+
+uint8_t* __fastcall h_field_ctor(uint8_t* field, void*, int32_t, int32_t, void*, void*, const char*, int32_t, int32_t,
+                                 int32_t) {
+    const void* vt = g_field_vtable;
+    memcpy(field, &vt, 4);
+    return field;
+}
+
+uint8_t* new_field() {
+    uint8_t* field = static_cast<uint8_t*>(h_field_new(0x6B4));
+    return field ? h_field_ctor(field, NULL, 0, 0, NULL, NULL, NULL, 0, 0, 0) : NULL;
 }
 
 char* __cdecl h_strncpy(char* to, const char* from, size_t n) {
     return strncpy(to, from, n);
 }
 
-// A window's own start of its field, as the open hooks call it: a field of
-// its own on the entry.
-void start_field(uint8_t* ctl, size_t at, int k) {
-    FieldBox* box = &g_field_boxes[k];
-    box->vtable = g_field_vtable;
-    box->index = k;
-    memcpy(ctl + at, &box, 4);
+// A window's own start of its field, as the open hooks call it: the field
+// it has, or a new one, given the line after the manager's unbind.
+void start_field(uint8_t* ctl, size_t at) {
+    uint8_t* field = NULL;
+    memcpy(&field, ctl + at, 4);
+    if (!field) {
+        field = new_field();
+        memcpy(ctl + at, &field, 4);
+    }
     ++g_log.field_starts;
-    h_edit_attach(g_edit, NULL, box);
-}
-
-void __fastcall h_passinpu_start(uint8_t* ctl, void*) {
-    start_field(ctl, 0x38, 5);
+    h_edit_deactivate(g_edit, NULL);
+    h_edit_attach(g_edit, NULL, field);
 }
 
 void __fastcall h_msgline_field(uint8_t* ctl, void*) {
-    start_field(ctl, 0x1C, 2);
+    start_field(ctl, 0x1C);
 }
 
 // comment's start past the bytes the engine reads: the line's field.
 void __stdcall h_comment_start(uint8_t* ctl, int32_t) {
-    start_field(ctl, 0x378, 1);
+    start_field(ctl, 0x378);
+}
+
+// What a draw reads of its field: the field's draw copy, through its
+// manager while it is bound.
+void field_drawn(const uint8_t* field, const char* what) {
+    if (field_live(field, what) && field[0x694] && !rdptr_of(field, 0x6A0)) {
+        field_live(NULL, what);
+    }
+}
+
+// passinpu's draw past its head: its field read for the paint with no test
+// of the field, as the game's does.
+void __fastcall h_passinpu_draw(uint8_t* ctl, void*) {
+    ++g_log.passinpu_draws;
+    field_drawn(rdptr_of(ctl, 0x38), "passinpu's draw read");
+}
+
+// msgline's draw past its head: with a field, the field read for the
+// paint, then the field's manager's +0xC with no test of the manager.
+void __fastcall h_msgline_draw(uint8_t* ctl, void*) {
+    ++g_log.msgline_draws;
+    const uint8_t* field = rdptr_of(ctl, 0x1C);
+    if (field && field_live(field, "msgline's draw read") && !rdptr_of(field, 0x6A0)) {
+        field_live(NULL, "msgline's draw read the manager of");
+    }
 }
 
 // comment's begin-close past its field's end: the kind of message and its
@@ -3444,6 +3622,17 @@ void __fastcall h_text_advance(uint8_t* text, void*) {
     }
 }
 
+// The code the text dispatch handed its gate, at the gate's end (ret 4).
+void __stdcall h_dispatch_code(int32_t code) {
+    ++g_log.dispatch_codes;
+    g_log.dispatch_code = code;
+}
+
+// The page-turn sound, after its push of the sound's name (cdecl).
+void __cdecl h_page_sound(uint32_t) {
+    ++g_log.page_sounds;
+}
+
 // The text object's clear (this = it), after its head's own bytes: its
 // messages, page flags and timer dropped and the event's wait zeroed, as
 // the game's clear leaves them.
@@ -4077,7 +4266,7 @@ __declspec(dllexport) FakeState* fake_state() {
     s.dialogue_ticks = &g_dialogue_ticks;
     s.edit = g_edit;
     s.field_typed = g_field_typed;
-    s.field_boxes = reinterpret_cast<uint8_t*>(g_field_boxes);
+    s.field_boxes = g_fields[0];
     s.msgline_busy = &g_msgline_busy;
     s.send_result = &g_send_result;
     s.pol = g_pol;
@@ -4156,6 +4345,8 @@ __declspec(dllexport) FakeState* fake_state() {
     s.nation = &g_nation;
     s.policy_ptr = &g_policy_ptr;
     s.settings = &g_settings;
+    s.ime = g_ime;
+    s.line_mode = &g_line_mode;
     return &s;
 }
 
@@ -5615,12 +5806,13 @@ asm(
 // ret 8), never run, its floor read (cdecl), run by the engine; its open
 // hook, run by the open; its tick (ret 4), run each frame it is up; its
 // draw, the door's handler and the routine an exit gives the door, never
-// run. The boxes' input routine and handler, never run; the text dispatch,
-// its gate and the clear, run by the engine's replies, and the advance, the
-// gate's on code 5, a stand-in; the box's show, the timer and the last-page
-// test, never run; the boxes' tick (ret 4), the game's left-button test
-// through the key test, then a stand-in that moves the page on. The
-// vtables are in read-only data, as the game's are.
+// run. The boxes' input routine, handler, text dispatch and its gate, never
+// run, the gate recording each code at its end; the clear, and the gate's
+// advance on code 5 and page-turn sound after it, stand-ins, run by the
+// engine's replies; the box's show, the timer and the last-page test, never
+// run; the boxes' tick (ret 4), the game's left-button test through the key
+// test, then a stand-in that moves the page on. The vtables are in
+// read-only data, as the game's are.
 asm(
     ".text\n"
     ".p2align 4\n"
@@ -5843,7 +6035,7 @@ asm(
     // the code to its gate on the text object, then on the other box's, as
     // the game's does through the two globals naming them; and the gate (the
     // same), which on a page that waits for a key and code 5 calls the
-    // advance.
+    // advance, then the page-turn sound, and at its end records the code.
     ".p2align 4\n"
     "_fake_text_dispatch:\n"
     "  .byte 0x56,0x57,0x8b,0x7c,0x24,0x0c,0x8b,0xf1,0x57\n"
@@ -5863,7 +6055,8 @@ asm(
     "_fake_text_gate:\n"
     "  .byte 0xf6,0x41,0x20,0x01,0x74,0x12,0x66,0x83,0x7c,0x24,0x04,0x05,0x75,0x0a\n"
     "  call _fake_text_advance\n"
-    "  .byte 0xb0,0x01,0xc2,0x04,0x00,0x32,0xc0,0xc2,0x04,0x00\n"
+    "  call _fake_page_sound\n"
+    "  jmp _h_dispatch_code@4\n"
 
     // The advance (this = the text object): the stand-in, then the box's
     // show as the game's calls it, never reached.
@@ -5874,6 +6067,13 @@ asm(
     "  call _fake_dialogue_show\n"
     "  .byte 0xc3\n"
     "  .fill 0xc0, 1, 0xcc\n"
+
+    // The page-turn sound: its name pushed, then the stand-in.
+    ".p2align 4\n"
+    "_fake_page_sound:\n"
+    "  .byte 0x68,0x30,0x30,0x31,0x35\n"
+    "  call _h_page_sound\n"
+    "  .byte 0x59,0xc3\n"
     ".p2align 4\n"
     "_fake_dialogue_show:\n"
     "  .byte 0x66,0xc7,0x43,0x4e,0x00,0x00,0x66,0xff,0x43,0x4e,0x66,0x89,0x85,0x08,0x02,0x00,0x00\n"
@@ -6580,16 +6780,43 @@ asm(
     "  .byte 0x8b,0x46,0x14,0x8b,0x4e,0x08,0x85,0xc0,0x75,0x19,0x6a,0x01,0xe8\n"
     "  .long @h_menu_one@12 - . - 4\n"
     "  .byte 0x8b,0xce,0xe8\n"
-    "  .long @h_passinpu_start@8 - . - 4\n"
+    "  .long _fake_passinpu_start - . - 4\n"
     "  .byte 0xa1\n"
     "  .long _g_input_state_ptr\n"
     "  .byte 0x5e,0xc6,0x40,0x4c,0x01,0xc3,0x6a,0x00,0x6a,0x01,0xe8\n"
     "  .long @h_menu_two@16 - . - 4\n"
     "  .byte 0x8b,0xce,0xe8\n"
-    "  .long @h_passinpu_start@8 - . - 4\n"
+    "  .long _fake_passinpu_start - . - 4\n"
     "  .byte 0xa1\n"
     "  .long _g_input_state_ptr\n"
     "  .byte 0x5e,0xc6,0x40,0x4c,0x01,0xc3\n"
+    // passinpu's start (this = the controller): the game's bytes, a field
+    // made only when it has none, then the manager's unbind and its bind of
+    // the field.
+    ".p2align 4\n"
+    ".globl _fake_passinpu_start\n"
+    "_fake_passinpu_start:\n"
+    "  .byte 0x56,0x8b,0xf1,0x57,0x8b,0x46,0x14,0x83,0xf8,0x01,0x7c,0x0c,0x83,0xf8,0x03,0x7d,0x0c,0xbf,0x0a,0x00\n"
+    "  .byte 0x00,0x00,0xeb,0x14,0x83,0xf8,0x03,0x7c,0x0a,0x83,0xf8,0x06,0xbf,0x01,0x00,0x00,0x00,0x7c,0x05,0xbf\n"
+    "  .byte 0x07,0x00,0x00,0x00,0x8b,0x4e,0x18,0xb8,0x10,0x00,0x00,0x00,0x3b,0xc8,0x7e,0x03,0x89,0x46,0x18,0x8b\n"
+    "  .byte 0x46,0x38,0x85,0xc0,0x75,0x3b,0x68,0xb4,0x06,0x00,0x00,0xe8\n"
+    "  .long _h_field_new - . - 4\n"
+    "  .byte 0x83,0xc4,0x04,0x85,0xc0,0x74,0x25,0x8b,0x4e,0x18,0x68,0x14,0x01,0x00,0x00,0x6a,0x0f,0x68,0x4a,0x01\n"
+    "  .byte 0x00,0x00,0x68\n"
+    "  .long _g_empty_text\n"
+    "  .byte 0x68\n"
+    "  .long _h_never\n"
+    "  .byte 0x56,0x51,0x57,0x8b,0xc8,0xe8\n"
+    "  .long @h_field_ctor@40 - . - 4\n"
+    "  .byte 0xeb,0x02,0x33,0xc0,0x89,0x46,0x38,0x8b,0x0d\n"
+    "  .long _g_edit_ptr\n"
+    "  .byte 0xe8\n"
+    "  .long @h_edit_deactivate@8 - . - 4\n"
+    "  .byte 0x8b,0x56,0x38,0x8b,0x0d\n"
+    "  .long _g_edit_ptr\n"
+    "  .byte 0x52,0xe8\n"
+    "  .long @h_edit_attach@12 - . - 4\n"
+    "  .byte 0x5f,0x5e,0xc3\n"
     ".p2align 4\n"
     ".globl _fake_passinpu_close\n"
     "_fake_passinpu_close:\n"
@@ -6720,9 +6947,10 @@ asm(
     "_g_text_vtables:\n"
     "  .long 0, _fake_comment_open, _fake_comment_close, 0, 0, _fake_bare_ret, _fake_comment_input\n"
     "  .fill 25, 4, 0\n"
-    "  .long 0, _fake_msgline_open, _fake_msgline_close, 0, 0, _fake_bare_ret, _fake_msgline_input\n"
+    "  .long 0, _fake_msgline_open, _fake_msgline_close, 0, @h_msgline_draw@8, _fake_bare_ret, _fake_msgline_input\n"
     "  .fill 25, 4, 0\n"
-    "  .long 0, _fake_passinpu_open, _fake_passinpu_close, 0, 0, _fake_bare_ret, _fake_passinpu_input\n"
+    "  .long 0, _fake_passinpu_open, _fake_passinpu_close, 0, @h_passinpu_draw@8, _fake_bare_ret\n"
+    "  .long _fake_passinpu_input\n"
     "  .fill 25, 4, 0\n"
     "  .long 0, 0, _fake_scname_close, 0, 0, _fake_bare_ret, _fake_scname_input\n"
     "  .fill 25, 4, 0\n"
@@ -6920,6 +7148,15 @@ void build_world() {
         const void* vt = g_vtable;
         memcpy(ctl, &vt, 4);
         g_ctl_global[row_named(plain[i])] = ctl;
+    }
+    // stringdl's field, its for good; the manager's line and IME display.
+    {
+        uint8_t* field = new_field();
+        memcpy(ctl_named("stringdl") + 0x160, &field, 4);
+        const void* line = &g_line_mode;
+        const void* ime = g_ime;
+        memcpy(g_edit + 0x0C, &line, 4);
+        memcpy(g_edit + 0x10, &ime, 4);
     }
     // mapframe, on a class whose fade-out (+0x50) is the stand-in's, and
     // mapv2 on the plain one.
