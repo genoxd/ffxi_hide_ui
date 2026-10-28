@@ -171,7 +171,8 @@
 // the engine reads and runs them: open, close and block refused as their
 // rules give, stringdl by every block and close slot; options() in plain
 // fields; answer and cancel doing what each window's own commit and cancel
-// do, comment's lines and link11's name and colors as tables through the
+// do, stringdl's name left in its field as the player's keys leave it,
+// comment's lines and link11's name and colors as tables through the
 // binding; the refusals of the game's limits, msgline's 300 bytes among
 // them; a hide taking the line from the window's own field alone, ending it
 // or suspending passinpu's under its draw, a hidden open doing so for the one
@@ -180,15 +181,15 @@
 // game's active menu's last, msgline's field ended first, keeping its text,
 // while it holds the line; msgline blocked, announced, listed by pending(), answered
 // with no window, its end read by the other handle; each input routine's
-// signature and a shape in each failing closed, comment's start and
-// passinpu's among them. The target arrows on the stand-in's per-menu
-// draw, sprite draw and quad routine, hooked under the stand-in's draw walk
-// each frame: listed and read as a name on no row, opened and closed as the
-// target window's draw starts and stops painting an arrow, its arrows'
-// points under detail; hidden targetwi keeping its layer with only its
-// arrows drawn, targetarrow's hide, close and block taking only the arrows,
-// no other window's frame dropped; move, resize and reset accepted; the
-// three draws, the template swap and the two arrow draws resolved, again
+// signature and a shape in each failing closed, comment's start, passinpu's
+// and a field's text set among them. The target arrows on the stand-in's
+// per-menu draw, sprite draw and quad routine, hooked under the stand-in's
+// draw walk each frame: listed and read as a name on no row, opened and
+// closed as the target window's draw starts and stops painting an arrow, its
+// arrows' points under detail; hidden targetwi keeping its layer with only
+// its arrows drawn, targetarrow's hide, close and block taking only the
+// arrows, no other window's frame dropped; move, resize and reset accepted;
+// the three draws, the template swap and the two arrow draws resolved, again
 // over the daemon's jumps, and failing closed. The template swap: the
 // owners' swaps through the stand-in's hooked entry putting partywin back
 // on the bottom edge its move gave it, the swap's size standing, and
@@ -971,6 +972,7 @@ struct FakeState {
     uint8_t* edit;
     char* field_typed;
     uint8_t* field_boxes;
+    uint8_t* field_text;
     uint8_t* msgline_busy;
     int32_t* send_result;
     uint8_t* pol;
@@ -2718,8 +2720,10 @@ int main(int argc, char** argv) {
     }
 
     // -- the text-entry windows: each input routine's signature, and a
-    //    shape in what the engine reads out of each; passinpu's start, its
-    //    open hook's call at +0x22, without the manager's unbind
+    //    shape in what the engine reads out of each; a field's text set's
+    //    signature, what it keeps, and the read stringdl's name handler
+    //    calls; passinpu's start, its open hook's call at +0x22, without the
+    //    manager's unbind
     {
         uint8_t* const* in = g_fake->text_inputs;
         const void* const* pass_vtable;
@@ -2730,10 +2734,16 @@ int main(int argc, char** argv) {
             uint8_t value;
             const char* expect;
         };
-        const Poke pokes[13] = {
+        uint8_t* field_read = call_target(in[0] + 0x1D7);
+        const char* const unkept = "field_text: it does not keep a field's text where the read stringdl's name"
+            " handler calls returns it, converted through the same converter";
+        const Poke pokes[16] = {
             {in[0] + 3, 0x90, "signature stringdl_input: not found"},
             {in[0] + 0x3C + 7, 0x90, "stringdl_input: with a reply written, it does not raise the outgoing box"
              " through the manager"},
+            {g_fake->field_text + 1, 0x90, "signature field_text: not found"},
+            {g_fake->field_text + 62 + 12, 0x90, unkept},
+            {field_read + 0x6A, 0x90, unkept},
             {in[1] + 1, 0x90, "signature comment_input: not found"},
             {in[1] + 0x73 + 10, 0x90, "comment_input: its Escape does not end the field, then close the window by"
              " instance"},
@@ -2749,7 +2759,7 @@ int main(int argc, char** argv) {
             {pass_start + 0x83, 0x90, "passinpu_input: its field's start does not end in the unbind and bind of the"
              " text entry's manager stringdl's end calls"},
         };
-        for (int i = 0; i < 13; ++i) {
+        for (int i = 0; i < 16; ++i) {
             pause_game();
             const uint8_t saved = *pokes[i].at;
             poke(pokes[i].at, pokes[i].value);
@@ -2760,7 +2770,8 @@ int main(int argc, char** argv) {
             poke(pokes[i].at, saved);
             resume_game();
         }
-        check(!engine_mapped(), "each text window's input routine differing, or a shape in it, installs nothing");
+        check(!engine_mapped(), "each text window's input routine, a field's text set or the read stringdl's name"
+            " handler calls differing, or a shape in what the engine reads out of them, installs nothing");
     }
 
     // -- the trade windows: each signature, and a shape in what the engine
@@ -7704,16 +7715,27 @@ int main(int argc, char** argv) {
             "  .. tostring(why))\n"
             "return finish()\n");
 
-        // stringdl: the name the outgoing box asks for, then a yes or no on
-        // a slot
+        // stringdl: the name the outgoing box asks for, the player's keys in
+        // its field, started as a key on its row starts it; then a yes or no
+        // on a slot
         put16(delivery, 0x1B4, 6);
         open_on_game_thread("menu    delivery");
         open_on_game_thread("menu    stringdl");
         sd[0x14] = 1;
-        sd[0x164] = 0;
         put16(sd, 0x15C, 0);
         strcpy(reinterpret_cast<char*>(sd + 0x118), "Send to whom?");
+        typedef void (__fastcall* FieldStartFn)(void* ctl, void* edx);
+        FieldStartFn stringdl_start;
+        const uint8_t* start = g_fake->text_inputs[0] + 0x70;
+        memcpy(&stringdl_start, &start, sizeof(stringdl_start));
+        uint8_t* name_field;
+        memcpy(&name_field, sd + 0x160, 4);
+        pause_game();
+        stringdl_start(sd, NULL);
+        strcpy(g_fake->field_typed, "Rol");
+        resume_game();
         wait_frames(2);
+        const bool typing = sd[0x164] == 1 && name_field[0x694] == 1;
         const int focus_before = tl->focus_calls;
         phase(L,
             "local o = h:options('stringdl')\n"
@@ -7735,9 +7757,16 @@ int main(int argc, char** argv) {
             "check(h:answer('stringdl', 'rolanberry', o.id) == true, 'answer(stringdl, rolanberry, id) queues')\n"
             "return finish()\n");
         wait_frames(3);
-        check(memcmp(sd + 0x58, "rolanberry", 11) == 0 && get16(sd, 0x15C) == 1 && tl->focus_calls == focus_before + 2
-                && tl->focus_menu == live_menu(row_named("delivery")),
-            "answer(stringdl, name): the name into +0x58, +0x15C 1, the outgoing box raised twice");
+        const char* kept = reinterpret_cast<const char*>(name_field);
+        check(typing && sd[0x164] == 0 && name_field[0x694] == 0 && strcmp(kept + 0x12, "rolanberry") == 0
+                && strcmp(kept + 0x1D5, "rolanberry") == 0 && get32(name_field, 0x39C) == 10
+                && strcmp(kept + 0x3A0, "rolanberry") == 0 && get32(name_field, 0x690) == 10
+                && memcmp(sd + 0x58, "rolanberry", 11) == 0 && get16(sd, 0x15C) == 1
+                && tl->focus_calls == focus_before + 2 && tl->focus_menu == live_menu(row_named("delivery")),
+            "answer(stringdl, name) with the player's keys in its field: the field ended, then its text set to the"
+            " name as the game's set keeps it, the text its read returns (+0x12), converted (+0x1D5) and the copy"
+            " its edit shows (+0x3A0) with their counts; the name into +0x58, +0x15C 1, the outgoing box raised"
+            " twice");
         put16(sd, 0x15C, 0);
         sd[0x14] = 2;
         put16(delivery, 0x1B4, 0x10);

@@ -1,5 +1,5 @@
 // fake_ffximain - a stand-in FFXiMain.dll for the end-to-end harness. Its
-// .text carries the 147 signatures from signatures.h, each
+// .text carries the 148 signatures from signatures.h, each
 // at a routine that behaves as far as the engine relies on it: the registry,
 // manager, link5 cache, link5 latch, link5 open and query cancel sites hold
 // the addresses of this image's own data and code, SetPosition writes the
@@ -141,7 +141,10 @@
 // its bind and unbind and the field objects behave as the game's, and
 // passinpu's and msgline's draws read their fields as the game's do; a
 // read, bind or delete of a NULL or deleted field is recorded where the
-// game's would fault or free twice.
+// game's would fault or free twice. A field's text set, run by the engine,
+// and the read stringdl's name handler calls, never run, are the game's
+// bytes around a stand-in for the converter, which converts a text to
+// itself.
 // Their vtables are in read-only data; stringdl and link6 have plain
 // controllers. The per-menu draw, the sprite draw and the quad routine are
 // the game's heads around stand-ins, and the draw primitive is the game's
@@ -404,7 +407,9 @@ uint8_t* g_text_objects[2] = {g_texts[0], g_texts[1]};  // the game's globals na
 // field bound); the line's mode, as the game's setmode writes it (2 cleared
 // and closed, 3 closed, 4 the chat line, 5 a field's), and its text, what
 // the player types. The field objects, 0x6B4 bytes each: +0 the vtable
-// whose +0xC deletes, +0x12 the text kept, +0x694 set while bound, +0x6A0
+// whose +0xC deletes, +0x12 the text kept, +0x1D5 that text converted,
+// +0x398 the field's length, +0x39C the conversion's count, +0x3A0 the copy
+// its edit shows, +0x690 that copy's length, +0x694 set while bound, +0x6A0
 // the manager then. A delete poisons all but the vtable.
 uint8_t g_edit[0x14];
 uint8_t* g_edit_ptr = g_edit;
@@ -414,6 +419,8 @@ char g_field_typed[64] = "Typed";
 uint8_t g_fields[16][0x6B4];
 uint8_t g_field_live[16];
 int g_field_next;
+uint8_t g_converter[4];                // the text converter a field's text set calls, through its global
+uint8_t* g_converter_ptr = g_converter;
 uint8_t g_input_state[0x50];           // what the open hooks' global names: +0x4C set while a field is up
 uint8_t* g_input_state_ptr = g_input_state;
 char g_empty_text[4] = "";
@@ -730,6 +737,7 @@ struct FakeState {
     uint8_t* edit;              // the game's text entry object
     char* field_typed;          // the line's text: what the player types into the field bound
     uint8_t* field_boxes;       // the field objects, 0x6B4 bytes each
+    uint8_t* field_text;        // a field's text set (this = the field; the text), ret 4
     uint8_t* msgline_busy;
     int32_t* send_result;
     uint8_t* pol;
@@ -929,6 +937,7 @@ void fake_link11_stop();
 void fake_link11_input();
 void fake_passinpu_stop();
 void fake_passinpu_input();
+void fake_field_text();
 extern const void* const g_text_vtables[5 * 0x20];
 extern const void* const g_field_vtable[4];
 volatile LONG g_gm_polls;
@@ -2568,6 +2577,17 @@ const char* __fastcall h_field_read(uint8_t* field, void*, int) {
         snprintf(reinterpret_cast<char*>(field + 0x12), 0x180, "%s", g_field_typed);
     }
     return reinterpret_cast<const char*>(field + 0x12);
+}
+
+// The converter's conversion (this = the converter; the text, its length,
+// where the converted text goes, its room, two dwords; ret 0x18): the text
+// as it is, at most the room less its 0, and the bytes written.
+int32_t __fastcall h_text_convert(void*, void*, const char* text, int32_t length, char* out, int32_t room, int32_t,
+                                  int32_t) {
+    const int32_t n = length < room - 1 ? length : room - 1;
+    memcpy(out, text, n);
+    out[n] = '\0';
+    return n;
 }
 
 // A field's delete (vtable +0xC; one dword): its destructor's unbind while
@@ -4267,6 +4287,7 @@ __declspec(dllexport) FakeState* fake_state() {
     s.edit = g_edit;
     s.field_typed = g_field_typed;
     s.field_boxes = g_fields[0];
+    s.field_text = reinterpret_cast<uint8_t*>(&fake_field_text);
     s.msgline_busy = &g_msgline_busy;
     s.send_result = &g_send_result;
     s.pol = g_pol;
@@ -6136,8 +6157,9 @@ asm(
 );
 
 // The text-entry windows, the game's bytes where the engine reads or runs
-// them: stringdl's input routine with its handlers and its field's end;
-// comment's, msgline's, scname's, link11's and passinpu's input routines,
+// them: stringdl's input routine with its handlers and its field's end; a
+// field's text set, run by the engine, and the read stringdl's name handler
+// calls; comment's, msgline's, scname's, link11's and passinpu's input routines,
 // never run, and their fields' ends, run by the engine; scname's, link11's
 // and passinpu's begin-closes and passinpu's open hook, run by the open and
 // the close. comment's begin-close is the game's head, its field ended,
@@ -6209,7 +6231,7 @@ asm(
     "  .byte 0x85,0x8c,0x00,0x00,0x00,0x8a,0x86,0x64,0x01,0x00,0x00,0x84,0xc0,0x74,0x79,0x8b,0xce,0xe8,0xe4,0xfe\n"
     "  .byte 0xff,0xff,0xeb,0x70,0x8a,0x86,0x64,0x01,0x00,0x00,0x84,0xc0,0x74,0x07,0x8b,0xce,0xe8,0xd1,0xfe,0xff\n"
     "  .byte 0xff,0x8b,0x8e,0x60,0x01,0x00,0x00,0x6a,0x00,0xe8\n"
-    "  .long @h_field_read@12 - . - 4\n"
+    "  .long _fake_field_read - . - 4\n"
     "  .byte 0x8d,0x56,0x58,0x8a,0x08,0x40,0x88,0x0a,0x42,0x84,0xc9,0x75,0xf6,0x66,0xc7,0x86,0x5c,0x01,0x00,0x00\n"
     "  .byte 0x01,0x00,0xeb,0x43,0x8a,0x86,0x64,0x01,0x00,0x00,0x84,0xc0,0x74,0x0f,0x8b,0x0d\n"
     "  .long _g_edit_ptr\n"
@@ -6249,6 +6271,43 @@ asm(
     "  .long _fake_stringdl_input + 0x2b2\n"
     "  .long _fake_stringdl_input + 0x2d4\n"
     "  .long _fake_stringdl_input + 0x2e4\n"
+    // A field's text set (this = the field; the text; ret 4), run by the
+    // engine, and the read stringdl's name handler calls (this = the field;
+    // a dword; ret 4), never run: the game's bytes around the converter's
+    // stand-in.
+    ".p2align 4\n"
+    ".globl _fake_field_text\n"
+    "_fake_field_text:\n"
+    "  .byte 0x53,0x55,0x8b,0x6c,0x24,0x0c,0x33,0xdb,0x56,0x3b,0xeb,0x57,0x8b,0xf1,0x0f,0x84,0x94,0x00,0x00,0x00\n"
+    "  .byte 0x8b,0x86,0x98,0x03,0x00,0x00,0x53,0x40,0x53,0x8d,0x8e,0xd5,0x01,0x00,0x00,0x50,0x51,0x8b,0xfd,0x83\n"
+    "  .byte 0xc9,0xff,0x33,0xc0,0xf2,0xae,0xf7,0xd1,0x49,0x51,0x8b,0x0d\n"
+    "  .long _g_converter_ptr\n"
+    "  .byte 0x55,0xe8\n"
+    "  .long @h_text_convert@32 - . - 4\n"
+    "  .byte 0x3b,0xc3,0x89,0x86,0x9c,0x03,0x00,0x00,0x7f,0x1b,0x88,0x5e,0x12,0x88,0x9e,0xa0,0x03,0x00,0x00,0x89\n"
+    "  .byte 0x9e,0x90,0x06,0x00,0x00,0x5f,0x5e,0x5d,0xb8,0x01,0x00,0x00,0x00,0x5b,0xc2,0x04,0x00,0x8d,0x7e,0x12\n"
+    "  .byte 0x8b,0xc5,0x8b,0xd7,0x2b,0xd5,0x8a,0x08,0x88,0x0c,0x02,0x40,0x3a,0xcb,0x75,0xf6,0x8d,0x96,0xa0,0x03\n"
+    "  .byte 0x00,0x00,0x8b,0xc7,0x2b,0xd7,0x8a,0x08,0x88,0x0c,0x02,0x40,0x3a,0xcb,0x75,0xf6,0x8b,0xfd,0x83,0xc9\n"
+    "  .byte 0xff,0x33,0xc0,0xf2,0xae,0xf7,0xd1,0x49,0x5f,0x89,0x8e,0x90,0x06,0x00,0x00,0x5e,0x5d,0xb8,0x01,0x00\n"
+    "  .byte 0x00,0x00,0x5b,0xc2,0x04,0x00,0xb8\n"
+    "  .long _g_empty_text\n"
+    "  .byte 0x8d,0x56,0x12,0x2b,0xd0,0x8a,0x08,0x88,0x0c,0x02,0x40,0x3a,0xcb,0x75,0xf6,0xb8\n"
+    "  .long _g_empty_text\n"
+    "  .byte 0x8d,0x96,0xa0,0x03,0x00,0x00,0x89,0x9e,0x9c,0x03,0x00,0x00,0x2b,0xd0,0x8a,0x08,0x88,0x0c,0x02,0x40\n"
+    "  .byte 0x3a,0xcb,0x75,0xf6,0x89,0x9e,0x90,0x06,0x00,0x00,0x5f,0x5e,0x5d,0xb8,0x01,0x00,0x00,0x00,0x5b,0xc2\n"
+    "  .byte 0x04,0x00\n"
+    ".p2align 4\n"
+    "_fake_field_read:\n"
+    "  .byte 0x56,0x8b,0xf1,0x8a,0x86,0x94,0x06,0x00,0x00,0x84,0xc0,0x74,0x4d,0x8b,0x86,0x98,0x03,0x00,0x00,0x8b\n"
+    "  .byte 0x8e,0xa0,0x06,0x00,0x00,0x53,0x40,0x57,0x8d,0x5e,0x12,0x50,0x53,0xe8\n"
+    "  .long _h_never - . - 4\n"
+    "  .byte 0x8b,0x8e,0x98,0x03,0x00,0x00,0x6a,0x00,0x41,0x6a,0x00,0x51,0x8b,0xfb,0x83,0xc9,0xff,0x33,0xc0,0xf2\n"
+    "  .byte 0xae,0xf7,0xd1,0x8d,0x96,0xd5,0x01,0x00,0x00,0x49,0x52,0x51,0x8b,0x0d\n"
+    "  .long _g_converter_ptr\n"
+    "  .byte 0x53,0xe8\n"
+    "  .long @h_text_convert@32 - . - 4\n"
+    "  .byte 0x5f,0x89,0x86,0x9c,0x03,0x00,0x00,0x5b,0x8a,0x44,0x24,0x08,0x84,0xc0,0x8d,0x86,0xd5,0x01,0x00,0x00\n"
+    "  .byte 0x75,0x03,0x8d,0x46,0x12,0x5e,0xc2,0x04,0x00\n"
     // comment's field end (this = the controller; keep; ret 4), run by the engine,
     // and its input routine, never run: the game's bytes.
     ".p2align 4\n"
@@ -7149,9 +7208,12 @@ void build_world() {
         memcpy(ctl, &vt, 4);
         g_ctl_global[row_named(plain[i])] = ctl;
     }
-    // stringdl's field, its for good; the manager's line and IME display.
+    // stringdl's field, its for good, 15 long as its open hook makes it; the
+    // manager's line and IME display.
     {
         uint8_t* field = new_field();
+        const int32_t length = 15;
+        memcpy(field + 0x398, &length, 4);
         memcpy(ctl_named("stringdl") + 0x160, &field, 4);
         const void* line = &g_line_mode;
         const void* ime = g_ime;

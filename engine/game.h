@@ -73,11 +73,13 @@ typedef void (__cdecl* PageSoundFn)();
 typedef void (__fastcall* LogReleaseFn)(void* log, void* edx, uint32_t line);
 
 // The text-entry windows' routines. stringdl's field end takes no argument
-// (FieldStopFn), the others whether to keep the field's text. The senders
-// return 0 when queued; link11's request (CreateFn) returns al 1 when queued.
+// (FieldStopFn), the others whether to keep the field's text. A field's text
+// set (FieldTextFn) takes the field object. The senders return 0 when
+// queued; link11's request (CreateFn) returns al 1 when queued.
 // SlotTakenFn: whether the second linkshell slot is taken.
 typedef void (__fastcall* FieldStopFn)(void* ctl, void* edx);
 typedef void (__fastcall* FieldEndFn)(void* ctl, void* edx, int32_t keep);
+typedef void (__fastcall* FieldTextFn)(void* field, void* edx, const char* text);
 typedef void (__fastcall* FieldLineFn)(void* ctl, void* edx, int32_t line);
 typedef void (__fastcall* UnbindFn)(void* manager, void* edx);
 typedef void (__fastcall* BindFn)(void* manager, void* edx, void* field);
@@ -809,6 +811,7 @@ struct TextSites {
     const uint8_t* stringdl_name;       // its handler while it asks the name
     const uint8_t* stringdl_slot;       // and while it asks about a slot
     FieldStopFn stringdl_stop;
+    FieldTextFn field_text;             // sets what a field's read returns, the text stringdl's commit and draw read
     uint8_t** line;                     // the global holding the text entry's manager, NULL once freed
     UnbindFn unbind;
     BindFn bind;
@@ -6843,7 +6846,13 @@ inline void stringdl_reply(Engine& e, uint8_t* ctl, const TextNow& now, bool ans
         if (ctl[kStringdlEditing] && holds_line(e, kTextStringdl, ctl)) {
             e.game.text.stringdl_stop(ctl, NULL);
         }
+        // The field holds the name as the player's keys leave it, set after
+        // the end, which takes the line's text into it: stringdl's draw
+        // shows the field's text.
         if (answer) {
+            if (uint8_t* field = field_object(kTextStringdl, ctl)) {
+                e.game.text.field_text(field, NULL, a.text);
+            }
             copy_padded(ctl + kStringdlName, a.text, kStringdlNameBytes);
         }
         reply = answer ? kStringdlNamed : kStringdlCanceled;

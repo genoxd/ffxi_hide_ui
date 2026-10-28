@@ -7,7 +7,7 @@
 
 namespace hu {
 
-// The 147 signatures the engine scans for; build.sh checks the count. Not one
+// The 148 signatures the engine scans for; build.sh checks the count. Not one
 // verbatim.
 const char kSigRegistry[] =
     "a0 ?? ?? ?? ?? 53 56 57 33 ff 84 c0 74 ?? 8b 5c 24 ?? b8 ?? ?? ?? ?? 8b f0 6a 10 53 50 e8 ?? ?? ?? ?? 83 c4 0c 85 c0 74 ?? 8a 4e 2c 83 c6 2c";
@@ -895,6 +895,22 @@ const uint8_t kStringdlCancelWrite[] = {0x66, 0xc7, 0x86, 0x5c, 0x01, 0x00, 0x00
 const uint8_t kStringdlSlotReplies[2][9] = {{0x66, 0xc7, 0x81, 0x5c, 0x01, 0x00, 0x00, 0x03, 0x00},
                                              {0x66, 0xc7, 0x81, 0x5c, 0x01, 0x00, 0x00, 0x04, 0x00}};
 const size_t kStringdlSlotBytes = 0x60;
+// A field's text set (this = the field; the text; ret 4), which no window's
+// commit calls: the text converted into +0x1D5, up to the field's length at
+// +0x398, through the converter its global names; a text converting to
+// something is copied into +0x12 and +0x3A0 and its length into +0x690, any
+// other empties them. The read stringdl's name handler calls returns +0x12
+// for a 0 argument, the field's text converted through the same converter
+// first while the field holds the line.
+const char kSigFieldText[] =
+    "53 55 8b 6c 24 0c 33 db 56 3b eb 57 8b f1 0f 84 ?? ?? ?? ?? 8b 86 98 03 00 00 53 40 53 8d 8e d5 01 00 00 50 51 8b fd 83 c9 ff 33 c0 f2 ae f7 d1 49 51 8b 0d ?? ?? ?? ?? 55 e8";
+const size_t kFieldTextConverter = 52;
+const size_t kFieldTextConvert = 57;
+const size_t kFieldTextKeptAt = 62;
+const char kShapeFieldTextKept[] =
+    "3b c3 89 86 9c 03 00 00 7f 1b 88 5e 12 88 9e a0 03 00 00 89 9e 90 06 00 00 5f 5e 5d b8 01 00 00 00 5b c2 04 00 8d 7e 12 8b c5 8b d7 2b d5 8a 08 88 0c 02 40 3a cb 75 f6 8d 96 a0 03 00 00 8b c7 2b d7 8a 08 88 0c 02 40 3a cb 75 f6 8b fd 83 c9 ff 33 c0 f2 ae f7 d1 49 5f 89 8e 90 06 00 00";
+const char kShapeFieldRead[] =
+    "56 8b f1 8a 86 94 06 00 00 84 c0 74 4d 8b 86 98 03 00 00 8b 8e a0 06 00 00 53 40 57 8d 5e 12 50 53 e8 ?? ?? ?? ?? 8b 8e 98 03 00 00 6a 00 41 6a 00 51 8b fb 83 c9 ff 33 c0 f2 ae f7 d1 8d 96 d5 01 00 00 49 52 51 8b 0d ?? ?? ?? ?? 53 e8 ?? ?? ?? ?? 5f 89 86 9c 03 00 00 5b 8a 44 24 08 84 c0 8d 86 d5 01 00 00 75 03 8d 46 12 5e c2 04 00";
 
 // comment's Escape ends the field keeping the line, then closes the window by
 // instance; its begin-close ends a field still open, keeping its line. The
@@ -1988,6 +2004,20 @@ inline bool resolve_text(const AskedInputs& in, const uint8_t* close_instance, T
     memcpy(&s.bind, &bind, sizeof(s.bind));
     memcpy(&s.stringdl_stop, &stop, sizeof(s.stringdl_stop));
     memcpy(&s.focus, &focus, sizeof(s.focus));
+    const uint8_t* text_set = asked_find(in, "field_text", kSigFieldText, why, len);
+    if (!text_set) {
+        return false;
+    }
+    const uint8_t* converter = rdptr(text_set, kFieldTextConverter);
+    const uint8_t* convert = asked_target(in, text_set + kFieldTextConvert, 0xE8);
+    if (!convert || !asked_data(in, converter, 4) || !shape_is(in, text_set + kFieldTextKeptAt, kShapeFieldTextKept, &a)
+        || !shape_is(in, shape_target(in, b, 1), kShapeFieldRead, &c) || shape_ptr(c, 1) != converter
+        || shape_target(in, c, 2) != convert) {
+        snprintf(why, len, "field_text: it does not keep a field's text where the read stringdl's name handler calls"
+            " returns it, converted through the same converter (client patched?)");
+        return false;
+    }
+    memcpy(&s.field_text, &text_set, sizeof(s.field_text));
 
     // comment
     s.comment_input = asked_find(in, "comment_input", kSigCommentInput, why, len);

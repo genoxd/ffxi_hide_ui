@@ -107,8 +107,8 @@ lua5.1 lua_client_test.lua "$ADDON" || status=1
 # clear, the event's wait flag, the tick and its left-button test's return,
 # and the two globals naming their text objects that the dispatch hands its
 # code between; the text-entry windows:
-# stringdl's input routine, name and slot handlers, field end and the
-# manager's focus;
+# stringdl's input routine, name and slot handlers and field end, a field's
+# text set and the manager's focus;
 # comment's input routine, vtable, begin-close, field end, the line's
 # sanitize and trim; msgline's input routine, field end, the player data
 # global, the POL interface's global and number, the clock's text, the
@@ -188,7 +188,7 @@ elif [ -f "$IMAGE" ]; then
         101D6070 10337460 101D5CF0 101D5DE0 101D5BC9 101CBC00 100F0F20 101CBBD0 101D5D50 100AD100 101D5CC0 \
         1062F6AC 1062F6A8 105EDDBE 10481F10 1037DC28 \
         10136A90 10136AD0 101266E0 10126930 10037E80 10129130 101268A0 10487200 10136B70 10136C79 104E1148 104E114C \
-        1014F310 1014F3D0 1014F5B0 1014F3B0 1015DA10 \
+        1014F310 1014F3D0 1014F5B0 1014F3B0 101C5A60 1015DA10 \
         101DD990 10337E60 101DCE60 101DCCF0 1018F9C0 1018FB60 \
         101FEF10 101FE9F0 104DED90 1035F1C4 100DB640 10310BCE 100F6F40 100F6F00 100F6E80 100F7050 100F71E0 \
         101FF3D0 101FF450 105771F0 10220D50 1062FFA0 \

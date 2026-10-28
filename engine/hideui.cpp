@@ -5192,7 +5192,7 @@ void write_dead(ReplyWriter& w, const uint8_t* ctl) {
     w.field("detail");
 }
 
-// `item`: for a count asked for an item picked from the inventory, its id.
+// `item`: the item's id, for a count whose asker's context is an item record.
 void write_box(ReplyWriter& w, const BoxQuestion& q) {
     const int b = q.box;
     const uint8_t* ctl = q.now.ctl;
@@ -6275,6 +6275,7 @@ void write_internals(ReplyWriter& w, const StatusData& s) {
         const void* const* at;
     } text_fns[] = {
         {"stringdl_stop", reinterpret_cast<const void* const*>(&text.stringdl_stop)},
+        {"field_text", reinterpret_cast<const void* const*>(&text.field_text)},
         {"unbind", reinterpret_cast<const void* const*>(&text.unbind)},
         {"bind", reinterpret_cast<const void* const*>(&text.bind)},
         {"focus", reinterpret_cast<const void* const*>(&text.focus)},

@@ -755,6 +755,7 @@ int main(int argc, char** argv) {
                     {"stringdl's name handler", x.stringdl_name},
                     {"stringdl's slot handler", x.stringdl_slot},
                     {"stringdl's field end", reinterpret_cast<const void*>(x.stringdl_stop)},
+                    {"a field's text set", reinterpret_cast<const void*>(x.field_text)},
                     {"the manager's focus", reinterpret_cast<const void*>(x.focus)},
                     {"comment_input", x.comment_input},
                     {"comment's vtable", x.comment_vtable},

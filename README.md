@@ -1260,8 +1260,10 @@ ui:cancel(n)
 
 `value` is the number the box shows, and `min` and `max` the numbers it takes.
 `item` is the item's id, its number in Windower's `res.items`, when the count
-is for an item the player picked from the inventory. This is not the `item`
-that `offer` takes in a trade, which is an inventory index.
+is for an item going into a synthesis, the outgoing delivery box, a trade or a
+trade with an NPC. Counts for the Mog House storage, shops, guilds and bazaars
+have no `item`. This is not the `item` that `offer` takes in a trade, which is
+an inventory index.
 
 ### Text
 

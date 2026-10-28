@@ -1492,12 +1492,14 @@ uint32_t __fastcall fake_text_clear(void* text, void*) {
 // hooks of comment, msgline and passinpu (their vtables' +4) start theirs; each
 // call a letter in `order` (s a field's end, P passinpu's start, o comment's
 // start, M msgline's start, u and b the manager's unbind and bind the engine
-// calls itself, f focus, z sanitize, t trim, n the POL number, c the clock,
-// S a send, m the mark, C and N the criteria cleared and named, Q the
-// search, k the slot test, L link5's selection, e the encoding, R the
-// request, I the item) and what it was given.
+// calls itself, T a field's text set, f focus, z sanitize, t trim, n the POL
+// number, c the clock, S a send, m the mark, C and N the criteria cleared
+// and named, Q the search, k the slot test, L link5's selection, e the
+// encoding, R the request, I the item) and what it was given.
 struct TextLog {
     char order[64];
+    void* text_field;           // the field the last text set was given, and its text
+    char field_text[16];
     int ends[6];
     int keep;
     int starts;
@@ -1606,6 +1608,12 @@ void __fastcall fake_stringdl_stop(void* ctl, void*) {
     static_cast<uint8_t*>(ctl)[kStringdlEditing] = 0;
     line_unbind();
     line_bind(NULL);
+}
+
+void __fastcall fake_field_text(void* field, void*, const char* text) {
+    text_logged('T');
+    g_text.text_field = field;
+    snprintf(g_text.field_text, sizeof(g_text.field_text), "%s", text);
 }
 
 void __fastcall fake_comment_stop(void* ctl, void*, int32_t keep) {
@@ -4194,6 +4202,7 @@ int main() {
     {
         TextSites& t = g_e.game.text;
         t.stringdl_stop = &fake_stringdl_stop;
+        t.field_text = &fake_field_text;
         t.line = &g_line_ptr;
         t.unbind = &fake_unbind;
         t.bind = &fake_bind;
@@ -9561,10 +9570,11 @@ int main() {
         for (size_t i = 10; i < kStringdlNameBytes; ++i) {
             padded = padded && sd[kStringdlName + i] == 0;
         }
-        check(strcmp(g_text.order, "sff") == 0 && memcmp(sd + kStringdlName, "Rolanberry", 10) == 0 && padded
-                && rd16(sd, kStringdlReply) == kStringdlNamed && g_text.focus_menu == outgoing,
-            "answer('stringdl', name): the field ended, the name into +0x58 as its strncpy pads it, +0x15C 1, the"
-            " outgoing box raised by the handler and again by the routine around it");
+        check(strcmp(g_text.order, "sTff") == 0 && g_text.text_field == g_text_boxes[kTextStringdl]
+                && strcmp(g_text.field_text, "Rolanberry") == 0 && memcmp(sd + kStringdlName, "Rolanberry", 10) == 0
+                && padded && rd16(sd, kStringdlReply) == kStringdlNamed && g_text.focus_menu == outgoing,
+            "answer('stringdl', name): the field ended, then its text set to the name, the name into +0x58 as its"
+            " strncpy pads it, +0x15C 1, the outgoing box raised by the handler and again by the routine around it");
         reply(kOpTextAnswer, "stringdl");
         const bool unread = refused("answer", "stringdl", "the outgoing box has not read stringdl's last reply yet");
         wr16(sd, kStringdlReply, 0);
@@ -9596,17 +9606,20 @@ int main() {
         check(unread && slot_mode && yes && no && name_mode && asks_name && named_cancel,
             "stringdl: refused while the box has not read the last reply, a name while it asks about a slot and a"
             " yes or no while it asks the name, anything in another state; on a slot +0x15C 3 for yes, 4 for its"
-            " cancel, the box raised once; the name's cancel ends the field and writes 2");
+            " cancel, the box raised once, no field's text set; the name's cancel ends the field, sets no text and"
+            " writes 2");
         wr16(sd, kStringdlReply, 0);
         open_now("msgline");
         sd[kStringdlEditing] = 1;
         fresh();
         answer(kTextStringdl, "Rolanberry");
         reply(kOpTextAnswer, "stringdl");
-        check(strcmp(g_text.order, "ff") == 0 && rd16(sd, kStringdlReply) == kStringdlNamed && sd[kStringdlEditing] == 1
-                && g_line[kLineBound] && rdptr(g_line, kLineField) == g_text_boxes[kTextMsgline],
+        check(strcmp(g_text.order, "Tff") == 0 && g_text.text_field == g_text_boxes[kTextStringdl]
+                && strcmp(g_text.field_text, "Rolanberry") == 0 && rd16(sd, kStringdlReply) == kStringdlNamed
+                && sd[kStringdlEditing] == 1 && g_line[kLineBound]
+                && rdptr(g_line, kLineField) == g_text_boxes[kTextMsgline],
             "answer('stringdl', name) while msgline's field holds the line: stringdl's end, which would take it,"
-            " is not called; the name written and the box raised");
+            " is not called; stringdl's own field given the name, the name written and the box raised");
         sd[kStringdlEditing] = 0;
         game_closes("msgline");
         wr16(delivery, kDeliveryState, 0);
