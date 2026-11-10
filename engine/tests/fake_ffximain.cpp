@@ -4711,7 +4711,7 @@ asm(
 
     // The KO window's input handler from its confirm on, never run: the
     // game's bytes around the stand-in's decider, message getter and ask,
-    // comyn's controller global (its registry row, 237, in menu_table.inc)
+    // comyn's controller global (its registry row, 240, in menu_table.inc)
     // and the callback below.
     ".p2align 4\n"
     ".globl _fake_dead_confirm\n"
@@ -4721,7 +4721,7 @@ asm(
     "  .byte 0x83,0xc4,0x08,0x84,0xc0,0x74,0x07,0x68,0x58,0x02,0x00,0x00,0xeb,0x02,0x6a,0x46,0x6a,0x0e\n"
     "  call _h_message\n"
     "  .byte 0x83,0xc4,0x08,0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 237\n"
+    "  .long _g_ctl_global + 4 * 240\n"
     "  .byte 0x6a,0x00,0x6a,0x01,0x6a,0x00,0x6a,0x00,0x50,0x6a,0x00,0x68\n"
     "  .long _fake_dead_chosen\n"
     "  call _fake_yesno_ask_site\n"
@@ -5059,7 +5059,7 @@ asm(
     // The magic opener(kind, sort, mask), cdecl, nothing returned, the
     // game's bytes: the player global, magic opened by name through the open
     // routine with the manager in ecx, then the three arguments handed to
-    // the controller in magic's registry slot (row 254), the stand-in for its
+    // the controller in magic's registry slot (row 257), the stand-in for its
     // rebuild; the je at +7 lands on the ret, as the game's does.
     ".p2align 4\n"
     ".globl _fake_magic_open\n"
@@ -5074,7 +5074,7 @@ asm(
     "  .long _g_mcb\n"
     "  call _fake_open\n"
     "  .byte 0x8b,0x44,0x24,0x0c,0x8b,0x4c,0x24,0x08,0x8b,0x54,0x24,0x04,0x50,0x51,0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 254\n"
+    "  .long _g_ctl_global + 4 * 257\n"
     "  .byte 0x52\n"
     "  call @h_magic_setup@20\n"
     "1:\n"
@@ -5514,7 +5514,7 @@ asm(
     "  .byte 0x5e,0xc2,0x08,0x00\n"
 
     // The key item list's ask, never run: evitem01's key opened through the
-    // open routine, then the setup on evitem01's controller (row 251).
+    // open routine, then the setup on evitem01's controller (row 254).
     ".p2align 4\n"
     ".globl _fake_evitem_ask\n"
     "_fake_evitem_ask:\n"
@@ -5530,7 +5530,7 @@ asm(
     "  .long _g_mcb\n"
     "  call _fake_open\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 251\n"
+    "  .long _g_ctl_global + 4 * 254\n"
     "  .byte 0x57\n"
     "  call _fake_evitem_setup\n"
     "  .byte 0x5f,0x5e,0xc2,0x08,0x00\n"
@@ -5553,12 +5553,12 @@ asm(
     "  .byte 0x5f,0x5e,0xc2,0x04,0x00\n"
 
     // Its callback(answer), cdecl, run: the key item list's controller
-    // (row 250) read as the game's is, then the stand-in's body.
+    // (row 253) read as the game's is, then the stand-in's body.
     ".p2align 4\n"
     ".globl _fake_evitem_callback\n"
     "_fake_evitem_callback:\n"
     "  .byte 0x56,0x8b,0x35\n"
-    "  .long _g_ctl_global + 4 * 250\n"
+    "  .long _g_ctl_global + 4 * 253\n"
     "  .byte 0xff,0x74,0x24,0x08\n"
     "  call _h_evitem_answer\n"
     "  .byte 0x83,0xc4,0x04,0x5e,0xc3\n"
@@ -5646,7 +5646,7 @@ asm(
 
     // maplist's close+reset (this = the controller), the game's bytes, run:
     // its class's close, the set-rows and free-rows stand-ins. Then its key
-    // handler, never run: maplist's global (row 206), the player data's
+    // handler, never run: maplist's global (row 209), the player data's
     // global, then its leaf confirm, its closing row's confirm, its cancel
     // at the top, each a call of close+reset, and the cancel's test of the
     // list it shows; its cancel inside a zone's maps and inside a region,
@@ -5662,7 +5662,7 @@ asm(
     "  .long @h_map_free@8 - (. + 4)\n"
     "  .fill 8, 1, 0x90\n"
     "  .byte 0xa1\n"
-    "  .long _g_ctl_global + 4 * 206\n"
+    "  .long _g_ctl_global + 4 * 209\n"
     "  .byte 0x56,0x85,0xc0,0x8b,0xf1,0x0f,0x84,0x00,0x00,0x00,0x00\n"
     "  .byte 0xa1\n"
     "  .long _g_player_data_ptr\n"
@@ -5711,9 +5711,9 @@ asm(
 
     // map0's input routine, never run: its cancel closes the window by
     // instance, then calls the map's close with 0 on mapframe's global (row
-    // 201). The map's close, run: the game's head, the stand-in that records
+    // 204). The map's close, run: the game's head, the stand-in that records
     // it, and from +0xAE the game's closes of map0, mapv3, mapv2, scanlist
-    // and mapscan (rows 200, 202 to 205) by name and the frame's fade-out.
+    // and mapscan (rows 203, 205 to 208) by name and the frame's fade-out.
     ".p2align 4\n"
     ".globl _fake_map0_input\n"
     "_fake_map0_input:\n"
@@ -5722,7 +5722,7 @@ asm(
     "  .long _g_mcb\n"
     "  call _h_close_menu@8\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 201\n"
+    "  .long _g_ctl_global + 4 * 204\n"
     "  .byte 0x6a,0x00\n"
     "  call _fake_map_close\n"
     "  .byte 0xc2,0x08,0x00\n"
@@ -5740,25 +5740,25 @@ asm(
     "  .byte 0xb9\n"
     "  .long _g_mcb\n"
     "  .byte 0x68\n"
-    "  .long _g_registry + 0x2c * 200\n"
-    "  call _fake_close\n"
-    "  .byte 0x68\n"
-    "  .long _g_registry + 0x2c * 202\n"
-    "  .byte 0xb9\n"
-    "  .long _g_mcb\n"
-    "  call _fake_close\n"
-    "  .byte 0x68\n"
     "  .long _g_registry + 0x2c * 203\n"
-    "  .byte 0xb9\n"
-    "  .long _g_mcb\n"
-    "  call _fake_close\n"
-    "  .byte 0x68\n"
-    "  .long _g_registry + 0x2c * 204\n"
-    "  .byte 0xb9\n"
-    "  .long _g_mcb\n"
     "  call _fake_close\n"
     "  .byte 0x68\n"
     "  .long _g_registry + 0x2c * 205\n"
+    "  .byte 0xb9\n"
+    "  .long _g_mcb\n"
+    "  call _fake_close\n"
+    "  .byte 0x68\n"
+    "  .long _g_registry + 0x2c * 206\n"
+    "  .byte 0xb9\n"
+    "  .long _g_mcb\n"
+    "  call _fake_close\n"
+    "  .byte 0x68\n"
+    "  .long _g_registry + 0x2c * 207\n"
+    "  .byte 0xb9\n"
+    "  .long _g_mcb\n"
+    "  call _fake_close\n"
+    "  .byte 0x68\n"
+    "  .long _g_registry + 0x2c * 208\n"
     "  .byte 0xb9\n"
     "  .long _g_mcb\n"
     "  call _fake_close\n"
@@ -7806,7 +7806,7 @@ asm(
     // The map's opener(mode), cdecl: the player data's global tested, the
     // second argument picked by the mode, the position read (nops here: the
     // stand-in's convert takes what is on the stack), then the controller in
-    // mapframe's registry slot (row 201) handed to the map's routine with
+    // mapframe's registry slot (row 204) handed to the map's routine with
     // the game's seven arguments.
     ".p2align 4\n"
     ".globl _fake_map_open\n"
@@ -7820,7 +7820,7 @@ asm(
     "  .long _g_map_object_ptr\n"
     "  .org _fake_map_open + 0x77, 0x90\n"
     "  .byte 0xa1\n"
-    "  .long _g_ctl_global + 4 * 201\n"
+    "  .long _g_ctl_global + 4 * 204\n"
     "  .byte 0x85,0xc0,0x74,0x3a,0x8b,0x44,0x24,0x14,0x8b,0x4c,0x24,0x10,0x8b,0x54,0x24,0x0c\n"
     "  .byte 0x6a,0x01,0x6a,0x00,0x6a,0x00,0x57,0x53,0x50,0x51,0x8b,0x0d\n"
     "  .long _g_map_object_ptr\n"
@@ -7829,7 +7829,7 @@ asm(
     "  .byte 0x50,0xa1\n"
     "  .long _g_pd_ptr\n"
     "  .byte 0x8b,0x88,0x10,0x00,0x00,0x00,0x51,0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 201\n"
+    "  .long _g_ctl_global + 4 * 204\n"
     "  call _fake_map_routine\n"
     "9:\n"
     "  .byte 0x5f,0x5e,0x5b,0x83,0xc4,0x10,0xc3\n"
@@ -7992,7 +7992,7 @@ asm(
 
     // The instincts' opener, cdecl, plain ret: the cache's lookups of
     // 0xEFF8..0xEFFE, the prep, mp_stat's opener on its controller (row
-    // 355) with 1, mp_cstm's on its (row 362), then mp_mncst by name; the two
+    // 358) with 1, mp_cstm's on its (row 365), then mp_mncst by name; the two
     // openers, each its window by name.
     ".p2align 4\n"
     ".globl _fake_instincts_open\n"
@@ -8004,11 +8004,11 @@ asm(
     "  .byte 0x46,0x81,0xfe,0xff,0xef,0x00,0x00,0x72,0xeb\n"
     "  call _h_instincts_prep\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 355\n"
+    "  .long _g_ctl_global + 4 * 358\n"
     "  .byte 0x6a,0x01\n"
     "  call _fake_mp_stat_open\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 362\n"
+    "  .long _g_ctl_global + 4 * 365\n"
     "  call _fake_mp_cstm_open\n"
     "  .byte 0x6a,0x00,0x6a,0x01,0x68\n"
     "  .long _g_key_mp_mncst\n"
@@ -8363,8 +8363,8 @@ asm(
     "  .byte 0x5e,0xc3\n"
 
     // The mount list's opener(list, sort), cdecl, the game's bytes: abisortw
-    // for a sort of 1, mount, its setup on mount's controller (row 259), then
-    // abisortw's controller's (row 256) +0x14 set 2.
+    // for a sort of 1, mount, its setup on mount's controller (row 262), then
+    // abisortw's controller's (row 259) +0x14 set 2.
     ".p2align 4\n"
     ".globl _fake_mount_open\n"
     "_fake_mount_open:\n"
@@ -8381,11 +8381,11 @@ asm(
     "  .byte 0xe8\n"
     "  .long _fake_open - . - 4\n"
     "  .byte 0x8b,0x44,0x24,0x04,0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 259\n"
+    "  .long _g_ctl_global + 4 * 262\n"
     "  .byte 0x50,0xe8\n"
     "  .long _fake_mount_setup - . - 4\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 256\n"
+    "  .long _g_ctl_global + 4 * 259\n"
     "  .byte 0xc7,0x41,0x14,0x02,0x00,0x00,0x00,0xc3\n"
 
     // Its setup(this = mount's controller; list), ret 4, the game's bytes
@@ -8563,7 +8563,7 @@ asm(
     "  .byte 0xc2,0x08,0x00\n"
 
     // The main menu's Status row, never run: in Monstrosity mp_stat's opener
-    // on its controller (row 355) with 0, else persona's (row 82) layout +0x1C
+    // on its controller (row 358) with 0, else persona's (row 82) layout +0x1C
     // set 1 and persona's open.
     ".p2align 4\n"
     ".globl _fake_status_row\n"
@@ -8571,7 +8571,7 @@ asm(
     "  .byte 0xe8\n"
     "  .long _fake_monstrosity - . - 4\n"
     "  .byte 0x84,0xc0,0x6a,0x00,0x74,0x14,0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 355\n"
+    "  .long _g_ctl_global + 4 * 358\n"
     "  .byte 0xe8\n"
     "  .long _fake_mp_stat_open - . - 4\n"
     "  .byte 0xe8\n"
@@ -8586,15 +8586,15 @@ asm(
     "  .long _fake_open - . - 4\n"
     "  .byte 0xc3\n"
 
-    // The configuration menu's message rows, never run: conf11l's (row 277)
+    // The configuration menu's message rows, never run: conf11l's (row 280)
     // set +0x14 written 1 or 0, then conf11l's open.
     ".p2align 4\n"
     ".globl _fake_conf11m_rows\n"
     "_fake_conf11m_rows:\n"
     "  .byte 0x8b,0x15\n"
-    "  .long _g_ctl_global + 4 * 277\n"
+    "  .long _g_ctl_global + 4 * 280\n"
     "  .byte 0xc7,0x42,0x14,0x01,0x00,0x00,0x00,0xeb,0x0c,0xa1\n"
-    "  .long _g_ctl_global + 4 * 277\n"
+    "  .long _g_ctl_global + 4 * 280\n"
     "  .byte 0xc7,0x40,0x14,0x00,0x00,0x00,0x00,0x6a,0x00,0x6a,0x01,0xb9\n"
     "  .long _g_mcb\n"
     "  .byte 0x68\n"
@@ -8603,13 +8603,13 @@ asm(
     "  .long _fake_open - . - 4\n"
     "  .byte 0xc3\n"
 
-    // The quest log command, never run: quest00's (row 246) mode +0x68
+    // The quest log command, never run: quest00's (row 249) mode +0x68
     // written 0, then quest00's open.
     ".p2align 4\n"
     ".globl _fake_quest_command\n"
     "_fake_quest_command:\n"
     "  .byte 0xa1\n"
-    "  .long _g_ctl_global + 4 * 246\n"
+    "  .long _g_ctl_global + 4 * 249\n"
     "  .byte 0x85,0xc0,0x74,0x07,0xc7,0x40,0x68,0x00,0x00,0x00,0x00,0x6a,0x00,0x6a,0x01,0x68\n"
     "  .long _g_key_quest00\n"
     "  .byte 0xb9\n"
@@ -8620,7 +8620,7 @@ asm(
 
     // quest00's confirm, never run: its two stand-in calls on quest00's
     // controller, quest01's open, then quest01's setup on its controller (row
-    // 247).
+    // 250).
     ".p2align 4\n"
     ".globl _fake_quest00_confirm\n"
     "_fake_quest00_confirm:\n"
@@ -8635,18 +8635,18 @@ asm(
     "  .byte 0xe8\n"
     "  .long _fake_open - . - 4\n"
     "  .byte 0x8b,0x56,0x30,0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 247\n"
+    "  .long _g_ctl_global + 4 * 250\n"
     "  .byte 0x52,0xe8\n"
     "  .long @h_quest01_setup@12 - . - 4\n"
     "  .byte 0x5e,0xc3\n"
 
-    // The missions command, never run: on miss00's controller (row 248) the
+    // The missions command, never run: on miss00's controller (row 251) the
     // setter with 0 or the log by name, then miss00's open.
     ".p2align 4\n"
     ".globl _fake_missions_command\n"
     "_fake_missions_command:\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 248\n"
+    "  .long _g_ctl_global + 4 * 251\n"
     "  .byte 0x85,0xc9,0x74,0x34,0xa1\n"
     "  .long _g_nation\n"
     "  .byte 0x83,0xe8,0x02,0x74,0x09,0x6a,0x00,0xe8\n"
@@ -8688,9 +8688,9 @@ asm(
     "  .byte 0x83,0xc4,0x04,0x84,0xc0,0x74,0x3a,0xc3\n"
 
     // map0's Wide Scan row, never run: while the map tracks a yes/no on
-    // comyn's controller (row 237), the game's message asked through the
+    // comyn's controller (row 240), the game's message asked through the
     // yes/no class's ask with a stand-in callback, else scanlist's opener on
-    // its controller (row 204).
+    // its controller (row 207).
     ".p2align 4\n"
     ".globl _fake_wide_scan_row\n"
     "_fake_wide_scan_row:\n"
@@ -8699,13 +8699,13 @@ asm(
     "  .byte 0x85,0xc0,0x74,0x2f,0x83,0x38,0x01,0x75,0x2a,0x6a,0x00,0x6a,0x01,0x6a,0x00,0x6a,0x00,0x6a,0x45,0x6a,0x0e,0xe8\n"
     "  .long _h_message - . - 4\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 237\n"
+    "  .long _g_ctl_global + 4 * 240\n"
     "  .byte 0x83,0xc4,0x08,0x50,0x6a,0x00,0x68\n"
     "  .long _h_scan_question\n"
     "  .byte 0xe8\n"
     "  .long _fake_yesno_ask_site - . - 4\n"
     "  .byte 0xc2,0x08,0x00,0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 204\n"
+    "  .long _g_ctl_global + 4 * 207\n"
     "  .byte 0xe8\n"
     "  .long _fake_scanlist_open - . - 4\n"
     "  .byte 0xc2,0x08,0x00\n"
@@ -8728,13 +8728,13 @@ asm(
     "  .byte 0x5e,0xc3\n"
 
     // The conquest map's text command, never run: the Region Info opener on
-    // cnqframe's controller (row 207), closed, with the area at +0x40 of the
+    // cnqframe's controller (row 210), closed, with the area at +0x40 of the
     // player's data.
     ".p2align 4\n"
     ".globl _fake_region_command\n"
     "_fake_region_command:\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 207\n"
+    "  .long _g_ctl_global + 4 * 210\n"
     "  .byte 0x85,0xc9,0x74,0x1e,0xa1\n"
     "  .long _g_route_player_ptr\n"
     "  .byte 0x85,0xc0,0x74,0x15,0x8b,0x51,0x08,0x85,0xd2,0x75,0x0e,0x8b,0x80,0x40,0x00,0x00,0x00,0x50,0x6a,0x00,0xe8\n"
@@ -8752,12 +8752,12 @@ asm(
     "  .byte 0x89,0x9e,0x60,0x01,0x00,0x00,0xc3\n"
 
     // cnqframe's Colonization cursor, never run: the region at coloresu's
-    // (row 218) +0x18, coloresu's open, colorank's close.
+    // (row 221) +0x18, coloresu's open, colorank's close.
     ".p2align 4\n"
     ".globl _fake_coloresu_row\n"
     "_fake_coloresu_row:\n"
     "  .byte 0xa1\n"
-    "  .long _g_ctl_global + 4 * 218\n"
+    "  .long _g_ctl_global + 4 * 221\n"
     "  .byte 0x85,0xc0,0x74,0x06,0x0f,0xbf,0xd7,0x89,0x50,0x18,0x6a,0x00,0x6a,0x01,0x68\n"
     "  .long _g_key_coloresu\n"
     "  .byte 0xb9\n"
@@ -8773,17 +8773,17 @@ asm(
     "  .byte 0xc3\n"
 
     // The text color menu's rows, never run: the category written into
-    // textcol1's, textcol2's and textcol3's controllers (rows 272 to 274), then
+    // textcol1's, textcol2's and textcol3's controllers (rows 275 to 277), then
     // at the game's offset textcol2's and textcol1's opens.
     ".p2align 4\n"
     ".globl _fake_text_color_rows\n"
     "_fake_text_color_rows:\n"
     "  .byte 0xa1\n"
-    "  .long _g_ctl_global + 4 * 272\n"
+    "  .long _g_ctl_global + 4 * 275\n"
     "  .byte 0xc7,0x40,0x14,0x00,0x00,0x00,0x00,0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 273\n"
+    "  .long _g_ctl_global + 4 * 276\n"
     "  .byte 0xc7,0x41,0x1c,0x00,0x00,0x00,0x00,0x8b,0x15\n"
-    "  .long _g_ctl_global + 4 * 274\n"
+    "  .long _g_ctl_global + 4 * 277\n"
     "  .byte 0xc7,0x42,0x18,0x00,0x00,0x00,0x00,0xeb,0x6a\n"
     "  .org _fake_text_color_rows + 0x92, 0x90\n"
     "  .byte 0x6a,0x00,0x6a,0x01,0x68\n"
@@ -9028,18 +9028,18 @@ asm(
     "  .long _h_bag_size - . - 4\n"
     "  .byte 0xc3\n"
 
-    // mp_mncst's Escape, run as the game's: mp_stat (row 355) and mp_cstm
-    // (row 362) each closed by name through a routine of its own, then
+    // mp_mncst's Escape, run as the game's: mp_stat (row 358) and mp_cstm
+    // (row 365) each closed by name through a routine of its own, then
     // mp_mncst.
     ".p2align 4\n"
     ".globl _fake_instincts_escape\n"
     "_fake_instincts_escape:\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 355\n"
+    "  .long _g_ctl_global + 4 * 358\n"
     "  .byte 0xe8\n"
     "  .long _fake_mp_stat_close - . - 4\n"
     "  .byte 0x8b,0x0d\n"
-    "  .long _g_ctl_global + 4 * 362\n"
+    "  .long _g_ctl_global + 4 * 365\n"
     "  .byte 0xe8\n"
     "  .long _fake_mp_cstm_close - . - 4\n"
     "  .byte 0x68\n"

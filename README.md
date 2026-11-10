@@ -3,7 +3,7 @@
 Hide, move, resize, open, close and answer the windows of Final Fantasy XI's
 own interface, from a Windower 4 addon.
 
-The client builds its interface out of 366 windows. You can
+The client builds its interface out of 369 windows. You can
 
 - hide any window, or block most of them so the game never opens them
 - move the windows
@@ -516,7 +516,7 @@ windows together.
 | `jobcselu` | `open('jobcselu', which)` | `'main'` or `'support'`: the job list for changing that job. A job picked in it changes your job | required |
 | `conf11l` | `open('conf11l', set)` | 1 or 2: one of the two sets of message settings, as the first or second row of the configuration's message menu `conf11m` opens it. The game labels the two sets with images, not text, so they go by number | 1 |
 | `jbpcat` | `open('jbpcat', job)` | a job by its three letters, `'war'` to `'run'`, or Windower's job id, 1 to 22: that job's Job Points categories | required |
-| `fp_cat2` | `open('fp_cat2', category)` | 1 to 7: the upgrades of one category of `fp_cat`, the Status menu's twelfth list | required |
+| `fp_cat2` | `open('fp_cat2', category)` | 1 to 7: the upgrades of one category of `fp_cat`, which the first row of `fe_main` opens | required |
 | `quest00` | `open('quest00', mode)` | 1: the quest log's menu, as the quest log command opens it. Its rows are "Current", "Completed", "Current" (with a count of 30), "Objective List", and a row that reads "Vana", a symbol of the game's own font, then "Bout". 2 or `'Unity Information'`: the rows "Active" and "Inactive" under "Unity chat settings:". 3 or `'Ranking Information'`: the rows "Ranking Results" and "Partial Ranking Results". Mode 1 has no title in the game's text, so it goes by number | 1 |
 | `quest01` | `open('quest01', list)` | 1 to 7, the row of `quest00` it opens from: 1 to 5 are the rows of its mode 1, in that order, and 6 and 7 those of its mode 3. Two rows read "Current", so the lists go by number. Refused unless `quest00` is open in that mode, since the game opens them only from there | 1 |
 | `miss00` | `open('miss00', log)` | none: your nation's mission log, as the Missions menu's first row opens it; or a log by its name in the game, in any case: `"San d'Oria"`, `'Bastok'`, `'Windurst'`, `'Rise of the Zilart'`, `'Chains of Promathia'`, `'Assault'`, `'Treasures of Aht Urhgan'`, `'Campaign'`, `'Wings of the Goddess'`, `'Seekers of Adoulin'`, `"Rhapsodies of Vana'diel"`, `'The Voracious Resurgence'`, `'A Crystalline Prophecy'`, `"A Moogle Kupo d'Etat"`, `'A Shantotto Ascension'`, or its number in that order, 1 to 15 | your nation's |
@@ -820,7 +820,7 @@ When a block closes a parent, all of this happens too.
 ## The compass
 
 The compass at the lower left, with the Vana'diel clock and the weather icon,
-is not one of the 366 windows: the client draws it separately. The library
+is not one of the 369 windows: the client draws it separately. The library
 covers it anyway, under the name `compass`. `hide`, `unhide`, `move` and
 `reset` work on it as on a window:
 
@@ -1862,6 +1862,9 @@ not been identified yet; the name is still valid.
 | `evitem01` | key item use confirm |
 | `faqmain` | help: FAQ |
 | `faqsub` | help: FAQ topic |
+| `fe_equip` | Trust Ascension: one of the six slots `fe_main` lists; it opens with `fe_inven` |
+| `fe_inven` | Trust Ascension: the list that opens beside `fe_equip` |
+| `fe_main` | Trust Ascension menu (status menu); its first row opens `fp_cat` |
 | `fep` |  |
 | `feppalle` |  |
 | `flistmai` | friend list menu |

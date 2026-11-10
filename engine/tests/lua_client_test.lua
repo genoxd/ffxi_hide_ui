@@ -51,7 +51,7 @@ local function status_table(ok, err)
                macros_blocked = false, detail = d}
     if ok then
         d.daemon = {abi = 1, build = '1.0.0'}
-        d.registry, d.rows, d.names, d.manager = '0x020022D8', 370, 370, '0x10621838'
+        d.registry, d.rows, d.names, d.manager = '0x020022D8', 373, 371, '0x10621838'
         d.ui = {w = 1920, h = 1080}
         s.ui = {w = 1920, h = 1080}
         d.functions = {open_by_name = '0x1', ui_update = '0x2', staged_close = '0x3', show_path = '0x4',

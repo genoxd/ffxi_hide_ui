@@ -1416,11 +1416,11 @@ void poke(uint8_t* at, uint8_t value) {
 const int kRowLog = 31;
 const int kRowEquip = 41;
 const int kRowMenuwind = 0;
-const int kRowBuff = 260;
-const int kRowDbdelsel = 327;
+const int kRowBuff = 263;
+const int kRowDbdelsel = 330;
 
 bool registry_pristine() {
-    return memcmp(g_fake->registry, g_fake->pristine, 371 * 0x2C) == 0;
+    return memcmp(g_fake->registry, g_fake->pristine, 374 * 0x2C) == 0;
 }
 
 int row_named(const char* name) {
@@ -1428,7 +1428,7 @@ int row_named(const char* name) {
     memcpy(key, "menu    ", 8);
     memset(key + 8, ' ', 8);
     memcpy(key + 8, name, strlen(name));
-    for (int r = 0; r < 370; ++r) {
+    for (int r = 0; r < 373; ++r) {
         if (memcmp(registry_row(r), key, 16) == 0) {
             return r;
         }
@@ -2984,7 +2984,7 @@ int main(int argc, char** argv) {
         "  'SetCursor, the link5 pending latch and the event callback the link5 open site names resolved to the'"
         "  .. ' stand-in: ' .. tostring(f.set_cursor) .. ' ' .. tostring(f.link5_latch) .. ' '"
         "  .. tostring(f.link5_callback))\n"
-        "check(d.registry == REGISTRY and d.manager == MCB and d.rows == 370 and d.names == 368"
+        "check(d.registry == REGISTRY and d.manager == MCB and d.rows == 373 and d.names == 371"
         "  and d.ui and d.ui.w == 1920 and d.ui.h == 1080, 'registry, manager and UI size resolved')\n"
         "check(d.pinned and d.daemon and d.daemon.abi == 1, 'pinned, daemon abi ' .. tostring(d.daemon and d.daemon.abi))\n"
         "check(h:hide('logwindo') == true and h:block('menuwind') == true and h:move('equip', 300, 200) == true,"
@@ -9062,7 +9062,7 @@ int main(int argc, char** argv) {
         "local r, why2 = h2:hide('buff')\n"
         "check(r == nil and why2:find('shut down', 1, true), 'verbs after shutdown say so')\n"
         "return finish()\n");
-    check(memcmp(g_fake->registry, g_fake->pristine, 371 * 0x2C) == 0,
+    check(memcmp(g_fake->registry, g_fake->pristine, 374 * 0x2C) == 0,
         "after shutdown the registry is byte-identical to the expected table");
     check(log[0x60] == 1 && walk_of(log) == 'd' && origin(equip, 0) == 100 + kRowEquip && origin(equip, 1) == 50,
         "logwindo is drawn again and equip is back at its default rect");
@@ -9122,7 +9122,7 @@ int main(int argc, char** argv) {
         "return finish()\n");
     lua.close(L);
     check(engine_unmaps(), "then the engine unmaps");
-    check(memcmp(g_fake->registry, g_fake->pristine, 371 * 0x2C) == 0, "and the registry is pristine");
+    check(memcmp(g_fake->registry, g_fake->pristine, 374 * 0x2C) == 0, "and the registry is pristine");
 
     // -- a shutdown while no frame runs, as two live unloads of six met it on
     //    2026-10-21 (each waited 1.5 s for the frame, refused with "drain" and
@@ -11259,7 +11259,7 @@ int main(int argc, char** argv) {
         uint8_t* dbdel = live_menu(kRowDbdelsel);
         check(dbdel && strcmp(g_fake->log->last_open, "tkdebug dbdelsel") == 0
                 && hidden_in_place(kRowDbdelsel, dbdel),
-            "open('dbdelsel') reached the open routine as \"tkdebug dbdelsel\"; its draw paints nothing, row 327"
+            "open('dbdelsel') reached the open routine as \"tkdebug dbdelsel\"; its draw paints nothing, row 330"
             " and the live menu at their layer");
         phase(L,
             "handlers.prerender()\n"
@@ -11273,16 +11273,16 @@ int main(int argc, char** argv) {
             "  and hideui.status().detail.unmatched_open_keys == unmatched,"
             "  'the open hook mapped \"tkdebug dbdelsel\" back to its name: opened{dbdelsel}, no unmatched key: '"
             "  .. table.concat(dbdel, ' '))\n"
-            "check(i and i.open and i.hidden and i.layer == 2 and i.detail.rows[1] == 327 and l and l.layer == 2"
+            "check(i and i.open and i.hidden and i.layer == 2 and i.detail.rows[1] == 330 and l and l.layer == 2"
             "  and l.detail.avail == -1 and l.detail.overlap == -1,"
-            "  'info and list report dbdelsel: open, hidden, layer 2, row 327, avail and overlap -1 as the table has them')\n"
+            "  'info and list report dbdelsel: open, hidden, layer 2, row 330, avail and overlap -1 as the table has them')\n"
             "hideui.debug(false)\n"
             "check(ui:unhide('dbdelsel') == true and ui:close('dbdelsel') == true, 'unhide and close of dbdelsel queue')\n"
             "return finish()\n");
         wait_frames(3);
         check(!live_menu(kRowDbdelsel) && strcmp(g_fake->log->last_close, "tkdebug dbdelsel") == 0
                 && memcmp(registry_row(kRowDbdelsel), g_fake->pristine + kRowDbdelsel * 0x2C, 0x2C) == 0,
-            "unhide put row 327's draw layer back, the row byte-identical to the table; close('dbdelsel') reached"
+            "unhide put row 330's draw layer back, the row byte-identical to the table; close('dbdelsel') reached"
             " the game's close as \"tkdebug dbdelsel\"");
         phase(L,
             "local list = ui:settings()\n"
@@ -11424,7 +11424,7 @@ int main(int argc, char** argv) {
         "  'info() through B reads the live menu')\n"
         "local n = 0\n"
         "for _ in pairs(hb:list()) do n = n + 1 end\n"
-        "check(n == 368, 'list() through B: all ' .. n .. ' names, the compass and the target arrows among them')\n"
+        "check(n == 371, 'list() through B: all ' .. n .. ' names, the compass and the target arrows among them')\n"
         "local q = hb:options('query')\n"
         "local s = q and q.options[1] and q.options[1].segments or {}\n"
         "check(q and q.title.text == 'Will you lend a hand?' and #q.options == 3 and q.options[2].value == 4"

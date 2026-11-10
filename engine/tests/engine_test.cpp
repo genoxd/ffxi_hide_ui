@@ -3392,11 +3392,11 @@ uint32_t __cdecl counted_convert(const char* text, int16_t* glyphs, uint32_t max
 int main() {
     // -- inventory and lookup
     check(g_e.inv.build(), "inventory indexes menu_table.inc");
-    check(kRowCount == 370 && g_e.inv.count == 368 && g_e.inv.compass == 366 && g_e.inv.targetarrow == 367
+    check(kRowCount == 373 && g_e.inv.count == 371 && g_e.inv.compass == 369 && g_e.inv.targetarrow == 370
             && g_e.inv.targetwi == name("targetwi") && g_e.inv.targetwi >= 0,
-        "370 registry rows, 366 windows, conf1win on two rows, the tkdebug record one of them, and mcr1edlo,"
-        " mcr2edlo and jobcsel folded into mcr1edit, mcr2edit and jobcselu, then the compass as the 367th name and"
-        " the target arrows as the 368th; targetwi's index kept");
+        "373 registry rows, 369 windows, conf1win on two rows, the tkdebug record one of them, and mcr1edlo,"
+        " mcr2edlo and jobcsel folded into mcr1edit, mcr2edit and jobcselu, then the compass as the 370th name and"
+        " the target arrows as the 371st; targetwi's index kept");
     {
         static const char* const pairs[3][2] = {{"mcr1edit", "mcr1edlo"}, {"mcr2edit", "mcr2edlo"},
                                                  {"jobcselu", "jobcsel"}};
@@ -3425,8 +3425,8 @@ int main() {
             " name in any case");
     }
     check(g_e.inv.names[name("conf1win")].row_count == 2
-            && g_e.inv.names[name("conf1win")].rows[0] == 264
-            && g_e.inv.names[name("conf1win")].rows[1] == 265,
+            && g_e.inv.names[name("conf1win")].rows[0] == 267
+            && g_e.inv.names[name("conf1win")].rows[1] == 268,
         "conf1win is the one name on two rows (264, 265)");
     {
         const int d = name("dbdelsel");
@@ -3434,11 +3434,11 @@ int main() {
         if (d >= 0) {
             make_key(g_e, d, key);
         }
-        check(d >= 0 && strcmp(kRowSpecs[327].type, "tkdebug ") == 0 && g_e.inv.name_of_row[327] == d
-                && g_e.inv.names[d].row_count == 1 && g_e.inv.names[d].rows[0] == 327
+        check(d >= 0 && strcmp(kRowSpecs[330].type, "tkdebug ") == 0 && g_e.inv.name_of_row[330] == d
+                && g_e.inv.names[d].row_count == 1 && g_e.inv.names[d].rows[0] == 330
                 && memcmp(g_e.inv.names[d].key, "tkdebug dbdelsel", kKeyLen) == 0
                 && strcmp(key, "tkdebug dbdelsel") == 0,
-            "row 327, the tkdebug record, is dbdelsel, keyed and made into an open key with its own type");
+            "row 330, the tkdebug record, is dbdelsel, keyed and made into an open key with its own type");
         bool every_row = true;
         for (int r = 0; r < kRowCount; ++r) {
             every_row = every_row && g_e.inv.name_of_row[r] >= 0;
@@ -4519,7 +4519,7 @@ int main() {
         uint8_t* conf = open_now("conf1win");
         g_e.holds.set(h1, name("conf1win"), kHoldHide, true);
         drain(g_e);
-        const bool both_rows = !draw_paints(conf) && row(264)[kRowLayer] == 2 && row(265)[kRowLayer] == 2
+        const bool both_rows = !draw_paints(conf) && row(267)[kRowLayer] == 2 && row(268)[kRowLayer] == 2
             && conf[kMenuLayer] == 2;
         g_e.holds.set(h1, name("conf1win"), kHoldHide, false);
         drain(g_e);
@@ -10421,12 +10421,12 @@ int main() {
             "open dbdelsel: the open routine gets \"tkdebug dbdelsel\", the hook maps it back; opened{dbdelsel}");
         g_e.holds.set(h1, d, kHoldHide, true);
         drain(g_e);
-        const bool hidden = menu && !draw_paints(menu) && row(327)[kRowLayer] == 2 && menu[kMenuLayer] == 2;
+        const bool hidden = menu && !draw_paints(menu) && row(330)[kRowLayer] == 2 && menu[kMenuLayer] == 2;
         g_e.holds.set(h1, d, kHoldHide, false);
         drain(g_e);
-        check(hidden && draw_paints(menu) && row(327)[kRowLayer] == 2 && menu[kMenuLayer] == 2
-                && memcmp(row(327), g_pristine + 327 * kRowStride, kRowStride) == 0,
-            "hide dbdelsel: its draw paints nothing, row 327 and the live menu at layer 2; unhide paints it, the row as"
+        check(hidden && draw_paints(menu) && row(330)[kRowLayer] == 2 && menu[kMenuLayer] == 2
+                && memcmp(row(330), g_pristine + 330 * kRowStride, kRowStride) == 0,
+            "hide dbdelsel: its draw paints nothing, row 330 and the live menu at layer 2; unhide paints it, the row as"
             " expected");
         run(cmd(kOpClose, "dbdelsel", 0, 0, s1, gen1));
         check(!live("dbdelsel") && strcmp(g_log.last_close, "tkdebug dbdelsel") == 0,
@@ -10489,11 +10489,11 @@ int main() {
         clear_log();
         run(cmd(kOpMove, "ability", 400, 100, s1, gen1));
         const bool undocked = !(rd32(live("ability"), kMenuPolicy) & 0x1000)
-            && !(rd32(row(257), kRowPolicy) & 0x1000) && ox("ability") == 400 && oy("ability") == 100;
+            && !(rd32(row(260), kRowPolicy) & 0x1000) && ox("ability") == 400 && oy("ability") == 100;
         const bool no_redock = g_log.dock_resets == 0;
         run(cmd(kOpReset, "ability", 0, 0, s1, gen1));
         const bool redocked = (rd32(live("ability"), kMenuPolicy) & 0x1000)
-            && rd32(row(257), kRowPolicy) == kRowSpecs[257].policy;
+            && rd32(row(260), kRowPolicy) == kRowSpecs[260].policy;
         check(undocked && no_redock, "move ability: dock bit cleared in the live menu and the registry, no re-dock");
         check(redocked && ox("ability") == 10 && oy("ability") == 200 && g_log.dock_resets == 1
                 && g_log.dock_group == 0 && g_log.dock_menu == live("ability"),
